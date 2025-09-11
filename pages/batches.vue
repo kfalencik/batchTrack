@@ -9,13 +9,15 @@
         </div>
 
         <!-- Stat cards -->
-        <v-row class="mb-7" dense>
-            <v-col cols="12" md="9">
+        <v-row class="mb-15 mt-10" dense>
+            <v-col cols="12">
                 <v-row>
-                        <StatCard :title="'All'" icon="mdi-view-grid" color="grey darken-1" :count="batches.length" :active="activeFilter === 'all'" @click="setFilter('all')" class="mr-2" />
-                        <StatCard :title="'Fermenting'" icon="mdi-flask" color="blue-lighten-1" :count="stats.fermenting" :active="activeFilter === 'fermenting'" @click="setFilter('fermenting')" class="mr-2" />
-                        <StatCard :title="'Flavouring'" icon="mdi-leaf" color="orange-lighten-2" :count="stats.flavouring" :active="activeFilter === 'flavouring'" @click="setFilter('flavouring')" class="mr-2" />
-                        <StatCard :title="'Complete'" icon="mdi-check-circle-outline" color="green-lighten-2" :count="stats.complete" :active="activeFilter === 'complete'" @click="setFilter('complete')" class="mr-2" />
+                    <StatCard :title="'All'" icon="mdi-view-grid" color="grey darken-1" :count="batches.length" :active="activeFilter === 'all'" @click="setFilter('all')" class="mr-2" />
+                    <StatCard :title="'Fermenting'" icon="mdi-flask" color="blue-lighten-1" :count="stats.fermenting" :active="activeFilter === 'fermenting'" @click="setFilter('fermenting')" class="mr-2" />
+                    <StatCard :title="'Flavouring'" icon="mdi-leaf" color="orange-lighten-2" :count="stats.flavouring" :active="activeFilter === 'flavouring'" @click="setFilter('flavouring')" class="mr-2" />
+                    <StatCard :title="'Complete'" icon="mdi-check-circle-outline" color="success" :count="stats.complete" :active="activeFilter === 'complete'" @click="setFilter('complete')" class="mr-2" />
+                    <StatCard :title="'Failed'" icon="mdi-alert-circle-outline" color="red" :count="stats.failed" :active="activeFilter === 'failed'" @click="setFilter('failed')" class="mr-2" />
+                    <StatCard :title="'Packaged'" icon="mdi-package-variant-closed" color="purple" :count="stats.packaged" :active="activeFilter === 'packaged'" @click="setFilter('packaged')" class="mr-2" />
                 </v-row>
             </v-col>
         </v-row>
@@ -70,7 +72,7 @@
                     <v-list>
                         <v-list-item @click="setStatus(item, 'complete')">
                             <v-list-item-content>
-                                <v-list-item-title class="align-center text-green text-sm"><v-icon color="green" class="mr-2" small>mdi-check-circle-outline</v-icon> Mark Complete</v-list-item-title>
+                                <v-list-item-title class="align-center text-success text-sm"><v-icon color="success" class="mr-2" small>mdi-check-circle-outline</v-icon> Mark Complete</v-list-item-title>
                             </v-list-item-content>
                         </v-list-item>
                         <v-list-item @click="setStatus(item, 'failed')">
@@ -80,7 +82,7 @@
                         </v-list-item>
                         <v-list-item @click="setStatus(item, 'packaged')">
                             <v-list-item-content>
-                                <v-list-item-title class="align-center text-blue text-sm"><v-icon color="blue" class="mr-2" small>mdi-package-variant-closed</v-icon> Mark Packaged</v-list-item-title>
+                                <v-list-item-title class="align-center text-purple text-sm"><v-icon color="purple" class="mr-2" small>mdi-package-variant-closed</v-icon> Mark Packaged</v-list-item-title>
                             </v-list-item-content>
                         </v-list-item>
                     </v-list>
@@ -225,7 +227,8 @@ import StatCard from '@/components/StatCard.vue'
         if (s === 'fermenting') return 'blue';
         if (s === 'flavouring') return 'orange';
         if (s === 'failed') return 'red';
-        if (s === 'complete' || s === 'packaged' || s === 'sold') return 'green';
+        if (s === 'packaged') return 'purple';
+        if (s === 'complete') return 'green';
         return 'grey';
     }
 
@@ -272,7 +275,6 @@ import StatCard from '@/components/StatCard.vue'
         if (s === 'failed') return 'mdi-alert-circle-outline';
         if (s === 'complete') return 'mdi-check-circle-outline';
         if (s === 'packaged') return 'mdi-package-variant-closed';
-        if (s === 'sold') return 'mdi-cash';
         return 'mdi-help-circle-outline';
     }
 
