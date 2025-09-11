@@ -55,8 +55,8 @@
                     :color="getStatusColor(getStatus(item))"
                     dark
                 >
-                    <v-icon size="small" class="mr-2">{{ getStatusIcon(getStatus(item)) }}</v-icon>
-                    {{ getStatus(item) }}
+                    <v-icon class="mr-2">{{ getStatusIcon(getStatus(item)) }}</v-icon>
+                    <span class="uppercase">{{ getStatus(item) }}</span>
                 </v-chip>
             </template>
             <template #item.actions="{ item }">

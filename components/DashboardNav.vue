@@ -48,7 +48,7 @@
         text-align: left !important;
     }
     .v-btn--active {
-        background-color: #d4345c !important;
+        background-color: #36a367 !important;
         color: white !important;
     }
 </style>

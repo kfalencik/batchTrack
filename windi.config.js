@@ -12,7 +12,7 @@ export default defineConfig({
             '2xl': '1536px',
         },
         colors: {
-            primary: '#d4345c',
+            primary: '#36a367',
             secondary: '#a4a189',
             darkGrey: '#dcd5d5',
             blueGrey: '#647589',
