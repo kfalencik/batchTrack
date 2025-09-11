@@ -3,6 +3,7 @@ import { getFirestore, collection, query, doc, getDocs, setDoc, addDoc, deleteDo
 export const useDataStore = defineStore('dataStore', {
     state: () => ({
         batches: [],
+        fermenters: [],
         loading: true, // Loader now shows immediately on first mount
         notification: null
     }),
@@ -45,6 +46,62 @@ export const useDataStore = defineStore('dataStore', {
             await addDoc(batchesRef, batch);
             this.setNotification({
                 text: 'Batch successfully created!',
+                color: 'success',
+                delay: 5000
+            })
+        },
+        // Fermenter CRUD
+        async getFermenters() {
+            this.loading = true
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const fermentersRef = collection(db, "fermenters");
+            const q = query(fermentersRef);
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const data = querySnapshot.docs.map(doc => doc.data());
+                this.fermenters = data
+            } else {
+                this.fermenters = null
+            }
+            this.loading = false
+        },
+        async addFermenter(fermenter) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const fermentersRef = collection(db, "fermenters");
+            await addDoc(fermentersRef, fermenter);
+            this.setNotification({
+                text: 'Fermenter successfully created!',
+                color: 'success',
+                delay: 5000
+            })
+        },
+        async updateFermenter(fermenter) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const fermentersRef = collection(db, "fermenters");
+            const q = query(fermentersRef, where('id', '==', fermenter.id));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach(async (doc) => await setDoc(doc.ref, fermenter))
+
+            this.setNotification({
+                text: 'Fermenter successfully updated!',
+                color: 'success',
+                delay: 5000
+            })
+        },
+        async removeFermenter(id) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const fermentersRef = collection(db, "fermenters");
+            const q = query(fermentersRef, where('id', '==', id));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach( async (doc) => await deleteDoc(doc.ref))
+
+            this.setNotification({
+                text: 'Fermenter successfully removed!',
                 color: 'success',
                 delay: 5000
             })

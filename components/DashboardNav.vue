@@ -7,6 +7,10 @@
                 <v-icon size="small" class="mr-2">mdi-home</v-icon>
                 <span>Dashboard</span>
             </v-btn>
+            <v-btn to="fermenters" variant="outline" class="my-1 w-full justify-start text-left" color="black">
+                <v-icon size="small" class="mr-2">mdi-beer</v-icon>
+                <span>Fermenters</span>
+            </v-btn>
             <v-btn to="batches" variant="outline" class="my-1 w-full justify-start text-left" color="black">
                 <v-icon size="small" class="mr-2">mdi-barrel</v-icon>
                 <span>Batches</span>

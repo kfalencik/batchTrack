@@ -56,8 +56,7 @@
     font-size: 22px;
   }
 .v-data-table__tr:nth-child(odd) {
-  background-color: #f9f9f9;
+  background-color: #f9f9f9 !important;
 }
-
 
 </style>
