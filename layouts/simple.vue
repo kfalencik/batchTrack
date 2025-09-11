@@ -2,7 +2,7 @@
     <div class="bg-lightGrey w-screen h-screen p-10">
         <NuxtLink class="text-center" to="/">
             <img class="mx-auto" src="/img/logo.png" alt="Hollenders Immobilien" style="height: 90px"/>
-            <h1 class="text-blue-400 text-center">BatchTrack</h1>
+            <h1 class="text-primary text-center">BatchTrack</h1>
         </NuxtLink>
 
         <v-container>

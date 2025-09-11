@@ -22,7 +22,8 @@
   html {
     letter-spacing: 0.03em;
     font-weight: 300;
-    background: #e2e8f0;
+    background: #ededed;
+    font-size: 14px;
   }
 
   h1,h2,h3,h4,h5 {
@@ -51,9 +52,10 @@
     font-size: 30px;
   }
 
-  .mobile-menu-open {
-    overflow: hidden !important;
+  h2 {
+    font-size: 22px;
   }
+
 
 .swiper-pagination-bullet {
   margin: 0 2px;

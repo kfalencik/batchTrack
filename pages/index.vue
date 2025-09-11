@@ -5,7 +5,8 @@
                 <p>Please provide your details to sign in:</p>
                 <v-alert
                     v-if="error"
-                    text="We could not sign you in — the details you entered are apparently not correct. Please try again."
+                    class="my-2 text-sm"
+                    text="We could not sign you in — the details you entered are not correct. Please try again."
                     title="Incorrect Details"
                     type="error"
                 />

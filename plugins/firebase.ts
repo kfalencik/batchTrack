@@ -8,12 +8,12 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   const firebaseConfig = {
     apiKey: config.public.FIREBASE_API_KEY,
-    authDomain: "hollenders-immobilien.firebaseapp.com",
-    projectId: "hollenders-immobilien",
-    storageBucket: "hollenders-immobilien.firebasestorage.app",
-    messagingSenderId: "872887777730",
-    appId: "1:872887777730:web:022bfb03df9c83db43be5b",
-    measurementId: "G-0K894ET6HJ"
+    authDomain: "batchtrack-81557.firebaseapp.com",
+    projectId: "batchtrack-81557",
+    storageBucket: "batchtrack-81557.firebasestorage.app",
+    messagingSenderId: "1043506392761",
+    appId: "1:1043506392761:web:40c3a966dd026214b43568",
+    measurementId: "G-9C0HZ8VN8T"
   }
 
   // Prevent re-initialization

@@ -22,8 +22,7 @@ export const useDataStore = defineStore('dataStore', {
                 this.notification = null
             }, notification.delay || 3000)
         },
-        async getBatches({ includeUnpublished = false }) {
-            console.log(includeUnpublished)
+        async getBatches() {
             this.loading = true
             const nuxtApp = useNuxtApp()
             const db = getFirestore(nuxtApp.$firebase);
@@ -33,8 +32,7 @@ export const useDataStore = defineStore('dataStore', {
 
             if (!querySnapshot.empty) {
                 const batchesData = querySnapshot.docs.map(doc => doc.data());
-                // If caller does not request unpublished, filter to published only
-                this.batches = includeUnpublished ? batchesData : batchesData.filter(p => p.published)
+                this.batches = batchesData
             } else {
                 this.batches = null
             }

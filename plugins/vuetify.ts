@@ -14,7 +14,7 @@ export default defineNuxtPlugin((app) => {
           'surface-light': '#EEEEEE',
           'surface-variant': '#424242',
           'on-surface-variant': '#EEEEEE',
-          primary: '#c7bc8f',
+          primary: '#d4345c',
           'primary-darken-1': '#1F5592',
           secondary: '#a4a189',
           'secondary-darken-1': '#018786',

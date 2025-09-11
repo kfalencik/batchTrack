@@ -41,6 +41,11 @@ export const useUserStore = defineStore('userStore', {
                 this.authenticated = false;
                 nuxtStorage.localStorage.setData('user', null);
                 nuxtStorage.localStorage.setData('authenticated', false);
+                this.setNotification({
+                    text: 'Error logging in, please check your credentials and try again.',
+                    color: 'warning',
+                    delay: 3000
+                })
                 return null;
             }
         },

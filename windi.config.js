@@ -12,11 +12,11 @@ export default defineConfig({
             '2xl': '1536px',
         },
         colors: {
-            primary: '#c6bb8f',
+            primary: '#d4345c',
             secondary: '#a4a189',
-            darkGrey: '#363535ff',
+            darkGrey: '#dcd5d5',
             blueGrey: '#647589',
-            lightGrey: '#e2e8f0'
+            lightGrey: '#ededed'
         },
         fontFamily: {
             sans: ['Dosis', 'sans-serif'],
