@@ -2,6 +2,7 @@
 import { getFirestore, collection, query, where, getDocs } from "firebase/firestore";
 import nuxtStorage from 'nuxt-storage';
 import md5 from 'js-md5';
+import { playNotificationSound } from '@/utils/sound'
 
 export const useUserStore = defineStore('userStore', {
     state: () => ({
@@ -12,6 +13,8 @@ export const useUserStore = defineStore('userStore', {
     actions: {
         setNotification (notification) {
             this.notification = notification
+            // play sound when notification appears (best-effort)
+            playNotificationSound()
             setTimeout(() => {
                 this.notification = null
             }, notification.delay || 3000)

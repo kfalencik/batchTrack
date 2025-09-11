@@ -1,4 +1,5 @@
 import { getFirestore, collection, query, doc, getDocs, setDoc, addDoc, deleteDoc, where } from "firebase/firestore";
+import { playNotificationSound } from '@/utils/sound'
 
 export const useDataStore = defineStore('dataStore', {
     state: () => ({
@@ -19,6 +20,8 @@ export const useDataStore = defineStore('dataStore', {
         },
         setNotification (notification) {
             this.notification = notification
+            // play sound when notification appears (best-effort)
+            playNotificationSound()
             setTimeout(() => {
                 this.notification = null
             }, notification.delay || 3000)
