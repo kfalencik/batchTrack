@@ -21,6 +21,9 @@
                 <template #item.readingFG="{ item }">
                     <span>{{ formatValue(item, 'readingFG') }}</span>
                 </template>
+            <template #item.abv="{ item }">
+                <span>{{ getABV(item) }}</span>
+            </template>
             <template #item.endDate="{ item }">
                 <span>
                     {{ getEndDate(item) }}
@@ -100,18 +103,21 @@
 </template>
 
 <script setup>
-    const headers = [
+import { ref, computed, onMounted, watch } from 'vue';
+    const headers = ref([
         { title: 'Fermenter', value: 'fermenter', prefix: 'Fermentor #' },
         { title: 'Status', value: 'status' },
         { title: 'Fermentation Days', value: 'fermentationDays', suffix: ' days' },
         { title: 'Batch Start Date', value: 'startDate' },
         { title: 'Batch End Date', value: 'endDate' },
+        
         { title: 'OG (°)', value: 'readingOG', suffix: '°', align: 'center' },
         { title: 'FG (°)', value: 'readingFG', suffix: '°', align: 'center' },
+        { title: 'ABV', value: 'abv', align: 'center' },
         { title: 'Pasteurised', value: 'pasteurised', align: 'center' },
         { title: 'Tax Paid',  value: 'taxPaid', align: 'center' },
         { title: 'Actions', value: 'actions' }
-    ];
+    ]);
 
     function getEndDate(item) {
         if (item && item.startDate && item.startDate.seconds && Number.isFinite(item.fermentationDays)) {
@@ -152,7 +158,7 @@
     }
 
         function formatValue(item, key) {
-            const header = headers.find(h => h.value === key);
+        const header = (headers.value || headers).find(h => h.value === key);
             let raw = undefined;
 
             if (!item) return '';
@@ -198,6 +204,82 @@
         return 'mdi-help-circle-outline';
     }
 
+    // ABV estimation:
+    // Preferred: use readingOG and readingFG when available: ABV = (OG - FG) * 131.25
+    // Fallback: estimate OG from sugar and water using a simple conversion: sugar grams per liter -> potential gravity
+    //   Rough estimate: 1 g sugar per L -> 0.004 gravity points (i.e., 1.004)
+    //   For sugar in kg and water in L: gravityPoints = (sugar_kg * 1000 / water_L) * 0.004
+    //   OG = 1 + gravityPoints
+    // Estimate FG by applying an attenuation factor influenced by yeast amount. Use a default apparent attenuation of 0.75.
+    const isABVEstimated = ref(false)
+
+    function updateABVEstimatedFlag() {
+        const list = batches.value || [];
+        isABVEstimated.value = list.some(i => isABVComputed(i) && !i.readingFG);
+        // update header title
+        const abvHeader = (headers.value || headers).find(h => h.value === 'abv');
+        if (abvHeader) abvHeader.title = isABVEstimated.value ? 'ABV (est.)' : 'ABV';
+    }
+
+    function isABVComputed(item) {
+        // computed when OG present but FG missing, or when sugar+water used
+        const ogRaw = item && (item.readingOG || item.readingOG === 0);
+        const fgRaw = item && (item.readingFG || item.readingFG === 0);
+        if (ogRaw && !fgRaw) return true;
+        if (item && (item.sugar !== undefined) && (item.water !== undefined)) return true;
+        return false;
+    }
+
+    function getABV(item) {
+        // Use final readings if present
+        const ogRaw = item && (item.readingOG || item.readingOG === 0) ? Number(item.readingOG) : null;
+        const fgRaw = item && (item.readingFG || item.readingFG === 0) ? Number(item.readingFG) : null;
+
+    if (ogRaw && fgRaw) {
+            const abv = (ogRaw - fgRaw) * 131;
+            return `${abv.toFixed(1)}%`;
+        }
+
+        // If we have OG but no FG, assume FG = 1.000 per spec
+        if (ogRaw && !fgRaw) {
+            const fgAssumed = 1.000;
+            const abv = (ogRaw - fgAssumed) * 131;
+            return `${abv.toFixed(1)}%`;
+        }
+
+        // If OG not present, try estimate from sugar + water
+        if (item && (item.sugar !== undefined) && (item.water !== undefined) && Number(item.water) > 0) {
+            // sugar may be grams or kg? user example uses sugar:1 (assume kg). We'll treat <=20 as kg, >20 as grams
+            let sugarKg = Number(item.sugar);
+            if (sugarKg > 20) sugarKg = sugarKg / 1000; // treat as grams -> kg
+            const waterL = Number(item.water);
+            if (!Number.isFinite(sugarKg) || !Number.isFinite(waterL) || waterL === 0) return '-';
+            const gravityPoints = (sugarKg * 1000 / waterL) * 0.004; // unitless points
+            const ogEst = 1 + gravityPoints;
+            const attenuation = estimateAttenuation(item);
+            const fgEst = ogEst - ((ogEst - 1) * attenuation);
+            const abv = (ogEst - fgEst) * 131;
+            return `${abv.toFixed(1)}%`;
+        }
+
+        return '-';
+    }
+
+    function estimateAttenuation(item) {
+        // Base apparent attenuation
+        let attenuation = 0.75;
+        // Increase attenuation slightly with more yeast (normalized)
+        if (item && item.yeast) {
+            const y = Number(item.yeast);
+            if (Number.isFinite(y)) {
+                // assume typical yeast grams between 5 and 100; map to 0.65..0.85
+                const clamped = Math.max(5, Math.min(100, y));
+                attenuation = 0.65 + ((clamped - 5) / (100 - 5)) * 0.2;
+            }
+        }
+        return attenuation;
+    }
+
     // Editor dialog state
     const editDialog = ref(false)
     const edited = ref(null)
@@ -228,11 +310,17 @@
 
     const dataStore = useDataStore()
 
-    onMounted(() => {
-        dataStore.getBatches()
+    onMounted(async () => {
+        await dataStore.getBatches()
+        updateABVEstimatedFlag()
     })
 
     const batches = computed(() => dataStore.batches)
+
+    // update header when batches change
+    watch(batches, () => updateABVEstimatedFlag(), { immediate: true, deep: true })
+
+    
 
     definePageMeta({
         layout: 'default'
