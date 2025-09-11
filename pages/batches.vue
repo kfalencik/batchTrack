@@ -45,6 +45,11 @@
             <template #item.abv="{ item }">
                 <span>{{ getABV(item) }} {{ item.readingFG ? '' : '(est.)' }}</span>
             </template>
+            <template #item.progress="{ item }">
+                <div style="max-width: 260px;" v-tooltip:top="getProgress(item).label">
+                    <v-progress-linear :buffer-value="getProgress(item).percent" :value="100" height="10" rounded color="blue"></v-progress-linear>
+                </div>
+            </template>
             <template #item.endDate="{ item }">
                 <span>
                     {{ getEndDate(item) }}
@@ -179,6 +184,7 @@ import StatCard from '@/components/StatCard.vue'
         { title: 'Fermenter', value: 'fermenter', prefix: 'Fermenter #', sortable: true },
         { title: 'Fermentation Days', value: 'fermentationDays', suffix: ' days', sortable: true },
         { title: 'Batch Start Date', value: 'startDate', sortable: true },
+            { title: 'Progress', value: 'progress', align: 'center', sortable: false },
         { title: 'Batch End Date', value: 'endDate', sortable: true },
         { title: 'OG (°)', value: 'readingOG', suffix: '°', align: 'center', sortable: true },
         { title: 'FG (°)', value: 'readingFG', suffix: '°', align: 'center', sortable: true },
@@ -278,6 +284,22 @@ import StatCard from '@/components/StatCard.vue'
         if (s === 'complete') return 'mdi-check-circle-outline';
         if (s === 'packaged') return 'mdi-package-variant-closed';
         return 'mdi-help-circle-outline';
+    }
+
+    function getProgress(item) {
+        // Returns object { percent: Number 0-100, label: 'xx%' or '-' }
+        if (!item || !item.startDate || !item.startDate.seconds || !Number.isFinite(Number(item.fermentationDays))) {
+            return { percent: 0, label: '-' };
+        }
+        const startMs = item.startDate.seconds * 1000;
+        const days = Number(item.fermentationDays);
+        if (!Number.isFinite(days) || days <= 0) return { percent: 0, label: '-' };
+        const endMs = startMs + (days * 86400 * 1000);
+        const now = Date.now();
+        const elapsed = Math.max(0, Math.min(now - startMs, endMs - startMs));
+        const percent = Math.round((elapsed / (endMs - startMs)) * 100);
+        const bounded = Math.max(0, Math.min(100, Number.isFinite(percent) ? percent : 0));
+        return { percent: bounded, label: `${bounded}%` };
     }
 
     // ABV estimation:
