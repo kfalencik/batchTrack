@@ -43,13 +43,63 @@
             <template #item.taxPaid="{ item }">
                 <v-icon :color="item.taxPaid ? 'green' : 'grey'">{{ item.taxPaid ? 'mdi-check' : 'mdi-close' }}</v-icon>
             </template>
+            <template #item.actions="{ item }">
+                <v-btn icon size="small" @click="openEdit(item)">
+                    <v-icon>mdi-pencil</v-icon>
+                </v-btn>
+            </template>
         </v-data-table>
+        
+        <v-dialog v-model="editDialog" width="600">
+            <template #activator="{ props }"></template>
+            <v-card>
+                <v-toolbar color="primary" dark>
+                    <v-toolbar-title>Update Batch</v-toolbar-title>
+                    <spacer />
+                    <v-btn icon @click="closeEdit">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-toolbar>
+                <v-card-text v-if="edited">
+                    <v-container>
+                        <v-row>
+                            <v-col cols="6">
+                                <v-text-field label="Fermenter" v-model="edited.fermenter" />
+                            </v-col>
+                            <v-col cols="6">
+                                <v-text-field label="Fermentation Days" type="number" v-model="edited.fermentationDays" />
+                            </v-col>
+                            <v-col cols="6">
+                                <v-text-field label="OG" v-model="edited.readingOG" />
+                            </v-col>
+                            <v-col cols="6">
+                                <v-text-field label="FG" v-model="edited.readingFG" />
+                            </v-col>
+                            <v-col cols="6">
+                                <v-switch label="Pasteurised" v-model="edited.pasteurised" />
+                            </v-col>
+                            <v-col cols="6">
+                                <v-switch label="Tax Paid" v-model="edited.taxPaid" />
+                            </v-col>
+                            <v-col cols="12">
+                                <v-select :items="['failed','complete','packaged','sold']" label="Status (backend statuses)" v-model="edited.status" />
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer />
+                    <v-btn text @click="closeEdit">Cancel</v-btn>
+                    <v-btn color="primary" @click="saveEdit">Save</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
 <script setup>
     const headers = [
-        { title: 'Fermenter', value: 'fermenter', prefix: 'Fermenter #' },
+        { title: 'Fermenter', value: 'fermenter', prefix: 'Fermentor #' },
         { title: 'Status', value: 'status' },
         { title: 'Fermentation Days', value: 'fermentationDays', suffix: ' days' },
         { title: 'Batch Start Date', value: 'startDate' },
@@ -57,7 +107,8 @@
         { title: 'OG (°)', value: 'readingOG', suffix: '°' },
         { title: 'FG (°)', value: 'readingFG', suffix: '°' },
         { title: 'Pasteurised', value: 'pasteurised', align: 'center' },
-        { title: 'Tax Paid',  value: 'taxPaid', align: 'center' }
+        { title: 'Tax Paid',  value: 'taxPaid' },
+        { title: 'Actions', value: 'actions' }
     ];
 
     function getEndDate(item) {
@@ -143,6 +194,34 @@
         if (s === 'packaged') return 'mdi-package-variant-closed';
         if (s === 'sold') return 'mdi-cash';
         return 'mdi-help-circle-outline';
+    }
+
+    // Editor dialog state
+    const editDialog = ref(false)
+    const edited = ref(null)
+
+    function openEdit(item) {
+        // shallow copy to avoid mutating table until save
+        edited.value = Object.assign({}, item)
+        editDialog.value = true
+    }
+
+    function closeEdit() {
+        edited.value = null
+        editDialog.value = false
+    }
+
+    async function saveEdit() {
+        if (!edited.value) return
+        // Ensure numeric conversions where appropriate
+        if (edited.value.fermentationDays) edited.value.fermentationDays = Number(edited.value.fermentationDays)
+        if (edited.value.readingOG) edited.value.readingOG = Number(edited.value.readingOG)
+        if (edited.value.readingFG) edited.value.readingFG = Number(edited.value.readingFG)
+        // call store to persist
+        await dataStore.updateBatch(edited.value)
+        // refresh list
+        await dataStore.getBatches()
+        closeEdit()
     }
 
     const dataStore = useDataStore()
