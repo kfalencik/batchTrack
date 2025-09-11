@@ -45,15 +45,15 @@
             <template #item.abv="{ item }">
                 <span>{{ getABV(item) }} {{ item.readingFG ? '' : '(est.)' }}</span>
             </template>
-            <template #item.progress="{ item }">
-                <div style="max-width: 260px;" v-tooltip:top="getProgress(item).label">
-                    <v-progress-linear :buffer-value="getProgress(item).percent" :value="100" height="10" rounded color="blue"></v-progress-linear>
-                </div>
-            </template>
             <template #item.endDate="{ item }">
                 <span>
                     {{ getEndDate(item) }}
                 </span>
+            </template>
+             <template #item.progress="{ item }">
+                <div style="max-width: 260px;" v-tooltip:top="getProgress(item).label">
+                    <v-progress-linear :buffer-value="getProgress(item).percent" :value="100" height="10" rounded color="blue"></v-progress-linear>
+                </div>
             </template>
             <template #item.status="{ item }">
                 <v-chip
@@ -184,11 +184,11 @@ import StatCard from '@/components/StatCard.vue'
         { title: 'Fermenter', value: 'fermenter', prefix: 'Fermenter #', sortable: true },
         { title: 'Fermentation Days', value: 'fermentationDays', suffix: ' days', sortable: true },
         { title: 'Batch Start Date', value: 'startDate', sortable: true },
-            { title: 'Progress', value: 'progress', align: 'center', sortable: false },
         { title: 'Batch End Date', value: 'endDate', sortable: true },
         { title: 'OG (°)', value: 'readingOG', suffix: '°', align: 'center', sortable: true },
         { title: 'FG (°)', value: 'readingFG', suffix: '°', align: 'center', sortable: true },
         { title: 'ABV', value: 'abv', align: 'center', sortable: true, align: 'center' },
+        { title: 'Progress', value: 'progress', align: 'center', sortable: false },
         { title: 'Status', value: 'status', sortable: true },
         { title: 'Actions', value: 'actions', align: 'center' }
     ]);
