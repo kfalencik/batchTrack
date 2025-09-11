@@ -2,10 +2,10 @@
   <div>
     <div class="d-flex justify-between mb-3">
         <h2 class="mb-5">Fermenters</h2>
-      <v-btn color="primary" @click="openAdd">
-        <v-icon left>mdi-plus</v-icon>
-        Add Fermenter
-      </v-btn>
+        <v-btn color="primary" @click="openAdd">
+            <v-icon class="mr-2">mdi-plus-circle</v-icon>
+            Add Fermenter
+        </v-btn>
     </div>
 
     <v-data-table

@@ -3,7 +3,7 @@
         <div class="d-flex justify-between mb-3">
             <h2 class="mb-5">Batches</h2>
             <v-btn color="primary" @click="openAdd">
-                <v-icon left>mdi-plus</v-icon>
+                <v-icon class="mr-2">mdi-plus-circle</v-icon>
                 Add Batch
             </v-btn>
         </div>
@@ -115,36 +115,38 @@
                                         persistent-hint
                                         dense
                                         :rules="[requiredRule]"
-                                         :readonly="isPreview"
+                                        required
+                                        class="required-field"
+                                        :readonly="isPreview"
                                     />
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field label="Fermentation Days" type="number" v-model="edited.fermentationDays" hint="Number of days (e.g. 10)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" />
+                                    <v-text-field class="required-field" label="Fermentation Days" type="number" v-model="edited.fermentationDays" hint="Number of days (e.g. 10)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field label="OG" v-model="edited.readingOG" hint="Original Gravity — format 1.030" persistent-hint placeholder="1.030" :rules="[ogRule]" :readonly="isPreview" />
+                                    <v-text-field class="required-field" label="OG" v-model="edited.readingOG" hint="Original Gravity — format 1.030" persistent-hint placeholder="1.030" :rules="[ogRule]" :readonly="isPreview" required />
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field label="Start Date" type="date" v-model="edited.startDateDate" hint="YYYY-MM-DD" persistent-hint :rules="[requiredRule]" :readonly="isPreview" />
+                                    <v-text-field class="required-field" label="Start Date" type="date" v-model="edited.startDateDate" hint="YYYY-MM-DD" persistent-hint :rules="[requiredRule]" :readonly="isPreview" required />
                                 </v-col>
                                 <v-col cols="6">
                                     <v-text-field label="FG" v-model="edited.readingFG" hint="Final Gravity — format 1.000 (assumed if empty)" persistent-hint placeholder="1.000" :readonly="isPreview" />
                                 </v-col>
                                 <!-- Water removed: fermenter size is used instead -->
                                 <v-col cols="6">
-                                    <v-text-field label="Sugar (kg)" type="number" v-model="edited.sugar" hint="Kilograms of sugar (e.g. 1)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" />
+                                    <v-text-field class="required-field" label="Sugar (kg)" type="number" v-model="edited.sugar" hint="Kilograms of sugar (e.g. 1)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field label="Tea (kg)" type="number" v-model="edited.tea" hint="Kilograms of tea" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" />
+                                    <v-text-field class="required-field" label="Tea (kg)" type="number" v-model="edited.tea" hint="Kilograms of tea" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field label="Temp (°C)" type="number" v-model="edited.temp" hint="Temperature in °C (e.g. 20)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" />
+                                    <v-text-field class="required-field" label="Temp (°C)" type="number" v-model="edited.temp" hint="Temperature in °C (e.g. 20)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field label="Yeast (g)" type="number" v-model="edited.yeast" hint="Yeast weight in grams (e.g. 40)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" />
+                                    <v-text-field class="required-field" label="Yeast (g)" type="number" v-model="edited.yeast" hint="Yeast weight in grams (e.g. 40)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field label="Yeast Nutrients (g)" type="number" v-model="edited.yeastNutrients" hint="Nutrients in grams" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" />
+                                    <v-text-field class="required-field" label="Yeast Nutrients (g)" type="number" v-model="edited.yeastNutrients" hint="Nutrients in grams" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
                                 </v-col>
                                 <v-col cols="6">
                                     <v-text-field label="Flavouring Tea (kg)" type="number" v-model="edited.flavouringTea" hint="Kilograms" persistent-hint :readonly="isPreview" />
@@ -516,13 +518,15 @@ import StatCard from '@/components/StatCard.vue'
     // Small helpers / computed state for UI
     const stats = computed(() => {
         const list = batches.value || [];
-        const s = { fermenting: 0, flavouring: 0, complete: 0 };
+        const s = { fermenting: 0, flavouring: 0, complete: 0, failed: 0, packaged: 0 };
         for (const b of list) {
             const st = getStatus(b) || '';
             const key = String(st).toLowerCase();
             if (key === 'fermenting') s.fermenting++;
             else if (key === 'flavouring') s.flavouring++;
-            else if (key === 'complete' || key === 'packaged' || key === 'sold') s.complete++;
+            else if (key === 'packaged') s.packaged++;
+            else if (key === 'complete') s.complete++;
+            else if (key === 'failed') s.failed++;
         }
         return s;
     })
@@ -595,3 +599,14 @@ import StatCard from '@/components/StatCard.vue'
         title: 'Batches | BatchTrack',
     })
 </script>
+
+<style scoped>
+/* show red asterisk for required fields */
+.required-field .v-field-label::after,
+.required-field .v-label::after,
+.required-field label::after {
+    content: ' *';
+    color: #e53935;
+    margin-left: 2px;
+}
+</style>
