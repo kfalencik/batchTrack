@@ -1,7 +1,7 @@
 <template>
     <div class="w-auto rounded-2xl pt-5 bg-surface-50 bg-lightGrey h-full flex flex-col text-center justify-between">
         <img src="/public/img/logo.png" width="35" class="mx-auto" />
-        <h1>Batch Tracker</h1>
+        <h1 class="text-blue-400">BatchTrack</h1>
         <div class="flex flex-col mt-10 items-start justify-start h-[80vh]">
             <v-btn to="dashboard" variant="tonal" class="my-1 w-full justify-start text-left">
                 <v-icon size="small" class="mr-2">mdi-home</v-icon>

@@ -1,11 +1,12 @@
 <template>
-    <div class="bg-lightGrey w-screen h-screen p-5">
+    <div class="bg-lightGrey w-screen h-screen p-10">
         <NuxtLink class="text-center" to="/">
             <img class="mx-auto" src="/img/logo.png" alt="Hollenders Immobilien" style="height: 90px"/>
+            <h1 class="text-blue-400 text-center">BatchTrack</h1>
         </NuxtLink>
 
         <v-container>
-            <div class="bg-white max-w-4xl mx-auto rounded-lg p-10 mt-10">
+            <div class="bg-white max-w-4xl mx-auto rounded-lg p-5 mt-10">
                 <slot />
             </div>
         </v-container>
