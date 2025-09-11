@@ -59,4 +59,9 @@
   background-color: #f9f9f9 !important;
 }
 
+.v-overlay.v-dialog {
+  background: rgba(0,0,0,0.2) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
 </style>

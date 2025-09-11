@@ -1,8 +1,14 @@
 <template>
     <div>
+        <div class="d-flex justify-between mb-3">
         <h2 class="mb-5">Batches</h2>
-        {{ fermenters }}
-        <v-data-table
+      <v-btn color="primary" @click="openAdd">
+        <v-icon left>mdi-plus</v-icon>
+        Add Batch
+      </v-btn>
+    </div>
+        <h2 class="mb-5">Batches</h2>
+         <v-data-table
             class="text-sm"
             :headers="headers"
             :items="batches"
@@ -11,7 +17,7 @@
                 <span>{{ formatValue(item, 'startDate') }}</span>
             </template>
                 <template #item.fermenter="{ item }">
-                    <span>{{ formatValue(item, 'fermenter') }}</span>
+                    <span>{{ getFermenterLabelById(item && item.fermenter) }}</span>
                 </template>
                 <template #item.fermentationDays="{ item }">
                     <span>{{ formatValue(item, 'fermentationDays') }}</span>
@@ -55,83 +61,85 @@
                 </v-btn>
             </template>
         </v-data-table>
-        
         <v-dialog v-model="editDialog" width="1200">
             <template #activator="{ props }"></template>
             <v-card>
                 <v-toolbar color="primary" dark>
-                    <v-toolbar-title>Update Batch</v-toolbar-title>
+                    <v-toolbar-title>{{ isAdding ? 'Add Batch' : 'Update Batch' }}</v-toolbar-title>
                     <spacer />
                     <v-btn icon @click="closeEdit">
                         <v-icon>mdi-close</v-icon>
                     </v-btn>
                 </v-toolbar>
                 <v-card-text v-if="edited">
-                    <v-container>
-                        <v-row>
-                            <v-col cols="6">
-                                <v-select
-                                    label="Fermenter"
-                                    v-model="edited.fermenter"
-                                    :items="fermenterOptions"
-                                    item-title="label"
-                                    item-value="value"
-                                    hint="Select fermenter"
-                                    persistent-hint
-                                    dense
-                                    clearable
-                                />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="Fermentation Days" type="number" v-model="edited.fermentationDays" hint="Number of days (e.g. 10)" persistent-hint />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="OG" v-model="edited.readingOG" hint="Original Gravity — format 1.030" persistent-hint placeholder="1.030" />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="FG" v-model="edited.readingFG" hint="Final Gravity — format 1.000 (assumed if empty)" persistent-hint placeholder="1.000" />
-                            </v-col>
-                            <!-- Water removed: fermenter size is used instead -->
-                            <v-col cols="6">
-                                <v-text-field label="Sugar (kg)" type="number" v-model="edited.sugar" hint="Kilograms of sugar (e.g. 1)" persistent-hint />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="Tea (kg)" type="number" v-model="edited.tea" hint="Kilograms of tea" persistent-hint />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="Temp (°C)" type="number" v-model="edited.temp" hint="Temperature in °C (e.g. 20)" persistent-hint />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="Yeast (g)" type="number" v-model="edited.yeast" hint="Yeast weight in grams (e.g. 40)" persistent-hint />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="Yeast Nutrients (g)" type="number" v-model="edited.yeastNutrients" hint="Nutrients in grams" persistent-hint />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="Flavouring Tea (kg)" type="number" v-model="edited.flavouringTea" hint="Kilograms" persistent-hint />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="Flavouring Sweetener (g)" type="number" v-model="edited.flavouringSweetener" hint="Grams" persistent-hint />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="Flavouring Essence (ml)" type="number" v-model="edited.flavouringEssence" hint="Milliliters" persistent-hint />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="Start Date" type="date" v-model="edited.startDateDate" hint="YYYY-MM-DD" persistent-hint />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-switch label="Pasteurised" v-model="edited.pasteurised" hint="Toggle if pasteurised" persistent-hint />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-switch label="Tax Paid" v-model="edited.taxPaid" hint="Toggle if tax has been paid" persistent-hint />
-                            </v-col>
-                        </v-row>
-                    </v-container>
+                    <v-form ref="formRef" lazy-validation>
+                        <v-container>
+                            <v-row>
+                                <v-col cols="6">
+                                    <v-select
+                                        label="Fermenter"
+                                        v-model="edited.fermenter"
+                                        :items="fermenterOptions"
+                                        item-title="label"
+                                        item-value="value"
+                                        hint="Select fermenter"
+                                        persistent-hint
+                                        dense
+                                        clearable
+                                        :rules="[requiredRule]"
+                                    />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field label="Fermentation Days" type="number" v-model="edited.fermentationDays" hint="Number of days (e.g. 10)" persistent-hint :rules="[requiredNumberRule]" />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field label="OG" v-model="edited.readingOG" hint="Original Gravity — format 1.030" persistent-hint placeholder="1.030" :rules="[ogRule]" />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field label="FG" v-model="edited.readingFG" hint="Final Gravity — format 1.000 (assumed if empty)" persistent-hint placeholder="1.000" />
+                                </v-col>
+                                <!-- Water removed: fermenter size is used instead -->
+                                <v-col cols="6">
+                                    <v-text-field label="Sugar (kg)" type="number" v-model="edited.sugar" hint="Kilograms of sugar (e.g. 1)" persistent-hint :rules="[requiredNumberRule]" />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field label="Tea (kg)" type="number" v-model="edited.tea" hint="Kilograms of tea" persistent-hint :rules="[requiredNumberRule]" />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field label="Temp (°C)" type="number" v-model="edited.temp" hint="Temperature in °C (e.g. 20)" persistent-hint :rules="[requiredNumberRule]" />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field label="Yeast (g)" type="number" v-model="edited.yeast" hint="Yeast weight in grams (e.g. 40)" persistent-hint :rules="[requiredNumberRule]" />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field label="Yeast Nutrients (g)" type="number" v-model="edited.yeastNutrients" hint="Nutrients in grams" persistent-hint :rules="[requiredNumberRule]" />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field label="Flavouring Tea (kg)" type="number" v-model="edited.flavouringTea" hint="Kilograms" persistent-hint />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field label="Flavouring Sweetener (g)" type="number" v-model="edited.flavouringSweetener" hint="Grams" persistent-hint />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field label="Flavouring Essence (ml)" type="number" v-model="edited.flavouringEssence" hint="Milliliters" persistent-hint />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field label="Start Date" type="date" v-model="edited.startDateDate" hint="YYYY-MM-DD" persistent-hint :rules="[requiredRule]" />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-switch label="Pasteurised" v-model="edited.pasteurised" hint="Toggle if pasteurised" persistent-hint />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-switch label="Tax Paid" v-model="edited.taxPaid" hint="Toggle if tax has been paid" persistent-hint />
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </v-form>
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer />
                     <v-btn text @click="closeEdit">Cancel</v-btn>
-                    <v-btn color="primary" @click="saveEdit">Save</v-btn>
+                    <v-btn color="primary" @click="saveEdit" :disabled="!isFormValid">Save</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -337,6 +345,45 @@ import { ref, computed, onMounted, watch } from 'vue';
     // Editor dialog state
     const editDialog = ref(false)
     const edited = ref(null)
+    const isAdding = ref(false)
+    const formRef = ref(null)
+
+    // Validation rules
+    const requiredRule = (v) => (v !== undefined && v !== null && v !== '' ) || 'Required'
+    const requiredNumberRule = (v) => {
+        if (v === undefined || v === null || v === '') return 'Required'
+        const n = Number(v)
+        return Number.isFinite(n) && n >= 0 || 'Must be a number'
+    }
+    const ogRule = (v) => {
+        if (v === undefined || v === null || v === '') return 'Required'
+        const n = Number(v)
+        return Number.isFinite(n) && n >= 1 && n < 2 || 'OG must be a gravity like 1.040'
+    }
+
+    const isFormValid = computed(() => {
+        if (!edited.value) return false;
+        const e = edited.value;
+        // fermenter
+        if (e.fermenter === undefined || e.fermenter === null || e.fermenter === '') return false;
+        // fermentationDays
+        const fd = Number(e.fermentationDays);
+        if (!Number.isFinite(fd)) return false;
+        // OG
+        const og = Number(e.readingOG);
+        if (!Number.isFinite(og) || og < 1 || og >= 2) return false;
+        // sugar, tea, temp, yeast, yeastNutrients
+        const requiredNums = ['sugar','tea','temp','yeast','yeastNutrients'];
+        for (const k of requiredNums) {
+            const n = Number(e[k]);
+            if (!Number.isFinite(n)) return false;
+        }
+        // start date
+        if (!e.startDateDate) return false;
+        const ms = Date.parse(e.startDateDate);
+        if (Number.isNaN(ms)) return false;
+        return true;
+    })
 
     function openEdit(item) {
         // shallow copy to avoid mutating table until save
@@ -347,6 +394,31 @@ import { ref, computed, onMounted, watch } from 'vue';
             // YYYY-MM-DD for date input
             edited.value.startDateDate = d.toISOString().slice(0,10);
         }
+        isAdding.value = false
+        editDialog.value = true
+    }
+
+    function openAdd() {
+        edited.value = {
+            // default fields for new batch
+            id: null,
+            fermenter: null,
+            fermentationDays: null,
+            readingOG: null,
+            readingFG: null,
+            sugar: null,
+            tea: null,
+            temp: null,
+            yeast: null,
+            yeastNutrients: null,
+            flavouringTea: null,
+            flavouringSweetener: null,
+            flavouringEssence: null,
+            pasteurised: false,
+            taxPaid: false,
+            startDateDate: null
+        }
+        isAdding.value = true
         editDialog.value = true
     }
 
@@ -357,6 +429,11 @@ import { ref, computed, onMounted, watch } from 'vue';
 
     async function saveEdit() {
         if (!edited.value) return
+        // validate form
+        if (formRef.value) {
+            const valid = await formRef.value.validate();
+            if (!valid) return;
+        }
         // Ensure numeric conversions where appropriate
         if (edited.value.fermentationDays) edited.value.fermentationDays = Number(edited.value.fermentationDays)
         if (edited.value.readingOG) edited.value.readingOG = Number(edited.value.readingOG)
@@ -373,7 +450,11 @@ import { ref, computed, onMounted, watch } from 'vue';
             }
         }
         // call store to persist
-        await dataStore.updateBatch(edited.value)
+        if (isAdding.value) {
+            await dataStore.addBatch(edited.value)
+        } else {
+            await dataStore.updateBatch(edited.value)
+        }
         // refresh list
         await dataStore.getBatches()
         updateABVEstimatedFlag()
@@ -396,9 +477,17 @@ import { ref, computed, onMounted, watch } from 'vue';
         // Expect fermenter objects to have an `id` property. Fallback to index if missing.
         return list.map((f, idx) => ({
             value: f && f.id !== undefined ? f.id : idx,
-            label: `Fermenter ${f && f.id !== undefined ? f.id : idx}`
+            label: f && f.name ? `${f.name} (${f.id !== undefined ? f.id : idx})` : `Fermenter ${f && f.id !== undefined ? f.id : idx}`
         }))
     })
+
+    function getFermenterLabelById(id) {
+        if (id === undefined || id === null) return '-';
+        const list = fermenters.value || [];
+        const found = list.find(f => f && (f.id === id || String(f.id) === String(id)));
+        if (!found) return `Fermenter ${id}`;
+        return found.name ? `${found.name}` : `Fermenter ${found.id}`;
+    }
 
     // update header when batches change
     watch(batches, () => updateABVEstimatedFlag(), { immediate: true, deep: true })
