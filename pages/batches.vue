@@ -1,13 +1,12 @@
 <template>
     <div>
         <div class="d-flex justify-between mb-3">
-        <h2 class="mb-5">Batches</h2>
-      <v-btn color="primary" @click="openAdd">
-        <v-icon left>mdi-plus</v-icon>
-        Add Batch
-      </v-btn>
-    </div>
-        <h2 class="mb-5">Batches</h2>
+            <h2 class="mb-5">Batches</h2>
+            <v-btn color="primary" @click="openAdd">
+                <v-icon left>mdi-plus</v-icon>
+                Add Batch
+            </v-btn>
+        </div>
          <v-data-table
             class="text-sm"
             :headers="headers"
@@ -56,9 +55,33 @@
                 <span v-else>-</span>
             </template>
             <template #item.actions="{ item }">
-                <v-btn icon color="info" flat size="x-small" @click="openEdit(item)">
+                <v-btn icon color="info" flat size="x-small"class="mr-2" @click="openEdit(item)">
                     <v-icon>mdi-pencil</v-icon>
                 </v-btn>
+                <v-menu offset-y>
+                    <template #activator="{ props }">
+                        <v-btn v-bind="props" icon flat size="x-small">
+                            <v-icon>mdi-dots-vertical</v-icon>
+                        </v-btn>
+                    </template>
+                    <v-list>
+                        <v-list-item @click="setStatus(item, 'complete')">
+                            <v-list-item-content>
+                                <v-list-item-title class="align-center text-green text-sm"><v-icon color="green" class="mr-2" small>mdi-check-circle-outline</v-icon> Mark Complete</v-list-item-title>
+                            </v-list-item-content>
+                        </v-list-item>
+                        <v-list-item @click="setStatus(item, 'failed')">
+                            <v-list-item-content>
+                                <v-list-item-title class="align-center text-red text-sm"><v-icon color="red" class="mr-2" small>mdi-alert-circle-outline</v-icon> Mark Failed</v-list-item-title>
+                            </v-list-item-content>
+                        </v-list-item>
+                        <v-list-item @click="setStatus(item, 'packaged')">
+                            <v-list-item-content>
+                                <v-list-item-title class="align-center text-blue text-sm"><v-icon color="blue" class="mr-2" small>mdi-package-variant-closed</v-icon> Mark Packaged</v-list-item-title>
+                            </v-list-item-content>
+                        </v-list-item>
+                    </v-list>
+                </v-menu>
             </template>
         </v-data-table>
         <v-dialog v-model="editDialog" width="1200">
@@ -149,7 +172,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
     const headers = ref([
-        { title: 'Fermenter', value: 'fermenter', prefix: 'Fermentor #' },
+        { title: 'Fermenter', value: 'fermenter', prefix: 'Fermenter #' },
         { title: 'Status', value: 'status' },
         { title: 'Fermentation Days', value: 'fermentationDays', suffix: ' days' },
         { title: 'Batch Start Date', value: 'startDate' },
@@ -459,6 +482,15 @@ import { ref, computed, onMounted, watch } from 'vue';
         await dataStore.getBatches()
         updateABVEstimatedFlag()
         closeEdit()
+    }
+
+    async function setStatus(item, status) {
+        console.log(item, status)
+        if (!item || !item.id) return;
+        const copy = Object.assign({}, item, { status });
+        console.log(copy)
+        await dataStore.updateBatch(copy);
+        await dataStore.getBatches();
     }
 
     const dataStore = useDataStore()
