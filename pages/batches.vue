@@ -7,9 +7,7 @@
             :items="batches"
         >
             <template #item.startDate="{ item }">
-                <span v-if="item.startDate && item.startDate.seconds">
-                    {{ new Date(item.startDate.seconds * 1000).toLocaleDateString() }}
-                </span>
+                <span>{{ formatValue(item, 'startDate') }}</span>
             </template>
                 <template #item.fermenter="{ item }">
                     <span>{{ formatValue(item, 'fermenter') }}</span>
@@ -38,10 +36,14 @@
                 </v-chip>
             </template>
             <template #item.pasteurised="{ item }">
-                <v-icon :color="item.pasteurised ? 'green' : 'grey'">{{ item.pasteurised ? 'mdi-check' : 'mdi-close' }}</v-icon>
+                <span v-if="item.pasteurised === true"><v-icon color="green">mdi-check</v-icon></span>
+                <span v-else-if="item.pasteurised === false"><v-icon color="grey">mdi-close</v-icon></span>
+                <span v-else>-</span>
             </template>
             <template #item.taxPaid="{ item }">
-                <v-icon :color="item.taxPaid ? 'green' : 'grey'">{{ item.taxPaid ? 'mdi-check' : 'mdi-close' }}</v-icon>
+                <span v-if="item.taxPaid === true"><v-icon color="green">mdi-check</v-icon></span>
+                <span v-else-if="item.taxPaid === false"><v-icon color="grey">mdi-close</v-icon></span>
+                <span v-else>-</span>
             </template>
             <template #item.actions="{ item }">
                 <v-btn icon size="small" @click="openEdit(item)">
@@ -104,10 +106,10 @@
         { title: 'Fermentation Days', value: 'fermentationDays', suffix: ' days' },
         { title: 'Batch Start Date', value: 'startDate' },
         { title: 'Batch End Date', value: 'endDate' },
-        { title: 'OG (°)', value: 'readingOG', suffix: '°' },
-        { title: 'FG (°)', value: 'readingFG', suffix: '°' },
+        { title: 'OG (°)', value: 'readingOG', suffix: '°', align: 'center' },
+        { title: 'FG (°)', value: 'readingFG', suffix: '°', align: 'center' },
         { title: 'Pasteurised', value: 'pasteurised', align: 'center' },
-        { title: 'Tax Paid',  value: 'taxPaid' },
+        { title: 'Tax Paid',  value: 'taxPaid', align: 'center' },
         { title: 'Actions', value: 'actions' }
     ];
 
@@ -116,7 +118,7 @@
             const secs = item.startDate.seconds + (Number(item.fermentationDays) * 86400);
             return new Date(secs * 1000).toLocaleDateString();
         }
-        return '';
+        return '-';
     }
 
     function getStatus(item) {
@@ -166,12 +168,12 @@
                 raw = item[key];
             }
 
-            if (raw === null || raw === undefined || raw === '') return '';
+        if (raw === null || raw === undefined || raw === '') return '-';
 
             // Special numeric formatting for OG/FG (always x.xxx)
             if (key === 'readingOG' || key === 'readingFG') {
                 const n = Number(raw);
-                if (!Number.isFinite(n)) return '';
+                if (!Number.isFinite(n)) return '-';
                 const formatted = n.toFixed(3);
                 const prefix = header && header.prefix ? header.prefix : '';
                 const suffix = header && header.suffix ? header.suffix : '';
