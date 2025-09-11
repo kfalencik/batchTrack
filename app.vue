@@ -55,44 +55,9 @@
   h2 {
     font-size: 22px;
   }
-
-
-.swiper-pagination-bullet {
-  margin: 0 2px;
-  padding: 5px;
-  border: 1px solid white !important;
-  background-color: none !important;
-  transition: background-color 2s ease;
-
-    &:hover {
-      background-color: #c7bc8f !important;
-    }
-
-    &-active {
-      background-color: #c7bc8f !important;
-    }
-  }
-
-.v-btn.border {
-  border: none !important;
-  background: none !important;
-
-  &::after {
-    content: '';
-    display: block;
-    width: 40px;
-    background-color: #c6bb8f;
-    height: 2px;
-    border: none;
-    opacity: 1;
-    left: 50%;
-    top: 100%;
-    transform: translateX(-50%);
-  }
+.v-data-table__tr:nth-child(odd) {
+  background-color: #f9f9f9;
 }
 
-.v-overlay.v-dialog {
-  background: rgba(0,0,0,0.6) !important;
-  backdrop-filter: blur(10px) !important;
-}
+
 </style>

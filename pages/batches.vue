@@ -11,6 +11,18 @@
                     {{ new Date(item.startDate.seconds * 1000).toLocaleDateString() }}
                 </span>
             </template>
+                <template #item.fermenter="{ item }">
+                    <span>{{ formatValue(item, 'fermenter') }}</span>
+                </template>
+                <template #item.fermentationDays="{ item }">
+                    <span>{{ formatValue(item, 'fermentationDays') }}</span>
+                </template>
+                <template #item.readingOG="{ item }">
+                    <span>{{ formatValue(item, 'readingOG') }}</span>
+                </template>
+                <template #item.readingFG="{ item }">
+                    <span>{{ formatValue(item, 'readingFG') }}</span>
+                </template>
             <template #item.endDate="{ item }">
                 <span>
                     {{ getEndDate(item) }}
@@ -37,15 +49,15 @@
 
 <script setup>
     const headers = [
-        { title: 'Fermenter', value: 'fermenter' },
+        { title: 'Fermenter', value: 'fermenter', prefix: 'Fermenter #' },
         { title: 'Status', value: 'status' },
-        { title: 'Fermentation Days', value: 'fermentationDays' },
+        { title: 'Fermentation Days', value: 'fermentationDays', suffix: ' days' },
         { title: 'Batch Start Date', value: 'startDate' },
         { title: 'Batch End Date', value: 'endDate' },
-        { title: 'OG (%)', value: 'readingOG' },
-        { title: 'FG (%)', value: 'readingFG' },
-        { title: 'Pasteurised', value: 'pasteurised' },
-        { title: 'Tax Paid',  value: 'taxPaid' }
+        { title: 'OG (°)', value: 'readingOG', suffix: '°' },
+        { title: 'FG (°)', value: 'readingFG', suffix: '°' },
+        { title: 'Pasteurised', value: 'pasteurised', align: 'center' },
+        { title: 'Tax Paid',  value: 'taxPaid', align: 'center' }
     ];
 
     function getEndDate(item) {
@@ -85,6 +97,42 @@
         if (s === 'complete' || s === 'packaged' || s === 'sold') return 'green';
         return 'grey';
     }
+
+        function formatValue(item, key) {
+            const header = headers.find(h => h.value === key);
+            let raw = undefined;
+
+            if (!item) return '';
+
+            // special handling for startDate (object with seconds)
+            if (key === 'startDate') {
+                if (item.startDate && item.startDate.seconds) {
+                    raw = new Date(item.startDate.seconds * 1000).toLocaleDateString();
+                }
+            } else if (Object.prototype.hasOwnProperty.call(item, key)) {
+                raw = item[key];
+            } else {
+                raw = item[key];
+            }
+
+            if (raw === null || raw === undefined || raw === '') return '';
+
+            // Special numeric formatting for OG/FG (always x.xxx)
+            if (key === 'readingOG' || key === 'readingFG') {
+                const n = Number(raw);
+                if (!Number.isFinite(n)) return '';
+                const formatted = n.toFixed(3);
+                const prefix = header && header.prefix ? header.prefix : '';
+                const suffix = header && header.suffix ? header.suffix : '';
+                return `${prefix}${formatted}${suffix}`;
+            }
+
+            // coerce to string for all other types
+            const str = String(raw);
+            const prefix = header && header.prefix ? header.prefix : '';
+            const suffix = header && header.suffix ? header.suffix : '';
+            return `${prefix}${str}${suffix}`;
+        }
 
     function getStatusIcon(status) {
         const s = (status || '').toLowerCase();
