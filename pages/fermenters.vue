@@ -32,10 +32,6 @@
       </template>
     </v-data-table>
 
-    <v-card class="mt-4 pa-3">
-      
-    </v-card>
-
     <v-dialog v-model="editDialog" width="800">
       <v-card>
         <v-toolbar color="primary" dark>

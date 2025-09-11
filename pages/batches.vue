@@ -7,10 +7,23 @@
                 Add Batch
             </v-btn>
         </div>
+
+        <!-- Stat cards -->
+        <v-row class="mb-7" dense>
+            <v-col cols="12" md="9">
+                <v-row>
+                        <StatCard :title="'All'" icon="mdi-view-grid" color="grey darken-1" :count="batches.length" :active="activeFilter === 'all'" @click="setFilter('all')" class="mr-2" />
+                        <StatCard :title="'Fermenting'" icon="mdi-flask" color="blue-lighten-1" :count="stats.fermenting" :active="activeFilter === 'fermenting'" @click="setFilter('fermenting')" class="mr-2" />
+                        <StatCard :title="'Flavouring'" icon="mdi-leaf" color="orange-lighten-2" :count="stats.flavouring" :active="activeFilter === 'flavouring'" @click="setFilter('flavouring')" class="mr-2" />
+                        <StatCard :title="'Complete'" icon="mdi-check-circle-outline" color="green-lighten-2" :count="stats.complete" :active="activeFilter === 'complete'" @click="setFilter('complete')" class="mr-2" />
+                </v-row>
+            </v-col>
+        </v-row>
+
          <v-data-table
             class="text-sm"
             :headers="headers"
-            :items="batches"
+            :items="displayedBatches"
         >
             <template #item.startDate="{ item }">
                 <span>{{ formatValue(item, 'startDate') }}</span>
@@ -43,16 +56,6 @@
                     <v-icon size="small" class="mr-2">{{ getStatusIcon(getStatus(item)) }}</v-icon>
                     {{ getStatus(item) }}
                 </v-chip>
-            </template>
-            <template #item.pasteurised="{ item }">
-                <span v-if="item.pasteurised === true"><v-icon color="green">mdi-check</v-icon></span>
-                <span v-else-if="item.pasteurised === false"><v-icon color="grey">mdi-close</v-icon></span>
-                <span v-else>-</span>
-            </template>
-            <template #item.taxPaid="{ item }">
-                <span v-if="item.taxPaid === true"><v-icon color="green">mdi-check</v-icon></span>
-                <span v-else-if="item.taxPaid === false"><v-icon color="grey">mdi-close</v-icon></span>
-                <span v-else>-</span>
             </template>
             <template #item.actions="{ item }">
                 <v-btn icon color="info" flat size="x-small" class="mr-2" @click="openEdit(item)" :title="item && item.status ? 'Preview' : 'Edit'">
@@ -167,19 +170,26 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import StatCard from '@/components/StatCard.vue'
     const headers = ref([
-        { title: 'Fermenter', value: 'fermenter', prefix: 'Fermenter #' },
-        { title: 'Status', value: 'status' },
-        { title: 'Fermentation Days', value: 'fermentationDays', suffix: ' days' },
-        { title: 'Batch Start Date', value: 'startDate' },
-        { title: 'Batch End Date', value: 'endDate' },
-        { title: 'OG (°)', value: 'readingOG', suffix: '°', align: 'center' },
-        { title: 'FG (°)', value: 'readingFG', suffix: '°', align: 'center' },
-        { title: 'ABV', value: 'abv', align: 'center' },
-        { title: 'Pasteurised', value: 'pasteurised', align: 'center' },
-        { title: 'Tax Paid',  value: 'taxPaid', align: 'center' },
+        { title: 'Fermenter', value: 'fermenter', prefix: 'Fermenter #', sortable: true },
+        { title: 'Fermentation Days', value: 'fermentationDays', suffix: ' days', sortable: true },
+        { title: 'Batch Start Date', value: 'startDate', sortable: true },
+        { title: 'Batch End Date', value: 'endDate', sortable: true },
+        { title: 'OG (°)', value: 'readingOG', suffix: '°', align: 'center', sortable: true },
+        { title: 'FG (°)', value: 'readingFG', suffix: '°', align: 'center', sortable: true },
+        { title: 'ABV', value: 'abv', align: 'center', sortable: true, align: 'center' },
+        { title: 'Status', value: 'status', sortable: true },
         { title: 'Actions', value: 'actions', align: 'center' }
     ]);
+
+    // UI state for filtering & sorting
+    const search = ref('')
+    const activeFilter = ref('all')
+    const sortDesc = ref(true)
+
+    // Expose component
+    const components = { StatCard }
 
     function getEndDate(item) {
         if (item && item.startDate && item.startDate.seconds && Number.isFinite(item.fermentationDays)) {
@@ -200,11 +210,11 @@ import { ref, computed, onMounted, watch } from 'vue';
             const now = Date.now();
             const endSecs = item.startDate.seconds + (Number(item.fermentationDays) * 86400);
             const endMs = endSecs * 1000;
-            if (now < endMs) return 'Fermenting';
+            if (now < endMs) return 'fermenting';
             // after fermentation
             // if flavouring fields present, mark as Flavouring
-            if (item.flavouringEssence || item.flavouringTea || item.flavouringSweetener) return 'Flavouring';
-            return 'Complete';
+            if (item.flavouringEssence || item.flavouringTea || item.flavouringSweetener) return 'flavouring';
+            return 'complete';
         }
 
         return backendStatus || 'Unknown';
@@ -504,6 +514,47 @@ import { ref, computed, onMounted, watch } from 'vue';
     const fermenters = computed(() => dataStore.fermenters)
     const batches = computed(() => dataStore.batches)
 
+    // Small helpers / computed state for UI
+    const stats = computed(() => {
+        const list = batches.value || [];
+        const s = { fermenting: 0, flavouring: 0, complete: 0 };
+        for (const b of list) {
+            const st = getStatus(b) || '';
+            const key = String(st).toLowerCase();
+            if (key === 'fermenting') s.fermenting++;
+            else if (key === 'flavouring') s.flavouring++;
+            else if (key === 'complete' || key === 'packaged' || key === 'sold') s.complete++;
+        }
+        return s;
+    })
+
+    function setFilter(val) {
+        activeFilter.value = val
+    }
+
+    const displayedBatches = computed(() => {
+        let list = (batches.value || []).slice();
+
+        // filter by activeFilter
+        if (activeFilter.value && activeFilter.value !== 'all') {
+            list = list.filter(b => getStatus(b) === activeFilter.value)
+        }
+
+        // search
+        if (search.value && search.value.trim() !== '') {
+            const q = String(search.value).toLowerCase();
+            list = list.filter(b => {
+                // check fermenter label, id, status, and numeric fields
+                const fLabel = getFermenterLabelById(b && b.fermenter).toLowerCase();
+                const status = (getStatus(b) || '').toLowerCase();
+                const idStr = b && b.id ? String(b.id).toLowerCase() : '';
+                return fLabel.includes(q) || status.includes(q) || idStr.includes(q);
+            })
+        }
+
+        return list;
+    })
+
     const fermenterOptions = computed(() => {
         const list = fermenters.value || [];
         // Expect fermenter objects to have an `id` property. Fallback to index if missing.
@@ -527,12 +578,14 @@ import { ref, computed, onMounted, watch } from 'vue';
         if (id === undefined || id === null) return '-';
         const list = fermenters.value || [];
         const found = list.find(f => f && (f.id === id || String(f.id) === String(id)));
-        if (!found) return `Fermenter ${id}`;
-        return found.name ? `${found.name}` : `Fermenter ${found.id}`;
+        if (!found) return `Fermenter #${id}`;
+        return found.name ? `${found.name}` : `Fermenter #${found.id}`;
     }
 
     // update header when batches change
-    watch(batches, () => updateABVEstimatedFlag(), { immediate: true, deep: true })
+    watch(batches, () => {
+        updateABVEstimatedFlag()
+    }, { immediate: true, deep: true })
 
     
 
