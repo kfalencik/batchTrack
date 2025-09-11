@@ -43,7 +43,7 @@
                     <span>{{ formatValue(item, 'readingFG') }}</span>
                 </template>
             <template #item.abv="{ item }">
-                <span>{{ getABV(item) }}</span>
+                <span>{{ getABV(item) }} {{ item.readingFG ? '' : '(est.)' }}</span>
             </template>
             <template #item.endDate="{ item }">
                 <span>
@@ -290,9 +290,6 @@ import StatCard from '@/components/StatCard.vue'
     function updateABVEstimatedFlag() {
         const list = batches.value || [];
         isABVEstimated.value = list.some(i => isABVComputed(i) && !i.readingFG);
-        // update header title
-        const abvHeader = (headers.value || headers).find(h => h.value === 'abv');
-        if (abvHeader) abvHeader.title = isABVEstimated.value ? 'ABV (est.)' : 'ABV';
     }
 
     function isABVComputed(item) {
@@ -474,7 +471,7 @@ import StatCard from '@/components/StatCard.vue'
         if (edited.value.readingOG) edited.value.readingOG = Number(edited.value.readingOG)
         if (edited.value.readingFG) edited.value.readingFG = Number(edited.value.readingFG)
         // other numeric fields
-    ['sugar','tea','temp','yeast','yeastNutrients','flavouringTea','flavouringSweetener','flavouringEssence'].forEach(k => {
+        ;['sugar','tea','temp','yeast','yeastNutrients','flavouringTea','flavouringSweetener','flavouringEssence'].forEach(k => {
             if (edited.value[k] !== undefined && edited.value[k] !== null && edited.value[k] !== '') edited.value[k] = Number(edited.value[k])
         })
         // convert date input to Firestore-like timestamp
