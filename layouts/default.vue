@@ -1,7 +1,7 @@
 <template>
-    <div v-if="userStore.authenticated" class="bg-surface-0 border border-black/10 dark:border-white/20 dark:bg-surface-950 w-full h-screen rounded-3xl p-6 hidden lg:flex items-start gap-6 overflow-hidden" style="overflow: hidden;">
+    <div v-if="userStore.authenticated" class="bg-surface-0 border border-black/10  w-full h-screen rounded-3xl p-6 flex items-start gap-6 overflow-hidden" style="overflow: hidden;">
         <DashboardNav />
-        <main class="bg-white w-full h-full rounded-xl p-10" :class="{ 'mobile-main': mobileMenu && !viewport.isGreaterOrEquals('desktop')}">
+        <main class="bg-white w-full h-full rounded-xl p-10">
             <v-snackbar v-if="notification" v-model="notification" :color="notification.color || info" location="top">
                 {{ notification.text }}
             </v-snackbar>
