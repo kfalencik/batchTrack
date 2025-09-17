@@ -4,11 +4,54 @@ import { playNotificationSound } from '@/utils/sound'
 export const useDataStore = defineStore('dataStore', {
     state: () => ({
         batches: [],
+        stockGroups: [],
         fermenters: [],
         loading: true, // Loader now shows immediately on first mount
         notification: null
     }),
     actions: {
+        // Stock (inventory) CRUD
+        async getStockGroups() {
+            this.loading = true
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const stockRef = collection(db, "stock");
+            const q = query(stockRef);
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const data = querySnapshot.docs.map(doc => doc.data());
+                this.stockGroups = data
+            } else {
+                this.stockGroups = null
+            }
+            this.loading = false
+        },
+        async addStockGroup(group) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const stockRef = collection(db, "stock");
+            await addDoc(stockRef, group);
+            this.setNotification({ text: 'Stock group added', color: 'success', delay: 3000 })
+        },
+        async updateStockGroup(group) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const stockRef = collection(db, "stock");
+            const q = query(stockRef, where('id', '==', group.id));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach(async (doc) => await setDoc(doc.ref, group))
+            this.setNotification({ text: 'Stock group updated', color: 'success', delay: 3000 })
+        },
+        async removeStockGroup(id) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const stockRef = collection(db, "stock");
+            const q = query(stockRef, where('id', '==', id));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach( async (doc) => await deleteDoc(doc.ref))
+            this.setNotification({ text: 'Stock group removed', color: 'warning', delay: 3000 })
+        },
         // Resets filters to a consistent default set
         resetFilters() {
             this.filters.vermarktungsart = 'Alle'
