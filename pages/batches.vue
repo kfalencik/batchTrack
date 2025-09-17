@@ -51,8 +51,8 @@
                 </span>
             </template>
              <template #item.progress="{ item }">
-                <div style="max-width: 260px;" v-tooltip:top="getProgress(item).label">
-                    <v-progress-linear :buffer-value="getProgress(item).percent" :value="100" height="10" rounded color="blue"></v-progress-linear>
+                <div v-tooltip:top="getProgress(item).label">
+                    <v-progress-linear :buffer-value="getProgress(item).percent" height="10" rounded color="success" striped></v-progress-linear>
                 </div>
             </template>
             <template #item.status="{ item }">
@@ -168,9 +168,10 @@
                     </v-form>
                 </v-card-text>
                 <v-card-actions>
-                    <v-spacer />
-                    <v-btn text @click="closeEdit">Close</v-btn>
-                    <v-btn v-if="!isPreview" color="primary" @click="saveEdit" :disabled="!isFormValid">Save</v-btn>
+                    <div class="text-right">
+                        <v-btn text @click="closeEdit">Close</v-btn>
+                        <v-btn v-if="!isPreview" color="primary" @click="saveEdit" :disabled="!isFormValid">Save</v-btn>
+                    </div>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -188,9 +189,9 @@ import StatCard from '@/components/StatCard.vue'
         { title: 'OG (°)', value: 'readingOG', suffix: '°', align: 'center', sortable: true },
         { title: 'FG (°)', value: 'readingFG', suffix: '°', align: 'center', sortable: true },
         { title: 'ABV', value: 'abv', align: 'center', sortable: true, align: 'center' },
-        { title: 'Progress', value: 'progress', align: 'center', sortable: false },
+        { title: 'Progress', value: 'progress', width: '160px', align: 'center', sortable: false },
         { title: 'Status', value: 'status', sortable: true },
-        { title: 'Actions', value: 'actions', align: 'center' }
+        { title: '', value: 'actions', align: 'right' }
     ]);
 
     // UI state for filtering & sorting

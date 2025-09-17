@@ -23,12 +23,14 @@
         <span>{{ item && item.name ? item.name : '-' }}</span>
       </template>
       <template #item.actions="{ item }">
+        <div class="text-right">
         <v-btn icon color="info" flat size="x-small" class="mr-2" @click="openEdit(item)">
           <v-icon>mdi-pencil</v-icon>
         </v-btn>
         <v-btn icon color="error" flat size="x-small" @click="remove(item)">
           <v-icon>mdi-delete</v-icon>
         </v-btn>
+      </div>
       </template>
     </v-data-table>
 
@@ -78,7 +80,7 @@ const headers = ref([
   { title: 'ID', value: 'id' },
   { title: 'Nickname', value: 'name' },
   { title: 'Size (L)', value: 'size' },
-  { title: 'Actions', value: 'actions', align: 'center' }
+  { title: '', value: 'actions', align: 'right' }
 ]);
 
 const dataStore = useDataStore();
