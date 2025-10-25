@@ -89,7 +89,6 @@
     }
     
     .v-data-table-footer {
-        margin-top: 2rem !important;
         padding: 1rem !important;
         background: rgb(248 250 252) !important;
         border-top: 1px solid rgb(226 232 240 / 0.5) !important;

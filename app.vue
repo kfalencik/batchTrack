@@ -223,7 +223,7 @@ p {
 
 /* Enhanced table spacing and typography */
 .v-data-table__td {
-  font-weight: 500 !important;
+  font-weight: 300 !important;
   color: rgb(15 23 42) !important;
   border-bottom: 1px solid rgb(226 232 240 / 0.4) !important;
 }

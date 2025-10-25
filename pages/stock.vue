@@ -42,7 +42,6 @@
                     
                         <template v-slot:expanded-row="{ item }">
                             <tr>
-                                <td></td>
                                 <td :colspan="headers.length" style="padding: 0" class="bg-lightGrey pa-3">
                                     <div v-if="!item.items || item.items.length === 0" class="text--secondary">No items in this group.</div>
                                     <v-data-table
