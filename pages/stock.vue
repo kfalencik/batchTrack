@@ -1,140 +1,88 @@
 <template>
     <div class="stock-page">
         <PageHeader 
-            title="Stock"
-            description="Manage your brewing ingredients and finished products. Track inventory levels, expiry dates, and packaging details."
+            title="Ingredients"
+            description="Manage your brewing ingredients and raw materials. Track inventory levels, expiry dates, and stock groups."
             :actions="headerActions"
             @action="handleHeaderAction"
         />
 
-        <!-- Section Tabs -->
-        <TabNavigation 
-            v-model="activeTab"
-            :tabs="stockTabs"
+        <EnhancedDataTable
+            :headers="headers"
+            :items="displayedGroups"
+            :loading="loading"
+            loading-text="Loading ingredients..."
         >
-            <template #ingredients>
-                <EnhancedDataTable
-                    :headers="headers"
-                    :items="displayedGroups"
-                    :loading="loading"
-                    loading-text="Loading ingredients..."
-                >
-                    <template #item.usable="{ item }">
-                        <span>{{ item.usableDisplay }}</span>
-                    </template>
-                    <template #item.itemsCount="{ item }">
-                        <span>{{ item.items.length }}</span>
-                    </template>
-                    <template #item.status="{ item }">
-                        <StatusChip 
-                            :status="item.status"
-                            type="stock"
-                            uppercase
-                        />
-                    </template>
-                    <template #item.actions="{ item }">
-                        <DataTableActions 
-                            :item="item.raw"
-                            @edit="openEdit"
-                            @delete="removeGroup"
-                        />
-                    </template>
-                    
-                        <template v-slot:expanded-row="{ item }">
-                            <tr>
-                                <td :colspan="headers.length" style="padding: 0" class="bg-lightGrey pa-3">
-                                    <div v-if="!item.items || item.items.length === 0" class="text--secondary">No items in this group.</div>
-                                    <v-data-table
-                                        v-else
-                                        :headers="itemHeaders"
-                                        :items="item.items"
-                                        class="elevation-0 w-100 rounded-md"
-                                        style="width: 100%"
-                                        dense
-                                        hide-default-header
-                                        hide-default-footer=""
-                                    >
-                                    <template #item.product="{ item: it }">
-                                        <div>
-                                            <div class="text-subtitle-2">{{ it.product }}</div>
-                                            <div class="text-caption text--secondary">{{ it.description || '' }}</div>
-                                        </div>
-                                    </template>
-
-                                    <template #item.quantity="{ item: it }">
-                                        <div class="font-weight-medium">{{ it.quantity ?? '-' }} {{ it.unit || '' }}</div>
-                                    </template>
-
-                                    <!-- packSize removed -->
-
-                                    <template #item.price="{ item: it }">
-                                        <div>{{ it.price !== undefined && it.price !== null && it.price !== '' ? `£${Number(it.price).toFixed(2)}` : '-' }}</div>
-                                    </template>
-
-                                    <template #item.dates="{ item: it }">
-                                        <div>
-                                            <div>Bought: <span class="text--secondary">{{ formatDate(it.dateBought) }}</span></div>
-                                            <div>Expiry: <span class="text--secondary">{{ formatDate(it.expiryDate) }}</span></div>
-                                        </div>
-                                    </template>
-
-                                    <template #item.status="{ item: it }">
-                                        <v-chip :color="isExpired(it) ? getStatusColor('expired') : (daysUntilExpiry(it) !== null && daysUntilExpiry(it) <= 7 ? getStatusColor('warning') : getStatusColor('ok'))" dark>
-                                            <v-icon left small>{{ isExpired(it) ? getStatusIcon('expired') : (daysUntilExpiry(it) !== null && daysUntilExpiry(it) <= 7 ? getStatusIcon('warning') : getStatusIcon('ok')) }}</v-icon>
-                                            <span>
-                                                {{ isExpired(it) ? 'Expired' : (daysUntilExpiry(it) === null ? 'No date' : (daysUntilExpiry(it) <= 0 ? 'Expires today' : daysUntilExpiry(it) <= 7 ? `${daysUntilExpiry(it)}d` : `${daysUntilExpiry(it)}d`)) }}
-                                            </span>
-                                        </v-chip>
-                                    </template>
-                                </v-data-table>
-                            </td>
-                        </tr>
-                    </template>
-                </EnhancedDataTable>
+            <template #item.usable="{ item }">
+                <span>{{ item.usableDisplay }}</span>
             </template>
-
-            <template #products>
-                <EnhancedDataTable
-                    :headers="productHeaders"
-                    :items="products"
-                    :loading="loadingProducts"
-                    loading-text="Loading products..."
-                >
-                    <template #item.productName="{ item }">
-                        <div>
-                            <div class="text-subtitle-2">{{ item.productName }}</div>
-                            <div class="text-caption text--secondary">{{ item.containerType }} - {{ item.containerSize }}L each</div>
-                        </div>
-                    </template>
-                    <template #item.quantity="{ item }">
-                        <div class="font-weight-medium">{{ item.quantity }} {{ item.containerType }}</div>
-                    </template>
-                    <template #item.totalVolume="{ item }">
-                        <div class="font-weight-medium">{{ item.totalVolume }}L</div>
-                    </template>
-                    <template #item.abv="{ item }">
-                        <div>{{ item.abv || '-' }}</div>
-                    </template>
-                    <template #item.packagedDate="{ item }">
-                        <div>{{ formatDate(item.packagedDate) }}</div>
-                    </template>
-                    <template #item.status="{ item }">
-                        <StatusChip 
-                            :status="item.status"
-                            type="product"
-                            uppercase
-                        />
-                    </template>
-                    <template #item.actions="{ item }">
-                        <DataTableActions 
-                            :item="item"
-                            @edit="viewProduct"
-                            @delete="removeProductWrapper"
-                        />
-                    </template>
-                </EnhancedDataTable>
+            <template #item.itemsCount="{ item }">
+                <span>{{ item.items.length }}</span>
             </template>
-        </TabNavigation>
+            <template #item.status="{ item }">
+                <StatusChip 
+                    :status="item.status"
+                    type="stock"
+                    uppercase
+                />
+            </template>
+            <template #item.actions="{ item }">
+                <DataTableActions 
+                    :item="item.raw"
+                    @edit="openEdit"
+                    @delete="removeGroup"
+                />
+            </template>
+            
+            <template v-slot:expanded-row="{ item }">
+                <tr>
+                    <td :colspan="headers.length" style="padding: 0" class="bg-lightGrey pa-3">
+                        <div v-if="!item.items || item.items.length === 0" class="text--secondary">No items in this group.</div>
+                        <v-data-table
+                            v-else
+                            :headers="itemHeaders"
+                            :items="item.items"
+                            class="elevation-0 w-100 rounded-md"
+                            style="width: 100%"
+                            dense
+                            hide-default-header
+                            hide-default-footer=""
+                        >
+                        <template #item.product="{ item: it }">
+                            <div>
+                                <div class="text-subtitle-2">{{ it.product }}</div>
+                                <div class="text-caption text--secondary">{{ it.description || '' }}</div>
+                            </div>
+                        </template>
+
+                        <template #item.quantity="{ item: it }">
+                            <div class="font-weight-medium">{{ it.quantity ?? '-' }} {{ it.unit || '' }}</div>
+                        </template>
+
+                        <template #item.price="{ item: it }">
+                            <div>{{ it.price !== undefined && it.price !== null && it.price !== '' ? `£${Number(it.price).toFixed(2)}` : '-' }}</div>
+                        </template>
+
+                        <template #item.dates="{ item: it }">
+                            <div>
+                                <div>Bought: <span class="text--secondary">{{ formatDate(it.dateBought) }}</span></div>
+                                <div>Expiry: <span class="text--secondary">{{ formatDate(it.expiryDate) }}</span></div>
+                            </div>
+                        </template>
+
+                        <template #item.status="{ item: it }">
+                            <v-chip :color="isExpired(it) ? getStatusColor('expired') : (daysUntilExpiry(it) !== null && daysUntilExpiry(it) <= 7 ? getStatusColor('warning') : getStatusColor('ok'))" dark>
+                                <v-icon left small>{{ isExpired(it) ? getStatusIcon('expired') : (daysUntilExpiry(it) !== null && daysUntilExpiry(it) <= 7 ? getStatusIcon('warning') : getStatusIcon('ok')) }}</v-icon>
+                                <span>
+                                    {{ isExpired(it) ? 'Expired' : (daysUntilExpiry(it) === null ? 'No date' : (daysUntilExpiry(it) <= 0 ? 'Expires today' : daysUntilExpiry(it) <= 7 ? `${daysUntilExpiry(it)}d` : `${daysUntilExpiry(it)}d`)) }}
+                                </span>
+                            </v-chip>
+                        </template>
+                    </v-data-table>
+                </td>
+            </tr>
+        </template>
+        </EnhancedDataTable>
 
         <BaseDialog
             v-model="editDialog"
@@ -358,261 +306,13 @@
                 </v-btn>
             </template>
         </BaseDialog>
-
-        <!-- Product Dialog -->
-        <BaseDialog
-            v-model="productDialog"
-            :title="isAddingProduct ? 'Add Product from Batch' : 'Edit Product'"
-            title-icon="mdi-package-variant"
-            max-width="1000px"
-            @close="closeProductDialog"
-        >
-            <v-form v-if="editedProduct" ref="productFormRef" lazy-validation>
-                <v-container>
-                    <!-- Batch Selection Section (only for new products) -->
-                    <v-row v-if="isAddingProduct">
-                        <v-col cols="12">
-                            <v-select
-                                :items="readyToPackBatches"
-                                label="Select Batch"
-                                v-model="editedProduct.selectedBatch"
-                                item-title="label"
-                                item-value="value"
-                                required
-                                :rules="[requiredRule]"
-                                hint="Choose a batch that's ready to pack"
-                                persistent-hint
-                                @update:modelValue="onBatchSelected"
-                            />
-                        </v-col>
-                        <v-col cols="12" v-if="editedProduct.selectedBatch">
-                            <v-alert type="info" class="mb-4">
-                                <div><strong>Available brew:</strong> {{ getTotalBatchAmount(selectedBatchData) }} L</div>
-                                <div><strong>Batch:</strong> {{ selectedBatchData ? getFermenterLabelById(selectedBatchData.fermenter) : '' }}</div>
-                                <div><strong>ABV:</strong> {{ selectedBatchData ? getABV(selectedBatchData) : '' }}%</div>
-                            </v-alert>
-                        </v-col>
-                    </v-row>
-
-                    <!-- Product Name -->
-                    <v-row>
-                        <v-col cols="12">
-                            <v-text-field 
-                                class="required-field" 
-                                label="Product Name" 
-                                v-model="editedProduct.productName" 
-                                :rules="[requiredRule]" 
-                                required 
-                            />
-                        </v-col>
-                    </v-row>
-
-                    <!-- Container Groups Section (only for new products with batch selected) -->
-                    <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
-                        <v-col cols="12">
-                            <h3 class="mb-3">Container Distribution</h3>
-                            <p class="text-caption text--secondary mb-4">Distribute your brew across different container types. You can add multiple groups to split the total amount.</p>
-                        </v-col>
-                    </v-row>
-
-                    <v-row v-for="(group, idx) in containerGroups" :key="idx" class="mb-4" v-if="isAddingProduct && editedProduct.selectedBatch">
-                        <v-col cols="12">
-                            <v-card outlined class="pa-4">
-                                <v-row class="align-center">
-                                    <v-col cols="3">
-                                        <v-select
-                                            :items="containerTypes"
-                                            label="Container Type"
-                                            v-model="group.containerType"
-                                            required
-                                            :rules="[requiredRule]"
-                                        />
-                                    </v-col>
-                                    <v-col cols="2">
-                                        <v-text-field
-                                            label="Container Size"
-                                            type="number"
-                                            v-model="group.containerSize"
-                                            suffix="L"
-                                            hint="Size per container"
-                                            required
-                                            :rules="[requiredNumberRule, (v) => validateContainerInput(v, group, 'size')]"
-                                        />
-                                    </v-col>
-                                    <v-col cols="2">
-                                        <v-text-field
-                                            label="Quantity"
-                                            type="number"
-                                            v-model="group.quantity"
-                                            hint="Number of containers"
-                                            required
-                                            :rules="[requiredNumberRule, (v) => validateContainerInput(v, group, 'quantity')]"
-                                        />
-                                    </v-col>
-                                    <v-col cols="2">
-                                        <div class="text-center">
-                                            <div class="text-h6">{{ getGroupTotal(group) }}L</div>
-                                            <div class="text-caption">Total</div>
-                                        </div>
-                                    </v-col>
-                                    <v-col cols="2">
-                                        <v-text-field
-                                            label="Notes"
-                                            v-model="group.notes"
-                                            hint="Optional"
-                                        />
-                                    </v-col>
-                                    <v-col cols="1" class="text-center">
-                                        <v-btn
-                                            icon
-                                            color="red"
-                                            flat
-                                            size="small"
-                                            @click="removeContainerGroup(idx)"
-                                            :disabled="containerGroups.length <= 1"
-                                        >
-                                            <v-icon>mdi-delete</v-icon>
-                                        </v-btn>
-                                    </v-col>
-                                </v-row>
-                            </v-card>
-                        </v-col>
-                    </v-row>
-
-                    <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
-                        <v-col cols="12">
-                            <v-btn
-                                color="primary"
-                                outlined
-                                @click="addContainerGroup"
-                                class="mb-4"
-                            >
-                                <v-icon class="mr-2">mdi-plus</v-icon>
-                                Add Another Container Group
-                            </v-btn>
-                        </v-col>
-                    </v-row>
-
-        <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
-            <v-col cols="12">
-                <v-alert 
-                    :type="getTotalDistributed() > getTotalBatchAmount(selectedBatchData) ? 'error' : (getTotalDistributed() < getTotalBatchAmount(selectedBatchData) ? 'warning' : 'success')" 
-                    class="mt-4"
-                >
-                    <div><strong>Total distributed:</strong> {{ getTotalDistributed() }} L</div>
-                    <div><strong>Available:</strong> {{ getTotalBatchAmount(selectedBatchData) }} L</div>
-                    <div><strong>Remaining:</strong> {{ (getTotalBatchAmount(selectedBatchData) - getTotalDistributed()).toFixed(1) }} L</div>
-                    
-                    <div v-if="getTotalDistributed() > getTotalBatchAmount(selectedBatchData)" class="mt-2">
-                        <strong class="text-red">❌ OVER-ASSIGNED: You cannot distribute more than the available brew volume!</strong>
-                    </div>
-                    <div v-else-if="getTotalDistributed() < getTotalBatchAmount(selectedBatchData)" class="mt-2">
-                        <small>⚠️ You have remaining brew that won't be packaged. This could be intentional (testing, spillage, etc.)</small>
-                    </div>
-                    <div v-else class="mt-2">
-                        <strong class="text-green">✅ Perfect! All available brew has been distributed.</strong>
-                    </div>
-                </v-alert>
-            </v-col>
-        </v-row>                            <!-- Legacy single container fields (only for editing existing products) -->
-                            <v-row v-if="!isAddingProduct">
-                                <v-col cols="6">
-                                    <v-select
-                                        :items="containerTypes"
-                                        label="Container Type"
-                                        v-model="editedProduct.containerType"
-                                        required
-                                        :rules="[requiredRule]"
-                                    />
-                                </v-col>
-                                <v-col cols="6">
-                                    <v-text-field
-                                        label="Container Size"
-                                        type="number"
-                                        v-model="editedProduct.containerSize"
-                                        suffix="L"
-                                        required
-                                        :rules="[requiredNumberRule]"
-                                    />
-                                </v-col>
-                                <v-col cols="6">
-                                    <v-text-field
-                                        label="Quantity"
-                                        type="number"
-                                        v-model="editedProduct.quantity"
-                                        required
-                                        :rules="[requiredNumberRule]"
-                                    />
-                                </v-col>
-                                <v-col cols="6">
-                                    <v-text-field
-                                        label="ABV"
-                                        v-model="editedProduct.abv"
-                                        suffix="%"
-                                        hint="e.g. 5.2%"
-                                    />
-                                </v-col>
-                                <v-col cols="12">
-                                    <v-text-field
-                                        label="Packaged Date"
-                                        type="date"
-                                        v-model="editedProduct.packagedDate"
-                                        required
-                                        :rules="[requiredRule]"
-                                    />
-                                </v-col>
-                                <v-col cols="12">
-                                    <v-textarea
-                                        label="Notes"
-                                        v-model="editedProduct.notes"
-                                        hint="Optional notes about this product"
-                                    />
-                                </v-col>
-                            </v-row>
-                        </v-container>
-                    </v-form>
-                    
-                    <template #actions>
-                        <v-spacer />
-                        <v-btn 
-                            variant="outlined" 
-                            @click="closeProductDialog"
-                            prepend-icon="mdi-close"
-                        >
-                            Cancel
-                        </v-btn>
-                        <v-btn 
-                            color="primary" 
-                            @click="saveProduct" 
-                            :disabled="!isProductFormValid"
-                            prepend-icon="mdi-content-save"
-                        >
-                            {{ isAddingProduct ? 'Create Products' : 'Save Product' }}
-                        </v-btn>
-                    </template>
-        </BaseDialog>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useDataStore } from '@/stores/data'
-import TabNavigation from '@/components/TabNavigation.vue'
 import EnhancedDataTable from '@/components/EnhancedDataTable.vue'
-
-// Tab configuration
-const stockTabs = ref([
-    {
-        value: 'ingredients',
-        label: 'Ingredients',
-        icon: 'mdi-clipboard-list-outline'
-    },
-    {
-        value: 'products',
-        label: 'Products',
-        icon: 'mdi-package-variant-closed'
-    }
-])
 
 const headers = ref([
     { title: '', value: 'data-table-expand', sortable: false, width: '48px' },
@@ -623,7 +323,6 @@ const headers = ref([
     { title: 'Actions', value: 'actions', sortable: false, align: 'center', width: '100px' }
 ])
 
-// Replaced expanded v-row/v-col listing with a nested v-data-table for cleaner tabular display of items
 const itemHeaders = ref([
     { title: 'Product', value: 'product', sortable: true },
     { title: 'Quantity', value: 'quantity', sortable: true, align: 'center', width: '100px' },
@@ -632,24 +331,10 @@ const itemHeaders = ref([
     { title: 'Status', value: 'status', sortable: true, align: 'center', width: '100px' }
 ])
 
-// Tab state
-const activeTab = ref('ingredients')
 const showHelp = ref(false)
-
-// Product headers for the products section
-const productHeaders = ref([
-    { title: 'Product', value: 'productName', sortable: true },
-    { title: 'Quantity', value: 'quantity', sortable: true, align: 'center', width: '100px' },
-    { title: 'Total Volume', value: 'totalVolume', sortable: true, align: 'center', width: '120px' },
-    { title: 'ABV', value: 'abv', sortable: true, align: 'center', width: '80px' },
-    { title: 'Packaged Date', value: 'packagedDate', sortable: true, width: '120px' },
-    { title: 'Status', value: 'status', sortable: true, align: 'center', width: '100px' },
-    { title: 'Actions', value: 'actions', sortable: false, align: 'center', width: '100px' }
-])
 
 const dataStore = useDataStore()
 const loading = ref(false)
-const loadingProducts = ref(false)
 
 const editDialog = ref(false)
 const edited = ref(null)
@@ -657,44 +342,21 @@ const isAdding = ref(false)
 const isPreview = ref(false)
 const formRef = ref(null)
 
-// Product dialog state
-const productDialog = ref(false)
-const editedProduct = ref(null)
-const isAddingProduct = ref(false)
-const productFormRef = ref(null)
-
-// Container groups for batch distribution
-const containerGroups = ref([])
-
-const containerTypes = ['Cans', 'Kegs', 'Bottles', 'Other']
-
 const units = ['g','kg','ml','l','pcs']
 
 // Header actions computed property
 const headerActions = computed(() => {
-    if (activeTab.value === 'ingredients') {
-        return [{
-            key: 'add-ingredient',
-            text: 'Add Ingredient Group',
-            icon: 'mdi-plus-circle',
-            color: 'primary'
-        }]
-    } else if (activeTab.value === 'products') {
-        return [{
-            key: 'add-product',
-            text: 'Add Product',
-            icon: 'mdi-package-variant',
-            color: 'primary'
-        }]
-    }
-    return []
+    return [{
+        key: 'add-ingredient',
+        text: 'Add Ingredient Group',
+        icon: 'mdi-plus-circle',
+        color: 'primary'
+    }]
 })
 
 function handleHeaderAction(actionKey) {
     if (actionKey === 'add-ingredient') {
         openAdd()
-    } else if (actionKey === 'add-product') {
-        openAddProduct()
     }
 }
 
@@ -702,229 +364,11 @@ function removeGroupWrapper(item) {
     removeGroup(item.id)
 }
 
-function removeProductWrapper(item) {
-    removeProduct(item.id)
-}
-
 const requiredRule = (v) => (v !== undefined && v !== null && v !== '' ) || 'Required'
 const requiredNumberRule = (v) => {
     if (v === undefined || v === null || v === '') return 'Required'
     const n = Number(v)
     return Number.isFinite(n) && n >= 0 || 'Must be a number'
-}
-
-// Validation function to prevent over-assignment
-function validateContainerInput(value, group, field) {
-    if (!editedProduct.value?.selectedBatch) return true
-    
-    const availableVolume = getTotalBatchAmount(selectedBatchData.value)
-    if (!availableVolume) return true
-    
-    // Calculate what the total would be with this change
-    const tempGroup = { ...group }
-    if (field === 'size') tempGroup.containerSize = value
-    if (field === 'quantity') tempGroup.quantity = value
-    
-    const tempGroupTotal = Number(tempGroup.containerSize || 0) * Number(tempGroup.quantity || 0)
-    
-    // Calculate total from other groups
-    const otherGroupsTotal = containerGroups.value
-        .filter(g => g !== group)
-        .reduce((total, g) => total + (Number(g.containerSize || 0) * Number(g.quantity || 0)), 0)
-    
-    const wouldBeTotal = tempGroupTotal + otherGroupsTotal
-    
-    if (wouldBeTotal > availableVolume) {
-        return `This would exceed available brew (${availableVolume}L)`
-    }
-    
-    return true
-}
-
-function openEdit(group) {
-    edited.value = Object.assign({}, group)
-    // deep copy items
-    edited.value.items = (group.items || []).map(i => Object.assign({}, i))
-    isAdding.value = false
-    isPreview.value = false
-    editDialog.value = true
-}
-
-function openAdd() {
-    edited.value = { id: null, name: '', items: [] }
-    isAdding.value = true
-    isPreview.value = false
-    editDialog.value = true
-}
-
-function closeEdit() {
-    edited.value = null
-    editDialog.value = false
-}
-
-function addItem() {
-    edited.value.items = edited.value.items || []
-    edited.value.items.push({ product: '', quantity: null, unit: 'kg', price: null, dateBought: null, expiryDate: null })
-}
-
-function removeItem(idx) {
-    if (!edited.value) return
-    edited.value.items.splice(idx,1)
-}
-
-async function saveEdit() {
-    if (!edited.value) return
-    if (formRef.value) {
-        const valid = await formRef.value.validate();
-        if (!valid) return
-    }
-    // ensure numeric coercion
-    edited.value.items = (edited.value.items || []).map(i => {
-        const copy = Object.assign({}, i)
-        if (copy.quantity !== undefined && copy.quantity !== null && copy.quantity !== '') copy.quantity = Number(copy.quantity)
-        if (copy.price !== undefined && copy.price !== null && copy.price !== '') copy.price = Number(copy.price)
-    // packSize removed from item shape
-        return copy
-    })
-
-    if (isAdding.value) {
-        // simple id assignment; can be replaced with Firestore id handling
-        edited.value.id = String(Date.now())
-        await dataStore.addStockGroup(edited.value)
-    } else {
-        await dataStore.updateStockGroup(edited.value)
-    }
-    await dataStore.getStockGroups()
-    closeEdit()
-}
-
-async function removeGroup(id) {
-    if (!id) return
-    await dataStore.removeStockGroup(id)
-    await dataStore.getStockGroups()
-}
-
-// Product dialog methods
-function openAddProduct() {
-    editedProduct.value = {
-        id: null,
-        productName: '',
-        selectedBatch: null,
-        containerType: 'Cans',
-        containerSize: 0.33,
-        quantity: 1,
-        totalVolume: 0,
-        abv: '',
-        packagedDate: new Date().toISOString().slice(0, 10),
-        status: 'packaged',
-        notes: ''
-    }
-    
-    // Initialize container groups for batch distribution
-    containerGroups.value = [{
-        containerType: 'Cans',
-        containerSize: 0.33,
-        quantity: 1,
-        notes: ''
-    }]
-    
-    isAddingProduct.value = true
-    productDialog.value = true
-}
-
-function closeProductDialog() {
-    editedProduct.value = null
-    containerGroups.value = []
-    productDialog.value = false
-}
-
-async function saveProduct() {
-    if (!editedProduct.value) return
-    
-    if (productFormRef.value) {
-        const valid = await productFormRef.value.validate()
-        if (!valid) return
-    }
-
-    if (isAddingProduct.value && editedProduct.value.selectedBatch) {
-        // Handle new product from batch with container groups
-        const selectedBatch = batches.value.find(b => b.id === editedProduct.value.selectedBatch)
-        if (!selectedBatch) return
-
-        const totalDistributed = getTotalDistributed()
-        const totalBatchAmount = getTotalBatchAmount(selectedBatch)
-        
-        // CRITICAL: Prevent over-assignment - this should never happen due to validation, but double-check
-        if (totalDistributed > totalBatchAmount) {
-            alert(`Cannot save: Total distributed (${totalDistributed}L) exceeds available brew (${totalBatchAmount}L)`)
-            return
-        }
-
-        // Check if user wants to proceed with remaining brew
-        if (totalDistributed < totalBatchAmount) {
-            const confirmed = confirm(
-                `You are distributing ${totalDistributed}L out of ${totalBatchAmount}L available. ` +
-                `${(totalBatchAmount - totalDistributed).toFixed(1)}L will remain unpackaged. ` +
-                `This could be intentional (testing, spillage, etc.). Continue?`
-            )
-            if (!confirmed) return
-        }
-
-        // Create product entries for each container group
-        const products = containerGroups.value.map(group => ({
-            id: `${selectedBatch.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            batchId: selectedBatch.id,
-            productName: `${editedProduct.value.productName} - ${group.containerType}`,
-            containerType: group.containerType,
-            containerSize: Number(group.containerSize),
-            quantity: Number(group.quantity),
-            totalVolume: Number(getGroupTotal(group)),
-            notes: group.notes || '',
-            packagedDate: new Date().toISOString().slice(0, 10),
-            status: 'packaged',
-            abv: getABV(selectedBatch),
-            fermenter: selectedBatch.fermenter
-        }))
-
-        // Save all products
-        for (const product of products) {
-            await dataStore.addProduct(product)
-        }
-
-        // Update batch status to 'packaged'
-        const updatedBatch = Object.assign({}, selectedBatch, { status: 'packaged' })
-        await dataStore.updateBatch(updatedBatch)
-        
-        // Refresh data
-        await dataStore.getBatches()
-        
-        // Show success message
-        dataStore.setNotification({
-            text: `Successfully packaged batch into ${products.length} product group${products.length > 1 ? 's' : ''}`,
-            color: 'success',
-            delay: 5000
-        })
-    } else {
-        // Handle legacy single product (editing existing products)
-        const containerSize = Number(editedProduct.value.containerSize) || 0
-        const quantity = Number(editedProduct.value.quantity) || 0
-        editedProduct.value.totalVolume = containerSize * quantity
-
-        // Ensure numeric conversions
-        if (editedProduct.value.containerSize) editedProduct.value.containerSize = Number(editedProduct.value.containerSize)
-        if (editedProduct.value.quantity) editedProduct.value.quantity = Number(editedProduct.value.quantity)
-
-        if (isAddingProduct.value) {
-            // Generate a unique ID for manual products
-            editedProduct.value.id = `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-            await dataStore.addProduct(editedProduct.value)
-        } else {
-            await dataStore.updateProduct(editedProduct.value)
-        }
-    }
-    
-    await dataStore.getProducts()
-    closeProductDialog()
 }
 
 function isExpired(item) {
@@ -984,220 +428,117 @@ const displayedGroups = computed(() => {
             name: g.name,
             items: items,
             usable,
-            usableDisplay: `${usable} ${items[0] && items[0].unit ? items[0].unit : ''}`,
+            usableDisplay: usable > 0 ? usable : '-',
             status,
             raw: g
         }
     })
 })
 
+function openAdd() {
+    edited.value = {
+        id: null,
+        name: '',
+        items: [
+            {
+                product: '',
+                quantity: null,
+                unit: '',
+                price: null,
+                dateBought: '',
+                expiryDate: '',
+                description: ''
+            }
+        ]
+    }
+    isAdding.value = true
+    isPreview.value = false
+    editDialog.value = true
+}
+
+function openEdit(item) {
+    edited.value = JSON.parse(JSON.stringify(item))
+    isAdding.value = false
+    isPreview.value = false
+    editDialog.value = true
+}
+
+function openPreview(item) {
+    edited.value = JSON.parse(JSON.stringify(item))
+    isAdding.value = false
+    isPreview.value = true
+    editDialog.value = true
+}
+
+function closeEdit() {
+    editDialog.value = false
+    edited.value = null
+    isAdding.value = false
+    isPreview.value = false
+}
+
 const isFormValid = computed(() => {
     if (!edited.value) return false
     if (!edited.value.name) return false
-    // ensure at least one item
-    if (!Array.isArray(edited.value.items) || edited.value.items.length === 0) return false
-    for (const it of edited.value.items) {
-        if (!it.product) return false
-        const q = Number(it.quantity)
-        if (!Number.isFinite(q)) return false
-    }
-    return true
+    return edited.value.items.every(item => 
+        item.product && 
+        Number.isFinite(Number(item.quantity)) && Number(item.quantity) >= 0
+    )
 })
 
-const isProductFormValid = computed(() => {
-    if (!editedProduct.value) return false
-    if (!editedProduct.value.productName) return false
-    
-    if (isAddingProduct.value && editedProduct.value.selectedBatch) {
-        // Validation for batch-based product creation
-        if (!editedProduct.value.selectedBatch) return false
-        
-        // Validate all container groups
-        for (const group of containerGroups.value) {
-            if (!group.containerType) return false
-            if (!Number.isFinite(Number(group.containerSize)) || Number(group.containerSize) <= 0) return false
-            if (!Number.isFinite(Number(group.quantity)) || Number(group.quantity) <= 0) return false
-        }
-        
-        // CRITICAL: Prevent over-assignment - total distributed cannot exceed available batch volume
-        const totalDistributed = getTotalDistributed()
-        const availableVolume = getTotalBatchAmount(selectedBatchData.value)
-        if (totalDistributed > availableVolume) return false
-        
-        return true
-    } else {
-        // Validation for legacy single product (editing existing products)
-        if (!editedProduct.value.containerType) return false
-        if (!Number.isFinite(Number(editedProduct.value.containerSize)) || Number(editedProduct.value.containerSize) <= 0) return false
-        if (!Number.isFinite(Number(editedProduct.value.quantity)) || Number(editedProduct.value.quantity) <= 0) return false
-        if (!editedProduct.value.packagedDate) return false
-        
-        return true
-    }
-})
-
-// Products computed properties
-const products = computed(() => dataStore.products || [])
-
-const displayedProducts = computed(() => {
-    return products.value || []
-})
-
-// Product-related methods
-function getProductStatusColor(status) {
-    const s = (status || '').toLowerCase()
-    if (s === 'packaged') return 'green'
-    if (s === 'sold') return 'blue'
-    return 'grey'
-}
-
-function getProductStatusIcon(status) {
-    const s = (status || '').toLowerCase()
-    if (s === 'packaged') return 'mdi-package-variant-closed'
-    if (s === 'sold') return 'mdi-cash'
-    return 'mdi-help-circle-outline'
-}
-
-function viewProduct(product) {
-    editedProduct.value = Object.assign({}, product)
-    isAddingProduct.value = false
-    productDialog.value = true
-}
-
-async function removeProduct(id) {
-    if (!id) return
-    if (confirm('Are you sure you want to remove this product?')) {
-        await dataStore.removeProduct(id)
-        await dataStore.getProducts()
-    }
-}
-
-// Update onMounted to load products and batches
-onMounted(async () => {
-    await dataStore.getStockGroups()
-    await dataStore.getProducts()
-    await dataStore.getBatches()
-    await dataStore.getFermenters()
-})
-
-// Batch and fermenter related computed properties
-const batches = computed(() => dataStore.batches || [])
-const fermenters = computed(() => dataStore.fermenters || [])
-
-// Ready to pack batches for selection
-const readyToPackBatches = computed(() => {
-    const readyBatches = batches.value.filter(b => (b.status || '').toLowerCase() === 'ready to pack')
-    return readyBatches.map(b => ({
-        value: b.id,
-        label: `${getFermenterLabelById(b.fermenter)} - Started ${formatBatchDate(b.startDate)}`
-    }))
-})
-
-// Selected batch data
-const selectedBatchData = computed(() => {
-    if (!editedProduct.value?.selectedBatch) return null
-    return batches.value.find(b => b.id === editedProduct.value.selectedBatch)
-})
-
-// Helper functions
-function getFermenterLabelById(id) {
-    if (id === undefined || id === null) return '-'
-    const fermenter = fermenters.value.find(f => f.id === id)
-    return fermenter && fermenter.name ? `${fermenter.name} (${id})` : `Fermenter ${id}`
-}
-
-function formatBatchDate(dateObj) {
-    if (!dateObj) return '-'
-    if (dateObj.seconds) {
-        const date = new Date(dateObj.seconds * 1000)
-        return date.toLocaleDateString()
-    }
-    return new Date(dateObj).toLocaleDateString()
-}
-
-function getBatchWaterLiters(batch) {
-    if (!batch || !batch.fermenter) return 0
-    const fermenter = fermenters.value.find(f => f.id === batch.fermenter)
-    if (!fermenter) return 0
-    
-    // Common field names: size, liters, capacity
-    if (fermenter.size !== undefined) return Number(fermenter.size)
-    if (fermenter.liters !== undefined) return Number(fermenter.liters)
-    if (fermenter.capacity !== undefined) return Number(fermenter.capacity)
-    return 0
-}
-
-function getTotalBatchAmount(batch) {
-    if (!batch) return 0
-    return getBatchWaterLiters(batch) || 0
-}
-
-function getABV(batch) {
-    if (!batch) return ''
-    
-    // Calculate ABV from OG and FG if available
-    if (batch.readingOG && batch.readingFG) {
-        const og = Number(batch.readingOG)
-        const fg = Number(batch.readingFG)
-        if (Number.isFinite(og) && Number.isFinite(fg)) {
-            const abv = ((og - fg) * 131.25).toFixed(1)
-            return abv
-        }
-    }
-    
-    // Fallback to estimated calculation or return empty
-    if (batch.readingOG) {
-        const og = Number(batch.readingOG)
-        const estimatedFg = 1.000 // Default assumption
-        if (Number.isFinite(og)) {
-            const abv = ((og - estimatedFg) * 131.25).toFixed(1)
-            return abv
-        }
-    }
-    
-    return ''
-}
-
-// Container group management
-function addContainerGroup() {
-    containerGroups.value.push({
-        containerType: 'Cans',
-        containerSize: 0.33,
-        quantity: 1,
-        notes: ''
+function addItem() {
+    if (!edited.value.items) edited.value.items = []
+    edited.value.items.push({
+        product: '',
+        quantity: null,
+        unit: '',
+        price: null,
+        dateBought: '',
+        expiryDate: '',
+        description: ''
     })
 }
 
-function removeContainerGroup(index) {
-    if (containerGroups.value.length > 1) {
-        containerGroups.value.splice(index, 1)
+function removeItem(index) {
+    if (edited.value.items.length > 1) {
+        edited.value.items.splice(index, 1)
     }
 }
 
-function getGroupTotal(group) {
-    const size = Number(group.containerSize) || 0
-    const qty = Number(group.quantity) || 0
-    return (size * qty).toFixed(1)
-}
-
-function getTotalDistributed() {
-    return containerGroups.value.reduce((total, group) => {
-        return total + Number(getGroupTotal(group))
-    }, 0)
-}
-
-// Batch selection handler
-function onBatchSelected(batchId) {
-    if (!batchId) return
+async function saveEdit() {
+    if (!edited.value) return
     
-    const batch = batches.value.find(b => b.id === batchId)
-    if (!batch) return
-    
-    // Auto-fill product name based on fermenter
-    if (!editedProduct.value.productName) {
-        editedProduct.value.productName = getFermenterLabelById(batch.fermenter)
+    // ensure numeric coercion
+    edited.value.items = (edited.value.items || []).map(i => {
+        const copy = Object.assign({}, i)
+        if (copy.quantity !== undefined && copy.quantity !== null && copy.quantity !== '') copy.quantity = Number(copy.quantity)
+        if (copy.price !== undefined && copy.price !== null && copy.price !== '') copy.price = Number(copy.price)
+        return copy
+    })
+
+    if (isAdding.value) {
+        // simple id assignment; can be replaced with Firestore id handling
+        edited.value.id = String(Date.now())
+        await dataStore.addStockGroup(edited.value)
+    } else {
+        await dataStore.updateStockGroup(edited.value)
     }
+    await dataStore.getStockGroups()
+    closeEdit()
 }
+
+async function removeGroup(id) {
+    if (!id) return
+    await dataStore.removeStockGroup(id)
+    await dataStore.getStockGroups()
+}
+
+// Load data on mount
+onMounted(async () => {
+    loading.value = true
+    await dataStore.getStockGroups()
+    loading.value = false
+})
 </script>
 
 <style scoped>
@@ -1222,39 +563,55 @@ function onBatchSelected(batchId) {
     margin: 2rem 0;
 }
 
-.data-table-wrapper:hover {
-    box-shadow: 
-        0 10px 15px -3px rgb(0 0 0 / 0.1),
-        0 4px 6px -4px rgb(0 0 0 / 0.1),
-        0 0 0 1px rgb(99 102 241 / 0.1);
-    border-color: rgb(99 102 241 / 0.2);
+.modern-field {
+    transition: all 0.2s ease;
 }
 
-/* Help section styling */
+.modern-field:hover {
+    transform: translateY(-1px);
+}
+
+.required-field {
+    position: relative;
+}
+
+.required-field::after {
+    content: '*';
+    color: red;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
 .help-card {
-    background: linear-gradient(135deg, rgb(99 102 241) 0%, rgb(139 92 246) 100%);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 1rem;
 }
 
 .help-card-title {
-    color: white;
-    padding: 1.5rem 2rem;
-    font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 1rem;
-}
-
-.help-icon {
-    font-size: 1.5rem;
-    color: rgb(255 255 255 / 0.9);
+    padding: 1.5rem;
+    padding-bottom: 1rem;
 }
 
 .help-card-content {
-    background: white;
-    padding: 2rem;
+    padding: 0 1.5rem 1.5rem;
+}
+
+.help-icon {
+    margin-right: 0.75rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
 }
 
 .help-grid {
@@ -1264,210 +621,47 @@ function onBatchSelected(batchId) {
 }
 
 .help-item {
-    background: rgb(248 250 252);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
     padding: 1.5rem;
-    border: 1px solid rgb(226 232 240);
-    transition: all 0.3s ease;
-}
-
-.help-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    border-color: rgb(99 102 241);
+    border-radius: 0.75rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .help-item-header {
     display: flex;
     align-items: center;
-    gap: 1rem;
     margin-bottom: 1rem;
 }
 
-.help-avatar {
-    background: linear-gradient(135deg, rgb(99 102 241), rgb(139 92 246));
-    flex-shrink: 0;
+.help-item-header h4 {
+    margin: 0 0 0 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
-.help-item h4 {
-    color: rgb(30 41 59);
-    font-weight: 600;
-    margin: 0;
-    font-size: 1.1rem;
+.help-avatar {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .help-item p {
-    color: rgb(71 85 105);
     margin: 0;
-    line-height: 1.6;
-    font-size: 0.95rem;
+    line-height: 1.5;
+    opacity: 0.9;
 }
 
 .rotate-180 {
     transform: rotate(180deg);
-    transition: transform 0.3s ease;
 }
 
-/* Modern form styling */
-.modern-field :deep(.v-field) {
-    background: rgb(248 250 252);
-    border: 1px solid rgb(226 232 240);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
-
-.modern-field :deep(.v-field:hover) {
-    border-color: rgb(148 163 184);
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    transform: translateY(-1px);
-}
-
-.modern-field :deep(.v-input--focused .v-field) {
-    border-color: rgb(99, 102, 241);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    background: white;
-    transform: translateY(-1px);
-}
-
-/* Stock item card styling */
 .stock-item-card {
-    border: 2px solid rgb(226 232 240) !important;
-    transition: all 0.3s ease;
-    background: rgb(248 250 252);
+    transition: all 0.2s ease;
+    border: 1px solid #e0e0e0;
 }
 
 .stock-item-card:hover {
-    border-color: rgb(99, 102, 241) !important;
-    box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
-    transform: translateY(-2px);
-}
-
-.modern-data-table {
-    background: transparent !important;
-}
-
-.modern-data-table :deep(.v-data-table__wrapper) {
-    border-radius: 1.5rem;
-}
-
-.modern-data-table :deep(.v-data-table-header) {
-    background: linear-gradient(135deg, rgb(248 250 252) 0%, rgb(241 245 249) 100%);
-    border-bottom: 2px solid rgb(226 232 240 / 0.6);
-}
-
-.modern-data-table :deep(.v-data-table-header .v-data-table__th) {
-    font-weight: 700;
-    color: rgb(51 65 85);
-    text-transform: uppercase;
-    letter-spacing: 0.075em;
-    font-size: 0.8rem;
-    padding: 1.5rem 1.25rem;
-    border-bottom: none;
-    position: relative;
-}
-
-.modern-data-table :deep(.v-data-table-header .v-data-table__th:first-child) {
-    padding-left: 2rem;
-}
-
-.modern-data-table :deep(.v-data-table-header .v-data-table__th:last-child) {
-    padding-right: 2rem;
-}
-
-.modern-data-table :deep(.v-data-table__tr) {
-    border-bottom: 1px solid rgb(226 232 240 / 0.4);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.modern-data-table :deep(.v-data-table__tr:nth-child(even)) {
-    background: rgb(248 250 252 / 0.4);
-}
-
-.modern-data-table :deep(.v-data-table__tr:hover) {
-    background: linear-gradient(135deg, rgb(99 102 241 / 0.08) 0%, rgb(79 70 229 / 0.05) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
-}
-
-.modern-data-table :deep(.v-data-table__td) {
-    padding: 1.5rem 1.25rem;
-    vertical-align: middle;
-    font-weight: 500;
-    color: rgb(15 23 42);
-    border-bottom: none;
-}
-
-.modern-data-table :deep(.v-data-table__td:first-child) {
-    padding-left: 2rem;
-}
-
-.modern-data-table :deep(.v-data-table__td:last-child) {
-    padding-right: 2rem;
-}
-
-.modern-data-table :deep(.v-data-table__tr:nth-child(even)) {
-    background: rgb(248 250 252 / 0.4);
-}
-
-.modern-data-table :deep(.v-data-table__tr:hover) {
-    background: linear-gradient(135deg, rgb(99 102 241 / 0.08) 0%, rgb(79 70 229 / 0.05) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
-}
-
-/* Mobile responsiveness for tables */
-@media (max-width: 768px) {
-    .stock-page {
-        padding: 0 0.5rem;
-    }
-    
-    .data-table-wrapper {
-        border-radius: 1rem;
-        margin: 1rem 0;
-        overflow-x: auto;
-    }
-    
-    .modern-data-table :deep(.v-data-table-header .v-data-table__th) {
-        padding: 1rem 0.75rem;
-        font-size: 0.7rem;
-    }
-    
-    .modern-data-table :deep(.v-data-table-header .v-data-table__th:first-child) {
-        padding-left: 1rem;
-    }
-    
-    .modern-data-table :deep(.v-data-table-header .v-data-table__th:last-child) {
-        padding-right: 1rem;
-    }
-    
-    .modern-data-table :deep(.v-data-table__td) {
-        padding: 1rem 0.75rem;
-    }
-    
-    .modern-data-table :deep(.v-data-table__td:first-child) {
-        padding-left: 1rem;
-    }
-    
-    .modern-data-table :deep(.v-data-table__td:last-child) {
-        padding-right: 1rem;
-    }
-    
-    .modern-data-table :deep(.v-data-table__tr:hover) {
-        transform: none;
-        box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.1);
-    }
-}
-
-/* Extra small devices */
-@media (max-width: 480px) {
-    .modern-data-table :deep(.v-data-table-header .v-data-table__th) {
-        padding: 0.75rem 0.5rem;
-        font-size: 0.65rem;
-    }
-    
-    .modern-data-table :deep(.v-data-table__td) {
-        padding: 0.75rem 0.5rem;
-        font-size: 0.875rem;
-    }
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
 }
 </style>

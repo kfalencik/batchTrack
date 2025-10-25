@@ -21,7 +21,11 @@
             </v-btn>
             <v-btn to="stock" variant="outline" class="my-1 w-full justify-start text-left" color="black">
                 <v-icon size="small" class="mr-2">mdi-clipboard-list-outline</v-icon>
-                <span>Stock</span>
+                <span>Ingredients</span>
+            </v-btn>
+            <v-btn to="products" variant="outline" class="my-1 w-full justify-start text-left" color="black">
+                <v-icon size="small" class="mr-2">mdi-package-variant-closed</v-icon>
+                <span>Products</span>
             </v-btn>
             <v-btn to="taxes" variant="outline" class="my-1 w-full justify-start text-left" color="black">
                 <v-icon size="small" class="mr-2">mdi-cash-multiple</v-icon>
