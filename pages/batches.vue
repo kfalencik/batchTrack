@@ -273,9 +273,9 @@
                 <v-btn 
                     variant="outlined" 
                     @click="closeEdit"
-                    class="mr-2"
+                    prepend-icon="mdi-close"
                 >
-                    Close
+                    {{ isPreview ? 'Close' : 'Cancel' }}
                 </v-btn>
                 <v-btn 
                     v-if="!isPreview" 
@@ -284,7 +284,7 @@
                     :disabled="!isFormValid"
                     prepend-icon="mdi-content-save"
                 >
-                    Save
+                    {{ isAdding ? 'Create Batch' : 'Update Batch' }}
                 </v-btn>
             </template>
         </BaseDialog>
@@ -505,8 +505,19 @@
             
             <template #actions>
                 <v-spacer />
-                <v-btn variant="outlined" @click="closePackDialog">Cancel</v-btn>
-                <v-btn color="primary" @click="savePackaging" :disabled="!isPackFormValid">
+                <v-btn 
+                    variant="outlined" 
+                    @click="closePackDialog"
+                    prepend-icon="mdi-close"
+                >
+                    Cancel
+                </v-btn>
+                <v-btn 
+                    color="primary" 
+                    @click="savePackaging" 
+                    :disabled="!isPackFormValid"
+                    prepend-icon="mdi-package-variant"
+                >
                     Complete Packaging
                 </v-btn>
             </template>
@@ -645,11 +656,22 @@ import StatCard from '@/components/StatCard.vue'
         return actions
     }
 
-    function handleCustomAction(actionKey, item) {
+    function handleCustomAction(actionKey, item, status = null) {
         if (actionKey === 'pack') {
             openPackDialog(item)
+        } else if (actionKey === 'set-status') {
+            // Handle status changes from the menu
+            if (status) {
+                setStatus(item, status)
+                // Show notification for better UX
+                dataStore.setNotification({
+                    text: `Batch status updated to: ${status}`,
+                    color: 'success',
+                    delay: 3000
+                })
+            }
         } else if (actionKey === 'menu') {
-            // For now, we'll show a simple menu - could be enhanced later
+            // Legacy fallback - shouldn't be used with new menu
             const action = confirm('Mark as failed? (Cancel for Ready to Pack)')
             if (action) {
                 setStatus(item, 'failed')

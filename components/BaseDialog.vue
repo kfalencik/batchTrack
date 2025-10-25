@@ -58,7 +58,7 @@ const props = defineProps({
   },
   maxWidth: {
     type: String,
-    default: '900px'
+    default: '1000px'
   },
   persistent: {
     type: Boolean,
@@ -146,16 +146,100 @@ defineEmits(['update:modelValue', 'close'])
 }
 
 .dialog-actions {
-  padding: 1rem 1.5rem 1.5rem 1.5rem !important;
+  padding: 1.25rem 1.5rem 1.5rem 1.5rem !important;
   border-top: 1px solid rgb(226 232 240 / 0.5);
-  gap: 0.75rem;
+  gap: 1rem;
   justify-content: flex-end;
   flex-shrink: 0;
+  background: rgb(248 250 252 / 0.5);
 }
 
 .dialog-actions :deep(.v-btn) {
   text-transform: none;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0;
+  padding: 0.75rem 1.5rem;
+  height: auto;
+  border-radius: 0.75rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.dialog-actions :deep(.v-btn:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.dialog-actions :deep(.v-btn[variant="outlined"]) {
+  border-color: rgb(226 232 240);
+  color: rgb(71 85 105);
+  background: white;
+}
+
+.dialog-actions :deep(.v-btn[variant="outlined"]:hover) {
+  border-color: rgb(148 163 184);
+  background: rgb(248 250 252);
+}
+
+.dialog-actions :deep(.v-btn[color="primary"]) {
+  background: rgb(99 102 241);
+  color: white;
+}
+
+.dialog-actions :deep(.v-btn[color="primary"]:hover) {
+  background: rgb(79 70 229);
+}
+
+.dialog-actions :deep(.v-btn .v-icon) {
+  margin-right: 0.5rem;
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.dialog-actions :deep(.v-btn:hover .v-icon) {
+  transform: scale(1.1);
+}
+
+.dialog-actions :deep(.v-btn[variant="outlined"] .v-icon) {
+  color: rgb(71 85 105);
+}
+
+.dialog-actions :deep(.v-btn[color="primary"] .v-icon) {
+  color: white;
+}
+
+/* Mobile responsive dialog actions */
+@media (max-width: 768px) {
+  .dialog-actions {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+  
+  .dialog-actions :deep(.v-btn) {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .dialog-actions :deep(.v-spacer) {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .dialog-header {
+    padding: 1rem 1rem 0 1rem;
+  }
+  
+  .dialog-content {
+    padding: 1rem 1rem 0 1rem !important;
+  }
+  
+  .dialog-actions {
+    padding: 1rem 1rem 1rem 1rem !important;
+  }
+  
+  .dialog-title__text {
+    font-size: 1.125rem;
+  }
 }
 </style>

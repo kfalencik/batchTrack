@@ -357,8 +357,22 @@
             
             <template #actions>
                 <v-spacer />
-                <v-btn variant="outlined" @click="closeEdit">Close</v-btn>
-                <v-btn v-if="!isPreview" color="primary" @click="saveEdit" :disabled="!isFormValid">Save</v-btn>
+                <v-btn 
+                    variant="outlined" 
+                    @click="closeEdit"
+                    prepend-icon="mdi-close"
+                >
+                    {{ isPreview ? 'Close' : 'Cancel' }}
+                </v-btn>
+                <v-btn 
+                    v-if="!isPreview" 
+                    color="primary" 
+                    @click="saveEdit" 
+                    :disabled="!isFormValid"
+                    prepend-icon="mdi-content-save"
+                >
+                    {{ isAdding ? 'Create Group' : 'Update Group' }}
+                </v-btn>
             </template>
         </BaseDialog>
 
@@ -577,9 +591,20 @@
                     
                     <template #actions>
                         <v-spacer />
-                        <v-btn variant="outlined" @click="closeProductDialog">Cancel</v-btn>
-                        <v-btn color="primary" @click="saveProduct" :disabled="!isProductFormValid">
-                            {{ isAddingProduct ? 'Create Products' : 'Save' }}
+                        <v-btn 
+                            variant="outlined" 
+                            @click="closeProductDialog"
+                            prepend-icon="mdi-close"
+                        >
+                            Cancel
+                        </v-btn>
+                        <v-btn 
+                            color="primary" 
+                            @click="saveProduct" 
+                            :disabled="!isProductFormValid"
+                            prepend-icon="mdi-content-save"
+                        >
+                            {{ isAddingProduct ? 'Create Products' : 'Save Product' }}
                         </v-btn>
                     </template>
         </BaseDialog>

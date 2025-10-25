@@ -76,7 +76,7 @@
             v-model="dialog"
             :title="isEditing ? 'Edit Recipe' : 'Add New Recipe'"
             title-icon="mdi-chef-hat"
-            max-width="900px"
+            max-width="1000px"
             card-class="recipe-dialog"
             @close="closeDialog"
         >
@@ -283,7 +283,7 @@
                 <v-btn 
                     variant="outlined" 
                     @click="closeDialog"
-                    class="mr-2"
+                    prepend-icon="mdi-close"
                 >
                     Cancel
                 </v-btn>

@@ -148,8 +148,20 @@
 
         <template #actions>
             <v-spacer />
-            <v-btn text @click="closeEdit">Cancel</v-btn>
-            <v-btn color="primary" @click="save">Save</v-btn>
+            <v-btn 
+                variant="outlined" 
+                @click="closeEdit"
+                prepend-icon="mdi-close"
+            >
+                Cancel
+            </v-btn>
+            <v-btn 
+                color="primary" 
+                @click="save"
+                prepend-icon="mdi-content-save"
+            >
+                {{ isAdding ? 'Create Fermenter' : 'Update Fermenter' }}
+            </v-btn>
         </template>
     </BaseDialog>
   </div>
@@ -159,9 +171,9 @@
 import { ref, computed, onMounted } from 'vue';
 
 const headers = ref([
-  { title: 'ID', value: 'id', sortable: true, width: '100px' },
+  { title: 'ID', value: 'id', sortable: true },
   { title: 'Nickname', value: 'name', sortable: true },
-  { title: 'Size (L)', value: 'size', sortable: true, align: 'center', width: '120px' },
+  { title: 'Size (L)', value: 'size', sortable: true, align: 'center' },
   { title: 'Actions', value: 'actions', sortable: false, align: 'center', width: '100px' }
 ]);
 
