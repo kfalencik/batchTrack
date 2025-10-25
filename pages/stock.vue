@@ -100,11 +100,8 @@
                     <v-form ref="formRef" lazy-validation>
                         <v-container>
                             <v-row>
-                                <v-col cols="6">
+                                <v-col cols="12">
                                     <v-text-field class="required-field" label="Group Name" v-model="edited.name" :readonly="isPreview" :rules="[requiredRule]" required />
-                                </v-col>
-                                <v-col cols="6">
-                                    <v-text-field label="Description" v-model="edited.description" :readonly="isPreview" />
                                 </v-col>
                             </v-row>
 
@@ -116,7 +113,7 @@
                                 </v-col>
                                 <v-col cols="12" v-for="(item, idx) in edited.items" :key="idx">
                                     <v-row class="align-center">
-                                        <v-col cols="3">
+                                        <v-col cols="5">
                                             <v-text-field class="required-field" label="Product" v-model="item.product" :readonly="isPreview" :rules="[requiredRule]" required />
                                         </v-col>
                                         <v-col cols="2">
@@ -128,14 +125,15 @@
                                         <v-col cols="2">
                                             <v-text-field label="Price" type="number" v-model="item.price" prefix="£" :readonly="isPreview" />
                                         </v-col>
-                                        <!-- packSize field removed -->
-                                        <v-col cols="1">
+                                        <v-col cols="1" class="d-flex align-center">
                                             <v-btn icon color="red" @click="removeItem(idx)" v-if="!isPreview"><v-icon>mdi-delete</v-icon></v-btn>
                                         </v-col>
-                                        <v-col cols="3">
+                                    </v-row>
+                                    <v-row>
+                                        <v-col cols="6">
                                             <v-text-field label="Date Bought" type="date" v-model="item.dateBought" :readonly="isPreview" />
                                         </v-col>
-                                        <v-col cols="3">
+                                        <v-col cols="6">
                                             <v-text-field label="Expiry Date" type="date" v-model="item.expiryDate" :readonly="isPreview" />
                                         </v-col>
                                     </v-row>
@@ -206,7 +204,7 @@ function openEdit(group) {
 }
 
 function openAdd() {
-    edited.value = { id: null, name: '', description: '', items: [] }
+    edited.value = { id: null, name: '', items: [] }
     isAdding.value = true
     isPreview.value = false
     editDialog.value = true
@@ -318,7 +316,6 @@ const displayedGroups = computed(() => {
         return {
             id: g.id,
             name: g.name,
-            description: g.description,
             items: items,
             usable,
             usableDisplay: `${usable} ${items[0] && items[0].unit ? items[0].unit : ''}`,
