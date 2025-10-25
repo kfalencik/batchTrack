@@ -181,15 +181,6 @@
                                         prepend-icon="mdi-thermometer"
                                     />
                                 </v-col>
-                                <v-col cols="6">
-                                    <v-text-field label="Flavouring Tea (kg)" type="number" v-model="edited.flavouringTea" hint="Kilograms" persistent-hint :readonly="isPreview" />
-                                </v-col>
-                                <v-col cols="6">
-                                    <v-text-field label="Flavouring Sweetener (g)" type="number" v-model="edited.flavouringSweetener" hint="Grams" persistent-hint :readonly="isPreview" />
-                                </v-col>
-                                <v-col cols="6">
-                                    <v-text-field label="Flavouring Essence (ml)" type="number" v-model="edited.flavouringEssence" hint="Milliliters" persistent-hint :readonly="isPreview" />
-                                </v-col>
                                 
                             </v-row>
                         </v-container>
@@ -389,10 +380,8 @@ import StatCard from '@/components/StatCard.vue'
             const endSecs = item.startDate.seconds + (Number(item.fermentationDays) * 86400);
             const endMs = endSecs * 1000;
             if (now < endMs) return 'fermenting';
-            // after fermentation
-            // if flavouring fields present, mark as Flavouring
-            if (item.flavouringEssence || item.flavouringTea || item.flavouringSweetener) return 'flavouring';
-            return 'ready to pack';
+            // after fermentation - automatically becomes flavouring status
+            return 'flavouring';
         }
 
         return backendStatus || 'Unknown';
@@ -677,9 +666,6 @@ import StatCard from '@/components/StatCard.vue'
             temp: null,
             yeast: null,
             yeastNutrients: null,
-            flavouringTea: null,
-            flavouringSweetener: null,
-            flavouringEssence: null,
             pasteurised: false,
             taxPaid: false,
             startDateDate: null
