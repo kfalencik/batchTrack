@@ -1,16 +1,10 @@
 <template>
     <div>
-        <div class="d-flex justify-between mb-3">
-            <h2 class="mb-5">Stock</h2>
-            <v-btn v-if="activeTab === 'ingredients'" color="primary" @click="openAdd">
-                <v-icon class="mr-2">mdi-plus-circle</v-icon>
-                Add Ingredient Group
-            </v-btn>
-            <v-btn v-if="activeTab === 'products'" color="primary" @click="openAddProduct">
-                <v-icon class="mr-2">mdi-package-variant</v-icon>
-                Add Product
-            </v-btn>
-        </div>
+        <PageHeader 
+            title="Stock"
+            :actions="headerActions"
+            @action="handleHeaderAction"
+        />
 
         <!-- Section Tabs -->
         <v-tabs v-model="activeTab" class="mb-4">
@@ -44,12 +38,11 @@
                         </v-chip>
                     </template>
                     <template #item.actions="{ item }">
-                        <v-btn icon color="info" flat size="x-small" class="mr-2" @click="openEdit(item.raw)">
-                            <v-icon>mdi-pencil</v-icon>
-                        </v-btn>
-                        <v-btn icon color="red" flat size="x-small" @click="removeGroup(item.id)">
-                            <v-icon>mdi-delete</v-icon>
-                        </v-btn>
+                        <DataTableActions 
+                            :item="item.raw"
+                            @edit="openEdit"
+                            @delete="removeGroup"
+                        />
                     </template>
                     
                         <template v-slot:expanded-row="{ item }">
@@ -138,12 +131,11 @@
                         </v-chip>
                     </template>
                     <template #item.actions="{ item }">
-                        <v-btn icon color="info" flat size="x-small" class="mr-2" @click="viewProduct(item)" title="Edit Product">
-                            <v-icon>mdi-pencil</v-icon>
-                        </v-btn>
-                        <v-btn icon color="red" flat size="x-small" @click="removeProduct(item.id)" title="Delete Product">
-                            <v-icon>mdi-delete</v-icon>
-                        </v-btn>
+                        <DataTableActions 
+                            :item="item"
+                            @edit="viewProduct"
+                            @delete="removeProductWrapper"
+                        />
                     </template>
                 </v-data-table>
             </v-window-item>
@@ -499,6 +491,42 @@ const containerGroups = ref([])
 const containerTypes = ['Cans', 'Kegs', 'Bottles', 'Other']
 
 const units = ['g','kg','ml','l','pcs']
+
+// Header actions computed property
+const headerActions = computed(() => {
+    if (activeTab.value === 'ingredients') {
+        return [{
+            key: 'add-ingredient',
+            text: 'Add Ingredient Group',
+            icon: 'mdi-plus-circle',
+            color: 'primary'
+        }]
+    } else if (activeTab.value === 'products') {
+        return [{
+            key: 'add-product',
+            text: 'Add Product',
+            icon: 'mdi-package-variant',
+            color: 'primary'
+        }]
+    }
+    return []
+})
+
+function handleHeaderAction(actionKey) {
+    if (actionKey === 'add-ingredient') {
+        openAdd()
+    } else if (actionKey === 'add-product') {
+        openAddProduct()
+    }
+}
+
+function removeGroupWrapper(item) {
+    removeGroup(item.id)
+}
+
+function removeProductWrapper(item) {
+    removeProduct(item.id)
+}
 
 const requiredRule = (v) => (v !== undefined && v !== null && v !== '' ) || 'Required'
 const requiredNumberRule = (v) => {

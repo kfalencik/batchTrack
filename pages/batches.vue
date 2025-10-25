@@ -1,12 +1,11 @@
 <template>
     <div>
-        <div class="d-flex justify-between mb-3">
-            <h2 class="mb-5">Batches</h2>
-            <v-btn color="primary" @click="openAdd">
-                <v-icon class="mr-2">mdi-plus-circle</v-icon>
-                Add Batch
-            </v-btn>
-        </div>
+        <PageHeader 
+            title="Batches"
+            action-text="Add Batch"
+            action-icon="mdi-plus-circle"
+            @action="openAdd"
+        />
 
         <!-- Stat cards -->
         <v-row class="mb-15 mt-10" dense>
@@ -68,40 +67,14 @@
                 </v-chip>
             </template>
             <template #item.actions="{ item }">
-                <v-btn icon color="info" flat size="x-small" class="mr-2" @click="openEdit(item)" :title="(item && item.status) || getStatus(item) === 'packaged' ? 'Preview' : 'Edit'">
-                    <v-icon>{{ (item && item.status) || getStatus(item) === 'packaged' ? 'mdi-eye' : 'mdi-pencil' }}</v-icon>
-                </v-btn>
-                <v-btn 
-                    v-if="getStatus(item) === 'ready to pack'" 
-                    icon 
-                    color="primary" 
-                    flat 
-                    size="x-small" 
-                    class="mr-2" 
-                    @click="openPackDialog(item)"
-                    title="Pack this batch"
-                >
-                    <v-icon>mdi-package-variant</v-icon>
-                </v-btn>
-                <v-menu offset-y v-if="getStatus(item) !== 'packaged'">
-                    <template #activator="{ props }">
-                        <v-btn v-bind="props" icon flat size="x-small">
-                            <v-icon>mdi-dots-vertical</v-icon>
-                        </v-btn>
-                    </template>
-                    <v-list>
-                        <v-list-item @click="setStatus(item, 'failed')">
-                            <v-list-item-content>
-                                <v-list-item-title class="align-center text-red text-sm"><v-icon color="red" class="mr-2" small>mdi-alert-circle-outline</v-icon> Mark Failed</v-list-item-title>
-                            </v-list-item-content>
-                        </v-list-item>
-                        <v-list-item @click="setStatus(item, 'ready to pack')">
-                            <v-list-item-content>
-                                <v-list-item-title class="align-center text-purple text-sm"><v-icon color="purple" class="mr-2" small>mdi-package-up</v-icon> Mark Ready to Pack</v-list-item-title>
-                            </v-list-item-content>
-                        </v-list-item>
-                    </v-list>
-                </v-menu>
+                <DataTableActions 
+                    :item="item"
+                    :show-delete="false"
+                    :edit-icon="getStatus(item) === 'packaged' ? 'mdi-eye' : 'mdi-pencil'"
+                    :custom-actions="getCustomActions(item)"
+                    @edit="openEdit"
+                    @custom-action="handleCustomAction"
+                />
             </template>
         </v-data-table>
         <v-dialog v-model="editDialog" width="1200">
@@ -425,7 +398,43 @@ import StatCard from '@/components/StatCard.vue'
         if (s === 'failed') return 'mdi-alert-circle-outline';
         if (s === 'ready to pack') return 'mdi-package-up';
         if (s === 'packaged') return 'mdi-package-variant-closed';
-        return 'mdi-help-circle-outline';
+        return 'mdi-help-circle';
+    }
+
+    function getCustomActions(item) {
+        const actions = []
+        
+        if (getStatus(item) === 'ready to pack') {
+            actions.push({
+                key: 'pack',
+                icon: 'mdi-package-variant',
+                color: 'primary'
+            })
+        }
+        
+        if (getStatus(item) !== 'packaged') {
+            actions.push({
+                key: 'menu',
+                icon: 'mdi-dots-vertical',
+                color: 'default'
+            })
+        }
+        
+        return actions
+    }
+
+    function handleCustomAction(actionKey, item) {
+        if (actionKey === 'pack') {
+            openPackDialog(item)
+        } else if (actionKey === 'menu') {
+            // For now, we'll show a simple menu - could be enhanced later
+            const action = confirm('Mark as failed? (Cancel for Ready to Pack)')
+            if (action) {
+                setStatus(item, 'failed')
+            } else {
+                setStatus(item, 'ready to pack')
+            }
+        }
     }
 
     function getProgress(item) {

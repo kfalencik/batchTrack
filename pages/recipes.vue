@@ -1,12 +1,11 @@
 <template>
     <div>
-        <div class="d-flex justify-between mb-3">
-            <h2 class="mb-5">Recipes</h2>
-            <v-btn color="primary" @click="openAdd">
-                <v-icon class="mr-2">mdi-plus-circle</v-icon>
-                Add Recipe
-            </v-btn>
-        </div>
+        <PageHeader 
+            title="Recipes"
+            action-text="Add Recipe"
+            action-icon="mdi-plus-circle"
+            @action="openAdd"
+        />
 
         <!-- Stat cards -->
         <v-row class="mb-15 mt-10" dense>
@@ -22,28 +21,16 @@
         <v-data-table
             class="text-sm"
             :headers="headers"
-            :items="recipes"
+            :items="processedRecipes"
         >
             <template #item.ingredients="{ item }">
-                <div class="py-2">
-                    <v-chip 
-                        v-for="ingredient in item.ingredients.slice(0, 3)" 
-                        :key="ingredient.itemId"
-                        size="small"
-                        class="mr-1 mb-1"
-                        color="blue-grey-lighten-4"
-                    >
-                        {{ getIngredientItemName(ingredient.itemId) }} ({{ ingredient.amount }}{{ ingredient.unit }})
-                    </v-chip>
-                    <v-chip 
-                        v-if="item.ingredients.length > 3"
-                        size="small"
-                        color="grey-lighten-2"
-                        class="mr-1"
-                    >
-                        +{{ item.ingredients.length - 3 }} more
-                    </v-chip>
-                </div>
+                <ChipDisplay 
+                    :items="item.ingredients"
+                    :max-visible="3"
+                    text-field="displayText"
+                    color="blue-grey-lighten-4"
+                    size="small"
+                />
             </template>
             <template #item.canMake="{ item }">
                 <v-chip :color="canMakeRecipe(item) ? 'green' : 'red'" dark>
@@ -55,181 +42,170 @@
                 <span>£{{ calculateRecipeCost(item).toFixed(2) }}</span>
             </template>
             <template #item.actions="{ item }">
-                <v-btn icon color="info" flat size="x-small" class="mr-2" @click="openEdit(item)">
-                    <v-icon>mdi-pencil</v-icon>
-                </v-btn>
-                <v-btn icon color="red" flat size="x-small" @click="removeRecipe(item.id)">
-                    <v-icon>mdi-delete</v-icon>
-                </v-btn>
+                <DataTableActions 
+                    :item="item"
+                    @edit="openEdit"
+                    @delete="removeRecipe"
+                />
             </template>
         </v-data-table>
 
         <!-- Add/Edit Recipe Dialog -->
-        <v-dialog v-model="dialog" max-width="900px" persistent>
-            <v-card class="recipe-dialog">
-                <v-toolbar color="primary" dark>
-                    <v-toolbar-title>
-                        <v-icon class="mr-2">mdi-chef-hat</v-icon>
-                        {{ isEditing ? 'Edit Recipe' : 'Add New Recipe' }}
-                    </v-toolbar-title>
-                    <v-spacer />
-                    <v-btn icon @click="closeDialog">
-                        <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                </v-toolbar>
-                
-                <v-card-text class="pa-6">
-                    <v-form ref="formRef" lazy-validation>
-                        <v-container>
-                            <!-- Recipe Basic Info -->
-                            <v-row>
-                                <v-col cols="12">
-                                    <v-text-field
-                                        v-model="currentRecipe.name"
-                                        label="Recipe Name"
-                                        required
-                                        :rules="[v => !!v || 'Recipe name is required']"
-                                        variant="outlined"
-                                        class="mb-2"
-                                    >
-                                        <template #prepend-inner>
-                                            <v-icon color="primary">mdi-silverware-fork-knife</v-icon>
-                                        </template>
-                                    </v-text-field>
-                                </v-col>
-                                <v-col cols="12">
-                                    <v-textarea
-                                        v-model="currentRecipe.description"
-                                        label="Description"
-                                        rows="3"
-                                        variant="outlined"
-                                        placeholder="Describe your recipe..."
-                                    >
-                                        <template #prepend-inner>
-                                            <v-icon color="primary">mdi-text</v-icon>
-                                        </template>
-                                    </v-textarea>
-                                </v-col>
-                            </v-row>
+        <BaseDialog
+            v-model="dialog"
+            :title="isEditing ? 'Edit Recipe' : 'Add New Recipe'"
+            title-icon="mdi-chef-hat"
+            max-width="900px"
+            card-class="recipe-dialog"
+            @close="closeDialog"
+        >
+            <v-form ref="formRef" lazy-validation>
+                <v-container>
+                    <!-- Recipe Basic Info -->
+                    <v-row>
+                        <v-col cols="12">
+                            <v-text-field
+                                v-model="currentRecipe.name"
+                                label="Recipe Name"
+                                required
+                                :rules="[v => !!v || 'Recipe name is required']"
+                                variant="outlined"
+                                class="mb-2"
+                            >
+                                <template #prepend-inner>
+                                    <v-icon color="primary">mdi-silverware-fork-knife</v-icon>
+                                </template>
+                            </v-text-field>
+                        </v-col>
+                        <v-col cols="12">
+                            <v-textarea
+                                v-model="currentRecipe.description"
+                                label="Description"
+                                rows="3"
+                                variant="outlined"
+                                placeholder="Describe your recipe..."
+                            >
+                                <template #prepend-inner>
+                                    <v-icon color="primary">mdi-text</v-icon>
+                                </template>
+                            </v-textarea>
+                        </v-col>
+                    </v-row>
 
-                            <v-divider class="my-5" />
+                    <v-divider class="my-5" />
 
-                            <!-- Ingredients Section -->
-                            <v-row>
-                                <v-col cols="12">
-                                    <div class="d-flex align-center mb-4">
-                                        <v-icon color="primary" class="mr-2">mdi-clipboard-list</v-icon>
-                                        <h3 class="text-h6">Ingredients</h3>
-                                    </div>
-                                </v-col>
-                                
-                                <v-col cols="12">
-                                    <div v-for="(ingredient, index) in currentRecipe.ingredients" :key="index" class="ingredient-row mb-4">
-                                        <v-card variant="outlined" class="pa-4">
-                                            <v-row align="center">
-                                                <v-col cols="5">
-                                                    <v-select
-                                                        v-model="ingredient.itemId"
-                                                        :items="ingredientItemOptions"
-                                                        item-title="label"
-                                                        item-value="value"
-                                                        label="Select Ingredient"
-                                                        required
-                                                        variant="outlined"
-                                                        @update:model-value="(itemId) => onIngredientItemSelected(itemId, index)"
-                                                    >
-                                                        <template #item="{ props, item }">
-                                                            <v-list-item v-bind="props">
-                                                                <template #prepend>
-                                                                    <v-chip 
-                                                                        size="x-small" 
-                                                                        :color="item.raw.available ? 'green' : 'red'"
-                                                                        class="mr-2"
-                                                                    >
-                                                                        {{ item.raw.available ? 'Available' : 'Out of Stock' }}
-                                                                    </v-chip>
-                                                                </template>
-                                                                <v-list-item-title>{{ item.raw.product }}</v-list-item-title>
-                                                                <v-list-item-subtitle>
-                                                                    {{ item.raw.groupName }} • {{ item.raw.quantity }}{{ item.raw.unit }} available
-                                                                </v-list-item-subtitle>
-                                                            </v-list-item>
+                    <!-- Ingredients Section -->
+                    <v-row>
+                        <v-col cols="12">
+                            <div class="d-flex align-center mb-4">
+                                <v-icon color="primary" class="mr-2">mdi-clipboard-list</v-icon>
+                                <h3 class="text-h6">Ingredients</h3>
+                            </div>
+                        </v-col>
+                        
+                        <v-col cols="12">
+                            <div v-for="(ingredient, index) in currentRecipe.ingredients" :key="index" class="ingredient-row mb-4">
+                                <v-card variant="outlined" class="pa-4">
+                                    <v-row align="center">
+                                        <v-col cols="5">
+                                            <v-select
+                                                v-model="ingredient.itemId"
+                                                :items="ingredientItemOptions"
+                                                item-title="label"
+                                                item-value="value"
+                                                label="Select Ingredient"
+                                                required
+                                                variant="outlined"
+                                                @update:model-value="(itemId) => onIngredientItemSelected(itemId, index)"
+                                            >
+                                                <template #item="{ props, item }">
+                                                    <v-list-item v-bind="props">
+                                                        <template #prepend>
+                                                            <v-chip 
+                                                                size="x-small" 
+                                                                :color="item.raw.available ? 'green' : 'red'"
+                                                                class="mr-2"
+                                                            >
+                                                                {{ item.raw.available ? 'Available' : 'Out of Stock' }}
+                                                            </v-chip>
                                                         </template>
-                                                    </v-select>
-                                                </v-col>
-                                                <v-col cols="3">
-                                                    <v-text-field
-                                                        v-model="ingredient.amount"
-                                                        label="Amount"
-                                                        type="number"
-                                                        step="0.1"
-                                                        required
-                                                        variant="outlined"
-                                                    ></v-text-field>
-                                                </v-col>
-                                                <v-col cols="2">
-                                                    <v-text-field
-                                                        v-model="ingredient.unit"
-                                                        label="Unit"
-                                                        :placeholder="getIngredientPlaceholderUnit(ingredient.itemId)"
-                                                        readonly
-                                                        required
-                                                        variant="outlined"
-                                                    ></v-text-field>
-                                                </v-col>
-                                                <v-col cols="2" class="d-flex justify-center">
-                                                    <v-btn 
-                                                        icon 
-                                                        color="red" 
-                                                        variant="outlined"
-                                                        size="small" 
-                                                        @click="removeIngredient(index)"
-                                                        :disabled="currentRecipe.ingredients.length === 1"
-                                                    >
-                                                        <v-icon>mdi-delete</v-icon>
-                                                    </v-btn>
-                                                </v-col>
-                                            </v-row>
-                                        </v-card>
-                                    </div>
-                                    
-                                    <v-btn 
-                                        @click="addIngredient" 
-                                        color="primary" 
-                                        variant="outlined" 
-                                        class="mt-2"
-                                        prepend-icon="mdi-plus"
-                                    >
-                                        Add Ingredient
-                                    </v-btn>
-                                </v-col>
-                            </v-row>
-                        </v-container>
-                    </v-form>
-                </v-card-text>
-                
-                <v-divider />
-                
-                <v-card-actions class="pa-4">
-                    <v-spacer />
-                    <v-btn 
-                        variant="outlined" 
-                        @click="closeDialog"
-                        class="mr-2"
-                    >
-                        Cancel
-                    </v-btn>
-                    <v-btn 
-                        color="primary" 
-                        @click="saveRecipe" 
-                        :disabled="!isFormValid"
-                        prepend-icon="mdi-content-save"
-                    >
-                        {{ isEditing ? 'Update Recipe' : 'Create Recipe' }}
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+                                                        <v-list-item-title>{{ item.raw.product }}</v-list-item-title>
+                                                        <v-list-item-subtitle>
+                                                            {{ item.raw.groupName }} • {{ item.raw.quantity }}{{ item.raw.unit }} available
+                                                        </v-list-item-subtitle>
+                                                    </v-list-item>
+                                                </template>
+                                            </v-select>
+                                        </v-col>
+                                        <v-col cols="3">
+                                            <v-text-field
+                                                v-model="ingredient.amount"
+                                                label="Amount"
+                                                type="number"
+                                                step="0.1"
+                                                required
+                                                variant="outlined"
+                                            ></v-text-field>
+                                        </v-col>
+                                        <v-col cols="2">
+                                            <v-text-field
+                                                v-model="ingredient.unit"
+                                                label="Unit"
+                                                :placeholder="getIngredientPlaceholderUnit(ingredient.itemId)"
+                                                readonly
+                                                required
+                                                variant="outlined"
+                                            ></v-text-field>
+                                        </v-col>
+                                        <v-col cols="2" class="d-flex justify-center">
+                                            <v-btn 
+                                                icon 
+                                                color="red" 
+                                                variant="outlined"
+                                                size="small" 
+                                                @click="removeIngredient(index)"
+                                                :disabled="currentRecipe.ingredients.length === 1"
+                                            >
+                                                <v-icon>mdi-delete</v-icon>
+                                            </v-btn>
+                                        </v-col>
+                                    </v-row>
+                                </v-card>
+                            </div>
+                            
+                            <v-btn 
+                                @click="addIngredient" 
+                                color="primary" 
+                                variant="outlined" 
+                                class="mt-2"
+                                prepend-icon="mdi-plus"
+                            >
+                                Add Ingredient
+                            </v-btn>
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-form>
+            
+            <template #actions>
+                <v-spacer />
+                <v-btn 
+                    variant="outlined" 
+                    @click="closeDialog"
+                    class="mr-2"
+                >
+                    Cancel
+                </v-btn>
+                <v-btn 
+                    color="primary" 
+                    @click="saveRecipe" 
+                    :disabled="!isFormValid"
+                    prepend-icon="mdi-content-save"
+                >
+                    {{ isEditing ? 'Update Recipe' : 'Create Recipe' }}
+                </v-btn>
+            </template>
+        </BaseDialog>
     </div>
 </template>
 
@@ -304,6 +280,16 @@ const availableRecipes = computed(() => {
 
 const unavailableRecipes = computed(() => {
     return recipes.value.filter(recipe => !canMakeRecipe(recipe)).length
+})
+
+const processedRecipes = computed(() => {
+    return recipes.value.map(recipe => ({
+        ...recipe,
+        ingredients: recipe.ingredients.map(ingredient => ({
+            ...ingredient,
+            displayText: `${getIngredientItemName(ingredient.itemId)} (${ingredient.amount}${ingredient.unit})`
+        }))
+    }))
 })
 
 const isFormValid = computed(() => {
@@ -387,11 +373,11 @@ async function saveRecipe() {
     }
 }
 
-async function removeRecipe(id) {
+async function removeRecipe(item) {
     if (confirm('Are you sure you want to delete this recipe?')) {
         try {
-            await dataStore.removeRecipe(id)
-            recipes.value = recipes.value.filter(recipe => recipe.id !== id)
+            await dataStore.removeRecipe(item.id)
+            recipes.value = recipes.value.filter(recipe => recipe.id !== item.id)
         } catch (error) {
             console.error('Error removing recipe:', error)
         }

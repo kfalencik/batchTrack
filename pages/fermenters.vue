@@ -1,12 +1,11 @@
 <template>
   <div>
-    <div class="d-flex justify-between mb-3">
-        <h2 class="mb-5">Fermenters</h2>
-        <v-btn color="primary" @click="openAdd">
-            <v-icon class="mr-2">mdi-plus-circle</v-icon>
-            Add Fermenter
-        </v-btn>
-    </div>
+    <PageHeader 
+        title="Fermenters"
+        action-text="Add Fermenter"
+        action-icon="mdi-plus-circle"
+        @action="openAdd"
+    />
 
     <v-data-table
       class="text-sm"
@@ -23,53 +22,43 @@
         <span>{{ item && item.name ? item.name : '-' }}</span>
       </template>
       <template #item.actions="{ item }">
-        <div class="text-right">
-        <v-btn icon color="info" flat size="x-small" class="mr-2" @click="openEdit(item)">
-          <v-icon>mdi-pencil</v-icon>
-        </v-btn>
-        <v-btn icon color="error" flat size="x-small" @click="remove(item)">
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
-      </div>
+        <DataTableActions 
+            :item="item"
+            @edit="openEdit"
+            @delete="remove"
+        />
       </template>
     </v-data-table>
 
-    <v-dialog v-model="editDialog" width="800">
-      <v-card>
-        <v-toolbar color="primary" dark>
-          <v-toolbar-title>{{ isAdding ? 'Add Fermenter' : 'Edit Fermenter' }}</v-toolbar-title>
-          <spacer />
-          <v-btn icon @click="closeEdit">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-
-        <v-card-text v-if="edited">
-          <v-container>
+    <BaseDialog
+        v-model="editDialog"
+        :title="isAdding ? 'Add Fermenter' : 'Edit Fermenter'"
+        max-width="800px"
+        @close="closeEdit"
+    >
+        <v-container v-if="edited">
             <v-row>
-              <v-col cols="6">
-                <v-text-field label="ID" v-model="edited.id" hint="Unique identifier (e.g. 1, F1)" persistent-hint />
-              </v-col>
-              <v-col cols="6">
-                <v-text-field label="Size (L)" type="number" v-model="edited.size" hint="Liters (e.g. 20)" persistent-hint />
-              </v-col>
-              <v-col cols="6">
-                <v-text-field label="Nickname" v-model="edited.name" hint="Optional name" persistent-hint />
-              </v-col>
-              <v-col cols="12">
-                <v-textarea label="Notes" v-model="edited.notes" hint="Optional notes" persistent-hint />
-              </v-col>
+                <v-col cols="6">
+                    <v-text-field label="ID" v-model="edited.id" hint="Unique identifier (e.g. 1, F1)" persistent-hint />
+                </v-col>
+                <v-col cols="6">
+                    <v-text-field label="Size (L)" type="number" v-model="edited.size" hint="Liters (e.g. 20)" persistent-hint />
+                </v-col>
+                <v-col cols="6">
+                    <v-text-field label="Nickname" v-model="edited.name" hint="Optional name" persistent-hint />
+                </v-col>
+                <v-col cols="12">
+                    <v-textarea label="Notes" v-model="edited.notes" hint="Optional notes" persistent-hint />
+                </v-col>
             </v-row>
-          </v-container>
-        </v-card-text>
+        </v-container>
 
-        <v-card-actions>
-          <v-spacer />
-          <v-btn text @click="closeEdit">Cancel</v-btn>
-          <v-btn color="primary" @click="save">Save</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+        <template #actions>
+            <v-spacer />
+            <v-btn text @click="closeEdit">Cancel</v-btn>
+            <v-btn color="primary" @click="save">Save</v-btn>
+        </template>
+    </BaseDialog>
   </div>
 </template>
 
