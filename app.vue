@@ -204,9 +204,46 @@ p {
   padding: 0 1rem;
 }
 
-/* Modern Data Table Styling */
+/* Modern Data Table Styling - Enhanced Global Overrides */
 .v-data-table__tr:nth-child(odd) {
-  background-color: rgb(248 250 252 / 0.5) !important;
+  background-color: rgb(248 250 252 / 0.3) !important;
+}
+
+.v-data-table__tr:nth-child(even) {
+  background-color: rgb(255 255 255 / 0.8) !important;
+}
+
+/* Enhanced row hover effects */
+.v-data-table__tr:hover {
+  background: linear-gradient(135deg, rgb(99 102 241 / 0.06) 0%, rgb(79 70 229 / 0.04) 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.08) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Enhanced table spacing and typography */
+.v-data-table__td {
+  font-weight: 500 !important;
+  color: rgb(15 23 42) !important;
+  border-bottom: 1px solid rgb(226 232 240 / 0.4) !important;
+}
+
+.v-data-table__th {
+  font-weight: 700 !important;
+  color: rgb(51 65 85) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.075em !important;
+  font-size: 0.8rem !important;
+  border-bottom: 2px solid rgb(226 232 240 / 0.6) !important;
+}
+
+/* Modern table footer styling */
+.v-data-table-footer {
+  background: rgb(248 250 252) !important;
+  border-top: 2px solid rgb(226 232 240 / 0.6) !important;
+  border-radius: 0 0 1.5rem 1.5rem !important;
+  padding: 1.25rem !important;
+  font-weight: 500 !important;
 }
 
 .v-overlay.v-dialog {

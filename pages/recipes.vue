@@ -706,11 +706,24 @@ onMounted(async () => {
 
 .data-table-wrapper {
     background: white;
-    border-radius: 1rem;
-    border: 1px solid rgb(226 232 240 / 0.8);
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    border-radius: 1.5rem;
+    border: 1px solid rgb(226 232 240 / 0.6);
+    box-shadow: 
+        0 4px 6px -1px rgb(0 0 0 / 0.1), 
+        0 2px 4px -2px rgb(0 0 0 / 0.1),
+        0 0 0 1px rgb(255 255 255 / 0.05);
     overflow: hidden;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 2rem 0;
+}
+
+.data-table-wrapper:hover {
+    box-shadow: 
+        0 10px 15px -3px rgb(0 0 0 / 0.1),
+        0 4px 6px -4px rgb(0 0 0 / 0.1),
+        0 0 0 1px rgb(99 102 241 / 0.1);
+    border-color: rgb(99 102 241 / 0.2);
 }
 
 .modern-data-table {
@@ -718,35 +731,124 @@ onMounted(async () => {
 }
 
 .modern-data-table :deep(.v-data-table__wrapper) {
-    border-radius: 1rem;
+    border-radius: 1.5rem;
 }
 
 .modern-data-table :deep(.v-data-table-header) {
-    background: rgb(248 250 252);
-    border-bottom: 1px solid rgb(226 232 240 / 0.5);
+    background: linear-gradient(135deg, rgb(248 250 252) 0%, rgb(241 245 249) 100%);
+    border-bottom: 2px solid rgb(226 232 240 / 0.6);
 }
 
 .modern-data-table :deep(.v-data-table-header .v-data-table__th) {
-    font-weight: 600;
-    color: rgb(71 85 105);
+    font-weight: 700;
+    color: rgb(51 65 85);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-size: 0.75rem;
-    padding: 1rem;
+    letter-spacing: 0.075em;
+    font-size: 0.8rem;
+    padding: 1.5rem 1.25rem;
+    border-bottom: none;
+    position: relative;
+}
+
+.modern-data-table :deep(.v-data-table-header .v-data-table__th:first-child) {
+    padding-left: 2rem;
+}
+
+.modern-data-table :deep(.v-data-table-header .v-data-table__th:last-child) {
+    padding-right: 2rem;
 }
 
 .modern-data-table :deep(.v-data-table__tr) {
-    border-bottom: 1px solid rgb(226 232 240 / 0.3);
-    transition: all 0.2s ease;
+    border-bottom: 1px solid rgb(226 232 240 / 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-data-table :deep(.v-data-table__tr:nth-child(even)) {
+    background: rgb(248 250 252 / 0.4);
 }
 
 .modern-data-table :deep(.v-data-table__tr:hover) {
-    background: rgb(248 250 252 / 0.5);
+    background: linear-gradient(135deg, rgb(99 102 241 / 0.08) 0%, rgb(79 70 229 / 0.05) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
 }
 
 .modern-data-table :deep(.v-data-table__td) {
-    padding: 1rem;
+    padding: 1.5rem 1.25rem;
     vertical-align: middle;
+    font-weight: 500;
+    color: rgb(15 23 42);
+    border-bottom: none;
+}
+
+.modern-data-table :deep(.v-data-table__td:first-child) {
+    padding-left: 2rem;
+}
+
+.modern-data-table :deep(.v-data-table__td:last-child) {
+    padding-right: 2rem;
+}
+
+/* Mobile responsiveness for tables */
+@media (max-width: 768px) {
+    .recipes-page {
+        padding: 0 0.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin: 1.5rem 0 2rem 0;
+    }
+    
+    .data-table-wrapper {
+        border-radius: 1rem;
+        margin: 1rem 0;
+        overflow-x: auto;
+    }
+    
+    .modern-data-table :deep(.v-data-table-header .v-data-table__th) {
+        padding: 1rem 0.75rem;
+        font-size: 0.7rem;
+    }
+    
+    .modern-data-table :deep(.v-data-table-header .v-data-table__th:first-child) {
+        padding-left: 1rem;
+    }
+    
+    .modern-data-table :deep(.v-data-table-header .v-data-table__th:last-child) {
+        padding-right: 1rem;
+    }
+    
+    .modern-data-table :deep(.v-data-table__td) {
+        padding: 1rem 0.75rem;
+    }
+    
+    .modern-data-table :deep(.v-data-table__td:first-child) {
+        padding-left: 1rem;
+    }
+    
+    .modern-data-table :deep(.v-data-table__td:last-child) {
+        padding-right: 1rem;
+    }
+    
+    .modern-data-table :deep(.v-data-table__tr:hover) {
+        transform: none;
+        box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.1);
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    .modern-data-table :deep(.v-data-table-header .v-data-table__th) {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.65rem;
+    }
+    
+    .modern-data-table :deep(.v-data-table__td) {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.875rem;
+    }
 }
 
 .cost-display {

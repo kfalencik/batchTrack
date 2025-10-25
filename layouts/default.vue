@@ -41,21 +41,59 @@
 </script>
 
 <style>
+    /* Modern Data Table Global Overrides */
     .v-data-table {
-        &__tr {
-            &:nth-child(odd) {
-                background: #ddd;
-                padding: 2px;
+        border-radius: 1rem !important;
+        overflow: hidden !important;
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
+        
+        .v-data-table__wrapper {
+            border-radius: 1rem !important;
+        }
+        
+        .v-data-table-header {
+            background: rgb(248 250 252) !important;
+            border-bottom: 1px solid rgb(226 232 240 / 0.5) !important;
+            
+            .v-data-table__th {
+                font-weight: 600 !important;
+                color: rgb(71 85 105) !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.05em !important;
+                font-size: 0.75rem !important;
+                padding: 1.25rem 1rem !important;
+                border-bottom: none !important;
             }
-
+        }
+        
+        .v-data-table__tr {
+            border-bottom: 1px solid rgb(226 232 240 / 0.3) !important;
+            transition: all 0.2s ease !important;
+            
+            &:nth-child(even) {
+                background: rgb(248 250 252 / 0.3) !important;
+            }
+            
+            &:hover {
+                background: rgb(99 102 241 / 0.05) !important;
+                transform: translateY(-1px) !important;
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05) !important;
+            }
+            
             td {
-                padding: 10px 16px !important;
+                padding: 1.25rem 1rem !important;
+                vertical-align: middle !important;
+                border-bottom: none !important;
             }
         }
     }
+    
     .v-data-table-footer {
-        margin-top: 40px;
-        font-size: 12px;
+        margin-top: 2rem !important;
+        padding: 1rem !important;
+        background: rgb(248 250 252) !important;
+        border-top: 1px solid rgb(226 232 240 / 0.5) !important;
+        font-size: 0.875rem !important;
 
         .v-select__selection-text {
             font-size: 12px;
