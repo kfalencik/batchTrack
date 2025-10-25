@@ -43,31 +43,93 @@
         @close="closeEdit"
     >
         <v-container v-if="edited">
+            <!-- Help Section -->
             <v-row>
-                <v-col cols="6">
+                <v-col cols="12">
+                    <v-card variant="flat" class="help-card mb-6">
+                        <v-card-title class="help-card-title">
+                            <v-icon class="help-icon">mdi-lightbulb-on</v-icon>
+                            <span>Fermenter Setup Guidelines</span>
+                            <v-spacer />
+                            <v-btn
+                                variant="text"
+                                size="small"
+                                @click="showHelp = !showHelp"
+                                :color="showHelp ? 'white' : 'rgba(255,255,255,0.7)'"
+                            >
+                                {{ showHelp ? 'Hide' : 'Show' }} Help
+                                <v-icon :class="{ 'rotate-180': showHelp }">mdi-chevron-down</v-icon>
+                            </v-btn>
+                        </v-card-title>
+                        <v-expand-transition>
+                            <v-card-text v-show="showHelp" class="help-card-content">
+                                <div class="help-grid">
+                                    <div class="help-item">
+                                        <div class="help-item-header">
+                                            <v-avatar size="40" class="help-avatar">
+                                                <v-icon color="white">mdi-identifier</v-icon>
+                                            </v-avatar>
+                                            <h4>Fermenter ID</h4>
+                                        </div>
+                                        <p>Unique identifier for tracking and organization. Use simple codes like "1", "F1", "Tank-A".</p>
+                                    </div>
+                                    
+                                    <div class="help-item">
+                                        <div class="help-item-header">
+                                            <v-avatar size="40" class="help-avatar">
+                                                <v-icon color="white">mdi-water</v-icon>
+                                            </v-avatar>
+                                            <h4>Capacity Planning</h4>
+                                        </div>
+                                        <p>Set the maximum brewing capacity to prevent overfilling and help with batch planning. Leave some headspace for fermentation activity.</p>
+                                    </div>
+                                    
+                                    <div class="help-item">
+                                        <div class="help-item-header">
+                                            <v-avatar size="40" class="help-avatar">
+                                                <v-icon color="white">mdi-tag</v-icon>
+                                            </v-avatar>
+                                            <h4>Organization</h4>
+                                        </div>
+                                        <p>Use nicknames and notes to distinguish between similar fermenters and track important details like maintenance schedules.</p>
+                                    </div>
+                                </div>
+                            </v-card-text>
+                        </v-expand-transition>
+                    </v-card>
+                </v-col>
+            </v-row>
+
+            <v-row>
+                <v-col cols="12">
                     <FormField
                         v-model="edited.id"
-                        label="ID"
+                        label="Fermenter ID"
                         type="text"
-                        placeholder="Unique identifier (e.g. 1, F1)"
+                        :required="true"
+                        placeholder="e.g. 1, F1, Tank-A"
+                        hint="Unique identifier for this fermenter"
                         prepend-icon="mdi-identifier"
                     />
                 </v-col>
-                <v-col cols="6">
+                <v-col cols="12">
                     <FormField
-                        v-model="edited.size"
-                        label="Size (L)"
+                        v-model="edited.capacity"
+                        label="Capacity (L)"
                         type="number"
-                        placeholder="Liters (e.g. 20)"
-                        prepend-icon="mdi-cup-water"
+                        :required="true"
+                        placeholder="e.g. 25"
+                        hint="Maximum brewing volume in litres"
+                        prepend-icon="mdi-water"
                     />
                 </v-col>
-                <v-col cols="6">
+                <v-col cols="12">
                     <FormField
                         v-model="edited.name"
                         label="Nickname"
                         type="text"
-                        placeholder="Optional name"
+                        placeholder="e.g. Big Blue, Workshop Tank..."
+                        hint="Optional friendly name for easy identification"
                         prepend-icon="mdi-tag"
                     />
                 </v-col>
@@ -76,7 +138,8 @@
                         v-model="edited.notes"
                         label="Notes"
                         type="textarea"
-                        placeholder="Optional notes"
+                        placeholder="Equipment details, cleaning schedule, special features..."
+                        hint="Optional notes and maintenance reminders"
                         prepend-icon="mdi-note-text"
                     />
                 </v-col>
@@ -110,6 +173,7 @@ const fermenters = computed(() => dataStore.fermenters);
 const editDialog = ref(false);
 const edited = ref(null);
 const isAdding = ref(false);
+const showHelp = ref(false);
 
 function openAdd() {
   edited.value = { id: '', size: null, name: '', notes: '' };
@@ -184,6 +248,84 @@ useHead({ title: 'Fermenters | BatchTrack' });
 .modern-data-table :deep(.v-data-table-header) {
     background: rgb(248 250 252);
     border-bottom: 1px solid rgb(226 232 240 / 0.5);
+}
+
+/* Help section styling */
+.help-card {
+    background: linear-gradient(135deg, rgb(99 102 241) 0%, rgb(139 92 246) 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+}
+
+.help-card-title {
+    color: white;
+    padding: 1.5rem 2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.help-icon {
+    font-size: 1.5rem;
+    color: rgb(255 255 255 / 0.9);
+}
+
+.help-card-content {
+    background: white;
+    padding: 2rem;
+}
+
+.help-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.help-item {
+    background: rgb(248 250 252);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgb(226 232 240);
+    transition: all 0.3s ease;
+}
+
+.help-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: rgb(99 102 241);
+}
+
+.help-item-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.help-avatar {
+    background: linear-gradient(135deg, rgb(99 102 241), rgb(139 92 246));
+    flex-shrink: 0;
+}
+
+.help-item h4 {
+    color: rgb(30 41 59);
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.help-item p {
+    color: rgb(71 85 105);
+    margin: 0;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
 }
 
 .modern-data-table :deep(.v-data-table-header .v-data-table__th) {

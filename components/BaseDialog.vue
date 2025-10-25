@@ -5,6 +5,7 @@
     :persistent="persistent"
     @update:model-value="$emit('update:modelValue', $event)"
     transition="dialog-top-transition"
+    scrollable
   >
     <v-card :class="['modern-dialog-card', cardClass]">
       <!-- Modern Header -->
@@ -26,9 +27,11 @@
         </div>
       </div>
       
-      <v-card-text :class="['dialog-content', contentClass]">
-        <slot />
-      </v-card-text>
+      <div class="dialog-content-container">
+        <v-card-text :class="['dialog-content', contentClass]">
+          <slot />
+        </v-card-text>
+      </div>
 
       <v-card-actions v-if="$slots.actions" class="dialog-actions">
         <slot name="actions" />
@@ -83,12 +86,16 @@ defineEmits(['update:modelValue', 'close'])
   box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
 }
 
 .dialog-header {
   padding: 1.5rem 1.5rem 0 1.5rem;
   border-bottom: 1px solid rgb(226 232 240 / 0.5);
-  margin-bottom: 1rem;
+  margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 .dialog-header__content {
@@ -128,8 +135,14 @@ defineEmits(['update:modelValue', 'close'])
   background: rgba(239, 68, 68, 0.1) !important;
 }
 
+.dialog-content-container {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
 .dialog-content {
-  padding: 0 1.5rem 1.5rem 1.5rem !important;
+  padding: 1.5rem 1.5rem 0 1.5rem !important;
 }
 
 .dialog-actions {
@@ -137,6 +150,7 @@ defineEmits(['update:modelValue', 'close'])
   border-top: 1px solid rgb(226 232 240 / 0.5);
   gap: 0.75rem;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .dialog-actions :deep(.v-btn) {

@@ -82,6 +82,73 @@
         >
             <v-form ref="formRef" lazy-validation>
                 <v-container>
+                    <!-- Help Section -->
+                    <v-row>
+                        <v-col cols="12">
+                            <v-card variant="flat" class="help-card mb-6">
+                                <v-card-title class="help-card-title">
+                                    <v-icon class="help-icon">mdi-lightbulb-on</v-icon>
+                                    <span>Recipe Creation Guidelines</span>
+                                    <v-spacer />
+                                    <v-btn
+                                        variant="text"
+                                        size="small"
+                                        @click="showHelp = !showHelp"
+                                        :color="showHelp ? 'white' : 'rgba(255,255,255,0.7)'"
+                                    >
+                                        {{ showHelp ? 'Hide' : 'Show' }} Help
+                                        <v-icon :class="{ 'rotate-180': showHelp }">mdi-chevron-down</v-icon>
+                                    </v-btn>
+                                </v-card-title>
+                                <v-expand-transition>
+                                    <v-card-text v-show="showHelp" class="help-card-content">
+                                        <div class="help-grid">
+                                            <div class="help-item">
+                                                <div class="help-item-header">
+                                                    <v-avatar size="40" class="help-avatar">
+                                                        <v-icon color="white">mdi-silverware-fork-knife</v-icon>
+                                                    </v-avatar>
+                                                    <h4>Recipe Naming</h4>
+                                                </div>
+                                                <p>Use descriptive names that include style, strength, or key ingredients. Examples: "Traditional Ginger Beer", "Spiced Apple Cider", "Hoppy Pale Ale".</p>
+                                            </div>
+                                            
+                                            <div class="help-item">
+                                                <div class="help-item-header">
+                                                    <v-avatar size="40" class="help-avatar">
+                                                        <v-icon color="white">mdi-clipboard-list</v-icon>
+                                                    </v-avatar>
+                                                    <h4>Ingredients</h4>
+                                                </div>
+                                                <p>Select ingredients from your stock inventory. Green badges show available items, red badges indicate out-of-stock items. Units are automatically set from your inventory.</p>
+                                            </div>
+                                            
+                                            <div class="help-item">
+                                                <div class="help-item-header">
+                                                    <v-avatar size="40" class="help-avatar">
+                                                        <v-icon color="white">mdi-scale</v-icon>
+                                                    </v-avatar>
+                                                    <h4>Quantities</h4>
+                                                </div>
+                                                <p>Enter amounts needed for one batch. The system will track stock usage and alert you when ingredients run low.</p>
+                                            </div>
+                                            
+                                            <div class="help-item">
+                                                <div class="help-item-header">
+                                                    <v-avatar size="40" class="help-avatar">
+                                                        <v-icon color="white">mdi-text</v-icon>
+                                                    </v-avatar>
+                                                    <h4>Recipe Notes</h4>
+                                                </div>
+                                                <p>Include brewing instructions, flavor profiles, fermentation notes, or serving suggestions in the description.</p>
+                                            </div>
+                                        </div>
+                                    </v-card-text>
+                                </v-expand-transition>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
                     <!-- Recipe Basic Info -->
                     <v-row>
                         <v-col cols="12">
@@ -90,6 +157,8 @@
                                 label="Recipe Name"
                                 type="text"
                                 :required="true"
+                                placeholder="e.g. Traditional Ginger Beer"
+                                hint="Give your recipe a memorable name"
                                 prepend-icon="mdi-silverware-fork-knife"
                             />
                         </v-col>
@@ -99,7 +168,8 @@
                                 label="Description"
                                 type="textarea"
                                 :rows="3"
-                                placeholder="Describe your recipe..."
+                                placeholder="Describe your recipe, brewing notes, flavor profile..."
+                                hint="Optional detailed description"
                                 prepend-icon="mdi-text"
                             />
                         </v-col>
@@ -118,9 +188,20 @@
                         
                         <v-col cols="12">
                             <div v-for="(ingredient, index) in currentRecipe.ingredients" :key="index" class="ingredient-row mb-4">
-                                <v-card variant="outlined" class="pa-4">
-                                    <v-row align="center">
-                                        <v-col cols="5">
+                                <v-card variant="outlined" class="pa-4 ingredient-card">
+                                    <div class="d-flex align-center justify-space-between mb-3">
+                                        <h4 class="text-h6">Ingredient {{ index + 1 }}</h4>
+                                        <v-btn 
+                                            v-if="currentRecipe.ingredients.length > 1"
+                                            icon="mdi-delete" 
+                                            color="red" 
+                                            variant="text" 
+                                            size="small"
+                                            @click="removeIngredient(index)"
+                                        />
+                                    </div>
+                                    <v-row>
+                                        <v-col cols="12">
                                             <v-select
                                                 v-model="ingredient.itemId"
                                                 :items="ingredientItemOptions"
@@ -129,7 +210,9 @@
                                                 label="Select Ingredient"
                                                 required
                                                 variant="outlined"
-                                                class="mb-2"
+                                                class="mb-2 modern-select"
+                                                hint="Choose from your stock inventory"
+                                                persistent-hint
                                                 @update:model-value="(itemId) => onIngredientItemSelected(itemId, index)"
                                             >
                                                 <template #prepend-inner>
@@ -154,15 +237,18 @@
                                                 </template>
                                             </v-select>
                                         </v-col>
-                                        <v-col cols="3">
+                                        <v-col cols="6">
                                             <FormField
                                                 v-model="ingredient.amount"
                                                 label="Amount"
                                                 type="number"
                                                 :required="true"
+                                                placeholder="e.g. 500"
+                                                hint="Quantity needed for recipe"
+                                                prepend-icon="mdi-scale"
                                             />
                                         </v-col>
-                                        <v-col cols="2">
+                                        <v-col cols="6">
                                             <FormField
                                                 v-model="ingredient.unit"
                                                 label="Unit"
@@ -170,19 +256,9 @@
                                                 :placeholder="getIngredientPlaceholderUnit(ingredient.itemId)"
                                                 :readonly="true"
                                                 :required="true"
+                                                hint="Unit from stock item"
+                                                prepend-icon="mdi-ruler"
                                             />
-                                        </v-col>
-                                        <v-col cols="2" class="d-flex justify-center">
-                                            <v-btn 
-                                                icon 
-                                                color="red" 
-                                                variant="outlined"
-                                                size="small" 
-                                                @click="removeIngredient(index)"
-                                                :disabled="currentRecipe.ingredients.length === 1"
-                                            >
-                                                <v-icon>mdi-delete</v-icon>
-                                            </v-btn>
                                         </v-col>
                                     </v-row>
                                 </v-card>
@@ -236,6 +312,7 @@ const stockGroups = ref([])
 const loading = ref(false)
 const dialog = ref(false)
 const isEditing = ref(false)
+const showHelp = ref(false)
 const currentRecipe = ref({
     id: '',
     name: '',
@@ -496,6 +573,119 @@ onMounted(async () => {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
+/* Help section styling */
+.help-card {
+    background: linear-gradient(135deg, rgb(99 102 241) 0%, rgb(139 92 246) 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+}
+
+.help-card-title {
+    color: white;
+    padding: 1.5rem 2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.help-icon {
+    font-size: 1.5rem;
+    color: rgb(255 255 255 / 0.9);
+}
+
+.help-card-content {
+    background: white;
+    padding: 2rem;
+}
+
+.help-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.help-item {
+    background: rgb(248 250 252);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgb(226 232 240);
+    transition: all 0.3s ease;
+}
+
+.help-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: rgb(99 102 241);
+}
+
+.help-item-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.help-avatar {
+    background: linear-gradient(135deg, rgb(99 102 241), rgb(139 92 246));
+    flex-shrink: 0;
+}
+
+.help-item h4 {
+    color: rgb(30 41 59);
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.help-item p {
+    color: rgb(71 85 105);
+    margin: 0;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+}
+
+/* Modern form styling */
+.modern-select :deep(.v-field) {
+    background: rgb(248 250 252);
+    border: 1px solid rgb(226 232 240);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.modern-select :deep(.v-field:hover) {
+    border-color: rgb(148 163 184);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transform: translateY(-1px);
+}
+
+.modern-select :deep(.v-input--focused .v-field) {
+    border-color: rgb(99, 102, 241);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    background: white;
+    transform: translateY(-1px);
+}
+
+/* Ingredient card styling */
+.ingredient-card {
+    border: 2px solid rgb(226 232 240) !important;
+    transition: all 0.3s ease;
+    background: rgb(248 250 252);
+}
+
+.ingredient-card:hover {
+    border-color: rgb(99, 102, 241) !important;
+    box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+    transform: translateY(-2px);
+}
+
+/* Enhanced field styling */
 .v-text-field.v-input--is-focused .v-field__outline {
     --v-field-border-width: 2px;
 }

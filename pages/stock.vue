@@ -153,285 +153,371 @@
             </v-window-item>
         </v-window>
 
-        <v-dialog v-model="editDialog" width="1200">
-            <v-card>
-                <v-toolbar color="primary" dark>
-                    <v-toolbar-title>{{ isPreview ? 'Preview Group' : (isAdding ? 'Add Group' : 'Edit Group') }}</v-toolbar-title>
-                    <v-spacer />
-                    <v-btn icon @click="closeEdit">
-                        <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                </v-toolbar>
-                <v-card-text v-if="edited">
-                    <v-form ref="formRef" lazy-validation>
-                        <v-container>
-                            <v-row>
-                                <v-col cols="12">
-                                    <FormField
-                                        v-model="edited.name"
-                                        label="Group Name"
-                                        type="text"
-                                        :required="true"
-                                        :readonly="isPreview"
-                                        prepend-icon="mdi-folder"
+        <BaseDialog
+            v-model="editDialog"
+            :title="isPreview ? 'Preview Group' : (isAdding ? 'Add Group' : 'Edit Group')"
+            title-icon="mdi-folder"
+            max-width="1200px"
+            @close="closeEdit"
+        >
+            <v-form v-if="edited" ref="formRef" lazy-validation>
+                <v-container>
+                    <!-- Help Section -->
+                    <v-row v-if="!isPreview">
+                        <v-col cols="12">
+                            <v-card variant="flat" class="help-card mb-6">
+                                <v-card-title class="help-card-title">
+                                    <v-icon class="help-icon">mdi-lightbulb-on</v-icon>
+                                    <span>Stock Management Guidelines</span>
+                                    <v-spacer />
+                                    <v-btn
+                                        variant="text"
+                                        size="small"
+                                        @click="showHelp = !showHelp"
+                                        :color="showHelp ? 'primary' : 'default'"
+                                    >
+                                        {{ showHelp ? 'Hide' : 'Show' }} Help
+                                        <v-icon :class="{ 'rotate-180': showHelp }">mdi-chevron-down</v-icon>
+                                    </v-btn>
+                                </v-card-title>
+                                <v-expand-transition>
+                                    <v-card-text v-show="showHelp" class="help-card-content">
+                                        <div class="help-grid">
+                                            <div class="help-item">
+                                                <div class="help-item-header">
+                                                    <v-avatar size="40" class="help-avatar">
+                                                        <v-icon color="white">mdi-folder</v-icon>
+                                                    </v-avatar>
+                                                    <h4>Stock Groups</h4>
+                                                </div>
+                                                <p>Organize inventory by type, supplier, or usage. Examples: "Brewing Ingredients", "Hops & Spices", "Packaging Supplies".</p>
+                                            </div>
+                                            
+                                            <div class="help-item">
+                                                <div class="help-item-header">
+                                                    <v-avatar size="40" class="help-avatar">
+                                                        <v-icon color="white">mdi-package-variant</v-icon>
+                                                    </v-avatar>
+                                                    <h4>Product Names</h4>
+                                                </div>
+                                                <p>Use clear, descriptive names. Include brand names or specifications when relevant for consistency.</p>
+                                            </div>
+                                            
+                                            <div class="help-item">
+                                                <div class="help-item-header">
+                                                    <v-avatar size="40" class="help-avatar">
+                                                        <v-icon color="white">mdi-ruler</v-icon>
+                                                    </v-avatar>
+                                                    <h4>Units & Quantities</h4>
+                                                </div>
+                                                <p>Be consistent with units across similar ingredients. Common units: g, kg, ml, L. This ensures accurate recipe calculations.</p>
+                                            </div>
+                                            
+                                            <div class="help-item">
+                                                <div class="help-item-header">
+                                                    <v-avatar size="40" class="help-avatar">
+                                                        <v-icon color="white">mdi-currency-gbp</v-icon>
+                                                    </v-avatar>
+                                                    <h4>Cost Tracking</h4>
+                                                </div>
+                                                <p>Track prices to monitor batch costs and profitability. Include dates to track price changes over time.</p>
+                                            </div>
+                                        </div>
+                                    </v-card-text>
+                                </v-expand-transition>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <v-row>
+                        <v-col cols="12">
+                            <FormField
+                                v-model="edited.name"
+                                label="Group Name"
+                                type="text"
+                                :required="true"
+                                :readonly="isPreview"
+                                placeholder="e.g. Brewing Ingredients, Hops, Grains..."
+                                hint="Name for this stock group"
+                                prepend-icon="mdi-folder"
+                            />
+                        </v-col>
+                    </v-row>
+
+                    <v-divider class="my-4" />
+
+                    <v-row>
+                        <v-col cols="12">
+                            <div class="d-flex align-center mb-3">
+                                <v-icon color="primary" class="mr-2">mdi-package-variant-closed</v-icon>
+                                <h3>Stock Items</h3>
+                            </div>
+                        </v-col>
+                        <v-col cols="12" v-for="(item, idx) in edited.items" :key="idx">
+                            <v-card variant="outlined" class="pa-4 mb-4 stock-item-card">
+                                <div class="d-flex align-center justify-space-between mb-3">
+                                    <h4 class="text-h6">Item {{ idx + 1 }}</h4>
+                                    <v-btn 
+                                        v-if="!isPreview && edited.items.length > 1"
+                                        icon="mdi-delete" 
+                                        color="red" 
+                                        variant="text" 
+                                        size="small"
+                                        @click="removeItem(idx)"
                                     />
-                                </v-col>
-                            </v-row>
-
-                            <v-divider class="my-4" />
-
-                            <v-row>
-                                <v-col cols="12">
-                                    <h3 class="mb-3">Items</h3>
-                                </v-col>
-                                <v-col cols="12" v-for="(item, idx) in edited.items" :key="idx">
-                                    <v-row class="align-center">
-                                        <v-col cols="5">
-                                            <FormField
-                                                v-model="item.product"
-                                                label="Product"
-                                                type="text"
-                                                :required="true"
-                                                :readonly="isPreview"
-                                                prepend-icon="mdi-package-variant"
-                                            />
-                                        </v-col>
-                                        <v-col cols="2">
-                                            <FormField
-                                                v-model="item.quantity"
-                                                label="Quantity"
-                                                type="number"
-                                                :required="true"
-                                                :readonly="isPreview"
-                                            />
-                                        </v-col>
-                                        <v-col cols="2">
-                                            <FormField
-                                                v-model="item.unit"
-                                                label="Unit"
-                                                type="select"
-                                                :items="units"
-                                                :readonly="isPreview"
-                                            />
-                                        </v-col>
-                                        <v-col cols="2">
-                                            <FormField
-                                                v-model="item.price"
-                                                label="Price"
-                                                type="number"
-                                                :readonly="isPreview"
-                                                prepend-icon="mdi-currency-gbp"
-                                            />
-                                        </v-col>
-                                        <v-col cols="1" class="d-flex align-center">
-                                            <v-btn icon color="red" @click="removeItem(idx)" v-if="!isPreview"><v-icon>mdi-delete</v-icon></v-btn>
-                                        </v-col>
-                                    </v-row>
-                                    <v-row>
-                                        <v-col cols="6">
-                                            <v-text-field
-                                                v-model="item.dateBought"
-                                                label="Date Bought"
-                                                type="date"
-                                                variant="outlined"
-                                                class="mb-2"
-                                                :readonly="isPreview"
-                                            >
-                                                <template #prepend-inner>
-                                                    <v-icon color="primary">mdi-calendar</v-icon>
-                                                </template>
-                                            </v-text-field>
-                                        </v-col>
-                                        <v-col cols="6">
-                                            <v-text-field
-                                                v-model="item.expiryDate"
-                                                label="Expiry Date"
-                                                type="date"
-                                                variant="outlined"
-                                                class="mb-2"
-                                                :readonly="isPreview"
-                                            >
-                                                <template #prepend-inner>
-                                                    <v-icon color="primary">mdi-calendar-alert</v-icon>
-                                                </template>
-                                            </v-text-field>
-                                        </v-col>
-                                    </v-row>
-                                </v-col>
-                                <v-col cols="12">
-                                    <v-btn text color="primary" @click="addItem" v-if="!isPreview"><v-icon class="mr-2">mdi-plus</v-icon>Add Item</v-btn>
-                                </v-col>
-                            </v-row>
-                        </v-container>
-                    </v-form>
-                </v-card-text>
-                <v-card-actions>
-                    <v-spacer />
-                    <v-btn text @click="closeEdit">Close</v-btn>
-                    <v-btn v-if="!isPreview" color="primary" @click="saveEdit" :disabled="!isFormValid">Save</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+                                </div>
+                                <v-row class="align-center">
+                                    <v-col cols="12">
+                                        <FormField
+                                            v-model="item.product"
+                                            label="Product Name"
+                                            type="text"
+                                            :required="true"
+                                            :readonly="isPreview"
+                                            placeholder="e.g. Ginger Root, Organic Sugar..."
+                                            hint="Product or ingredient name"
+                                            prepend-icon="mdi-package-variant"
+                                        />
+                                    </v-col>
+                                    <v-col cols="4">
+                                        <FormField
+                                            v-model="item.quantity"
+                                            label="Quantity"
+                                            type="number"
+                                            :required="true"
+                                            :readonly="isPreview"
+                                            placeholder="e.g. 500"
+                                            hint="Amount in stock"
+                                            prepend-icon="mdi-counter"
+                                        />
+                                    </v-col>
+                                    <v-col cols="4">
+                                        <FormField
+                                            v-model="item.unit"
+                                            label="Unit"
+                                            type="select"
+                                            :items="units"
+                                            :readonly="isPreview"
+                                            hint="Unit of measurement"
+                                            prepend-icon="mdi-ruler"
+                                        />
+                                    </v-col>
+                                    <v-col cols="4">
+                                        <FormField
+                                            v-model="item.price"
+                                            label="Price (£)"
+                                            type="number"
+                                            :readonly="isPreview"
+                                            placeholder="e.g. 12.50"
+                                            hint="Cost per unit (optional)"
+                                            prepend-icon="mdi-currency-gbp"
+                                        />
+                                    </v-col>
+                                    <v-col cols="6">
+                                        <v-text-field
+                                            v-model="item.dateBought"
+                                            label="Date Bought"
+                                            type="date"
+                                            variant="outlined"
+                                            class="mb-2 modern-field"
+                                            :readonly="isPreview"
+                                            hint="Purchase date (optional)"
+                                            persistent-hint
+                                        >
+                                            <template #prepend-inner>
+                                                <v-icon color="primary">mdi-calendar</v-icon>
+                                            </template>
+                                        </v-text-field>
+                                    </v-col>
+                                    <v-col cols="6">
+                                        <v-text-field
+                                            v-model="item.expiryDate"
+                                            label="Expiry Date"
+                                            type="date"
+                                            variant="outlined"
+                                            class="mb-2 modern-field"
+                                            :readonly="isPreview"
+                                            hint="Best before date (optional)"
+                                            persistent-hint
+                                        >
+                                            <template #prepend-inner>
+                                                <v-icon color="primary">mdi-calendar-alert</v-icon>
+                                            </template>
+                                        </v-text-field>
+                                    </v-col>
+                                </v-row>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12">
+                            <v-btn text color="primary" @click="addItem" v-if="!isPreview"><v-icon class="mr-2">mdi-plus</v-icon>Add Item</v-btn>
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-form>
+            
+            <template #actions>
+                <v-spacer />
+                <v-btn variant="outlined" @click="closeEdit">Close</v-btn>
+                <v-btn v-if="!isPreview" color="primary" @click="saveEdit" :disabled="!isFormValid">Save</v-btn>
+            </template>
+        </BaseDialog>
 
         <!-- Product Dialog -->
-        <v-dialog v-model="productDialog" width="1000">
-            <v-card>
-                <v-toolbar color="primary" dark>
-                    <v-toolbar-title>{{ isAddingProduct ? 'Add Product from Batch' : 'Edit Product' }}</v-toolbar-title>
-                    <v-spacer />
-                    <v-btn icon @click="closeProductDialog">
-                        <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                </v-toolbar>
-                <v-card-text v-if="editedProduct">
-                    <v-form ref="productFormRef" lazy-validation>
-                        <v-container>
-                            <!-- Batch Selection Section (only for new products) -->
-                            <v-row v-if="isAddingProduct">
-                                <v-col cols="12">
-                                    <v-select
-                                        :items="readyToPackBatches"
-                                        label="Select Batch"
-                                        v-model="editedProduct.selectedBatch"
-                                        item-title="label"
-                                        item-value="value"
-                                        required
-                                        :rules="[requiredRule]"
-                                        hint="Choose a batch that's ready to pack"
-                                        persistent-hint
-                                        @update:modelValue="onBatchSelected"
-                                    />
-                                </v-col>
-                                <v-col cols="12" v-if="editedProduct.selectedBatch">
-                                    <v-alert type="info" class="mb-4">
-                                        <div><strong>Available brew:</strong> {{ getTotalBatchAmount(selectedBatchData) }} L</div>
-                                        <div><strong>Batch:</strong> {{ selectedBatchData ? getFermenterLabelById(selectedBatchData.fermenter) : '' }}</div>
-                                        <div><strong>ABV:</strong> {{ selectedBatchData ? getABV(selectedBatchData) : '' }}%</div>
-                                    </v-alert>
-                                </v-col>
-                            </v-row>
+        <BaseDialog
+            v-model="productDialog"
+            :title="isAddingProduct ? 'Add Product from Batch' : 'Edit Product'"
+            title-icon="mdi-package-variant"
+            max-width="1000px"
+            @close="closeProductDialog"
+        >
+            <v-form v-if="editedProduct" ref="productFormRef" lazy-validation>
+                <v-container>
+                    <!-- Batch Selection Section (only for new products) -->
+                    <v-row v-if="isAddingProduct">
+                        <v-col cols="12">
+                            <v-select
+                                :items="readyToPackBatches"
+                                label="Select Batch"
+                                v-model="editedProduct.selectedBatch"
+                                item-title="label"
+                                item-value="value"
+                                required
+                                :rules="[requiredRule]"
+                                hint="Choose a batch that's ready to pack"
+                                persistent-hint
+                                @update:modelValue="onBatchSelected"
+                            />
+                        </v-col>
+                        <v-col cols="12" v-if="editedProduct.selectedBatch">
+                            <v-alert type="info" class="mb-4">
+                                <div><strong>Available brew:</strong> {{ getTotalBatchAmount(selectedBatchData) }} L</div>
+                                <div><strong>Batch:</strong> {{ selectedBatchData ? getFermenterLabelById(selectedBatchData.fermenter) : '' }}</div>
+                                <div><strong>ABV:</strong> {{ selectedBatchData ? getABV(selectedBatchData) : '' }}%</div>
+                            </v-alert>
+                        </v-col>
+                    </v-row>
 
-                            <!-- Product Name -->
-                            <v-row>
-                                <v-col cols="12">
-                                    <v-text-field 
-                                        class="required-field" 
-                                        label="Product Name" 
-                                        v-model="editedProduct.productName" 
-                                        :rules="[requiredRule]" 
-                                        required 
-                                    />
-                                </v-col>
-                            </v-row>
+                    <!-- Product Name -->
+                    <v-row>
+                        <v-col cols="12">
+                            <v-text-field 
+                                class="required-field" 
+                                label="Product Name" 
+                                v-model="editedProduct.productName" 
+                                :rules="[requiredRule]" 
+                                required 
+                            />
+                        </v-col>
+                    </v-row>
 
-                            <!-- Container Groups Section (only for new products with batch selected) -->
-                            <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
-                                <v-col cols="12">
-                                    <h3 class="mb-3">Container Distribution</h3>
-                                    <p class="text-caption text--secondary mb-4">Distribute your brew across different container types. You can add multiple groups to split the total amount.</p>
-                                </v-col>
-                            </v-row>
+                    <!-- Container Groups Section (only for new products with batch selected) -->
+                    <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
+                        <v-col cols="12">
+                            <h3 class="mb-3">Container Distribution</h3>
+                            <p class="text-caption text--secondary mb-4">Distribute your brew across different container types. You can add multiple groups to split the total amount.</p>
+                        </v-col>
+                    </v-row>
 
-                            <v-row v-for="(group, idx) in containerGroups" :key="idx" class="mb-4" v-if="isAddingProduct && editedProduct.selectedBatch">
-                                <v-col cols="12">
-                                    <v-card outlined class="pa-4">
-                                        <v-row class="align-center">
-                                            <v-col cols="3">
-                                                <v-select
-                                                    :items="containerTypes"
-                                                    label="Container Type"
-                                                    v-model="group.containerType"
-                                                    required
-                                                    :rules="[requiredRule]"
-                                                />
-                                            </v-col>
-                                            <v-col cols="2">
-                                                <v-text-field
-                                                    label="Container Size"
-                                                    type="number"
-                                                    v-model="group.containerSize"
-                                                    suffix="L"
-                                                    hint="Size per container"
-                                                    required
-                                                    :rules="[requiredNumberRule, (v) => validateContainerInput(v, group, 'size')]"
-                                                />
-                                            </v-col>
-                                            <v-col cols="2">
-                                                <v-text-field
-                                                    label="Quantity"
-                                                    type="number"
-                                                    v-model="group.quantity"
-                                                    hint="Number of containers"
-                                                    required
-                                                    :rules="[requiredNumberRule, (v) => validateContainerInput(v, group, 'quantity')]"
-                                                />
-                                            </v-col>
-                                            <v-col cols="2">
-                                                <div class="text-center">
-                                                    <div class="text-h6">{{ getGroupTotal(group) }}L</div>
-                                                    <div class="text-caption">Total</div>
-                                                </div>
-                                            </v-col>
-                                            <v-col cols="2">
-                                                <v-text-field
-                                                    label="Notes"
-                                                    v-model="group.notes"
-                                                    hint="Optional"
-                                                />
-                                            </v-col>
-                                            <v-col cols="1" class="text-center">
-                                                <v-btn
-                                                    icon
-                                                    color="red"
-                                                    flat
-                                                    size="small"
-                                                    @click="removeContainerGroup(idx)"
-                                                    :disabled="containerGroups.length <= 1"
-                                                >
-                                                    <v-icon>mdi-delete</v-icon>
-                                                </v-btn>
-                                            </v-col>
-                                        </v-row>
-                                    </v-card>
-                                </v-col>
-                            </v-row>
+                    <v-row v-for="(group, idx) in containerGroups" :key="idx" class="mb-4" v-if="isAddingProduct && editedProduct.selectedBatch">
+                        <v-col cols="12">
+                            <v-card outlined class="pa-4">
+                                <v-row class="align-center">
+                                    <v-col cols="3">
+                                        <v-select
+                                            :items="containerTypes"
+                                            label="Container Type"
+                                            v-model="group.containerType"
+                                            required
+                                            :rules="[requiredRule]"
+                                        />
+                                    </v-col>
+                                    <v-col cols="2">
+                                        <v-text-field
+                                            label="Container Size"
+                                            type="number"
+                                            v-model="group.containerSize"
+                                            suffix="L"
+                                            hint="Size per container"
+                                            required
+                                            :rules="[requiredNumberRule, (v) => validateContainerInput(v, group, 'size')]"
+                                        />
+                                    </v-col>
+                                    <v-col cols="2">
+                                        <v-text-field
+                                            label="Quantity"
+                                            type="number"
+                                            v-model="group.quantity"
+                                            hint="Number of containers"
+                                            required
+                                            :rules="[requiredNumberRule, (v) => validateContainerInput(v, group, 'quantity')]"
+                                        />
+                                    </v-col>
+                                    <v-col cols="2">
+                                        <div class="text-center">
+                                            <div class="text-h6">{{ getGroupTotal(group) }}L</div>
+                                            <div class="text-caption">Total</div>
+                                        </div>
+                                    </v-col>
+                                    <v-col cols="2">
+                                        <v-text-field
+                                            label="Notes"
+                                            v-model="group.notes"
+                                            hint="Optional"
+                                        />
+                                    </v-col>
+                                    <v-col cols="1" class="text-center">
+                                        <v-btn
+                                            icon
+                                            color="red"
+                                            flat
+                                            size="small"
+                                            @click="removeContainerGroup(idx)"
+                                            :disabled="containerGroups.length <= 1"
+                                        >
+                                            <v-icon>mdi-delete</v-icon>
+                                        </v-btn>
+                                    </v-col>
+                                </v-row>
+                            </v-card>
+                        </v-col>
+                    </v-row>
 
-                            <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
-                                <v-col cols="12">
-                                    <v-btn
-                                        color="primary"
-                                        outlined
-                                        @click="addContainerGroup"
-                                        class="mb-4"
-                                    >
-                                        <v-icon class="mr-2">mdi-plus</v-icon>
-                                        Add Another Container Group
-                                    </v-btn>
-                                </v-col>
-                            </v-row>
+                    <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
+                        <v-col cols="12">
+                            <v-btn
+                                color="primary"
+                                outlined
+                                @click="addContainerGroup"
+                                class="mb-4"
+                            >
+                                <v-icon class="mr-2">mdi-plus</v-icon>
+                                Add Another Container Group
+                            </v-btn>
+                        </v-col>
+                    </v-row>
 
-            <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
-                <v-col cols="12">
-                    <v-alert 
-                        :type="getTotalDistributed() > getTotalBatchAmount(selectedBatchData) ? 'error' : (getTotalDistributed() < getTotalBatchAmount(selectedBatchData) ? 'warning' : 'success')" 
-                        class="mt-4"
-                    >
-                        <div><strong>Total distributed:</strong> {{ getTotalDistributed() }} L</div>
-                        <div><strong>Available:</strong> {{ getTotalBatchAmount(selectedBatchData) }} L</div>
-                        <div><strong>Remaining:</strong> {{ (getTotalBatchAmount(selectedBatchData) - getTotalDistributed()).toFixed(1) }} L</div>
-                        
-                        <div v-if="getTotalDistributed() > getTotalBatchAmount(selectedBatchData)" class="mt-2">
-                            <strong class="text-red">❌ OVER-ASSIGNED: You cannot distribute more than the available brew volume!</strong>
-                        </div>
-                        <div v-else-if="getTotalDistributed() < getTotalBatchAmount(selectedBatchData)" class="mt-2">
-                            <small>⚠️ You have remaining brew that won't be packaged. This could be intentional (testing, spillage, etc.)</small>
-                        </div>
-                        <div v-else class="mt-2">
-                            <strong class="text-green">✅ Perfect! All available brew has been distributed.</strong>
-                        </div>
-                    </v-alert>
-                </v-col>
-            </v-row>                            <!-- Legacy single container fields (only for editing existing products) -->
+        <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
+            <v-col cols="12">
+                <v-alert 
+                    :type="getTotalDistributed() > getTotalBatchAmount(selectedBatchData) ? 'error' : (getTotalDistributed() < getTotalBatchAmount(selectedBatchData) ? 'warning' : 'success')" 
+                    class="mt-4"
+                >
+                    <div><strong>Total distributed:</strong> {{ getTotalDistributed() }} L</div>
+                    <div><strong>Available:</strong> {{ getTotalBatchAmount(selectedBatchData) }} L</div>
+                    <div><strong>Remaining:</strong> {{ (getTotalBatchAmount(selectedBatchData) - getTotalDistributed()).toFixed(1) }} L</div>
+                    
+                    <div v-if="getTotalDistributed() > getTotalBatchAmount(selectedBatchData)" class="mt-2">
+                        <strong class="text-red">❌ OVER-ASSIGNED: You cannot distribute more than the available brew volume!</strong>
+                    </div>
+                    <div v-else-if="getTotalDistributed() < getTotalBatchAmount(selectedBatchData)" class="mt-2">
+                        <small>⚠️ You have remaining brew that won't be packaged. This could be intentional (testing, spillage, etc.)</small>
+                    </div>
+                    <div v-else class="mt-2">
+                        <strong class="text-green">✅ Perfect! All available brew has been distributed.</strong>
+                    </div>
+                </v-alert>
+            </v-col>
+        </v-row>                            <!-- Legacy single container fields (only for editing existing products) -->
                             <v-row v-if="!isAddingProduct">
                                 <v-col cols="6">
                                     <v-select
@@ -488,16 +574,15 @@
                             </v-row>
                         </v-container>
                     </v-form>
-                </v-card-text>
-                <v-card-actions>
-                    <v-spacer />
-                    <v-btn text @click="closeProductDialog">Cancel</v-btn>
-                    <v-btn color="primary" @click="saveProduct" :disabled="!isProductFormValid">
-                        {{ isAddingProduct ? 'Create Products' : 'Save' }}
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+                    
+                    <template #actions>
+                        <v-spacer />
+                        <v-btn variant="outlined" @click="closeProductDialog">Cancel</v-btn>
+                        <v-btn color="primary" @click="saveProduct" :disabled="!isProductFormValid">
+                            {{ isAddingProduct ? 'Create Products' : 'Save' }}
+                        </v-btn>
+                    </template>
+        </BaseDialog>
     </div>
 </template>
 
@@ -525,6 +610,7 @@ const itemHeaders = ref([
 
 // Tab state
 const activeTab = ref('ingredients')
+const showHelp = ref(false)
 
 // Product headers for the products section
 const productHeaders = ref([
@@ -1105,6 +1191,118 @@ function onBatchSelected(batchId) {
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
     overflow: hidden;
     backdrop-filter: blur(8px);
+}
+
+/* Help section styling */
+.help-card {
+    background: linear-gradient(135deg, rgb(99 102 241) 0%, rgb(139 92 246) 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+}
+
+.help-card-title {
+    color: white;
+    padding: 1.5rem 2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.help-icon {
+    font-size: 1.5rem;
+    color: rgb(255 255 255 / 0.9);
+}
+
+.help-card-content {
+    background: white;
+    padding: 2rem;
+}
+
+.help-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.help-item {
+    background: rgb(248 250 252);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgb(226 232 240);
+    transition: all 0.3s ease;
+}
+
+.help-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: rgb(99 102 241);
+}
+
+.help-item-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.help-avatar {
+    background: linear-gradient(135deg, rgb(99 102 241), rgb(139 92 246));
+    flex-shrink: 0;
+}
+
+.help-item h4 {
+    color: rgb(30 41 59);
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.help-item p {
+    color: rgb(71 85 105);
+    margin: 0;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+}
+
+/* Modern form styling */
+.modern-field :deep(.v-field) {
+    background: rgb(248 250 252);
+    border: 1px solid rgb(226 232 240);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.modern-field :deep(.v-field:hover) {
+    border-color: rgb(148 163 184);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transform: translateY(-1px);
+}
+
+.modern-field :deep(.v-input--focused .v-field) {
+    border-color: rgb(99, 102, 241);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    background: white;
+    transform: translateY(-1px);
+}
+
+/* Stock item card styling */
+.stock-item-card {
+    border: 2px solid rgb(226 232 240) !important;
+    transition: all 0.3s ease;
+    background: rgb(248 250 252);
+}
+
+.stock-item-card:hover {
+    border-color: rgb(99, 102, 241) !important;
+    box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+    transform: translateY(-2px);
 }
 
 .modern-data-table {
