@@ -7,11 +7,13 @@
         @action="openAdd"
     />
 
-    <v-data-table
-      class="text-sm"
-      :headers="headers"
-      :items="fermenters"
-    >
+    <LoadingWrapper :loading="loading" text="Loading fermenters...">
+        <v-data-table
+          class="text-sm"
+          :headers="headers"
+          :items="fermenters"
+          :loading="loading"
+        >
       <template #item.id="{ item }">
         <span>{{ item && item.id ? `Fermenter #${item.id}` : '-' }}</span>
       </template>
@@ -29,6 +31,7 @@
         />
       </template>
     </v-data-table>
+    </LoadingWrapper>
 
     <BaseDialog
         v-model="editDialog"
@@ -39,16 +42,40 @@
         <v-container v-if="edited">
             <v-row>
                 <v-col cols="6">
-                    <v-text-field label="ID" v-model="edited.id" hint="Unique identifier (e.g. 1, F1)" persistent-hint />
+                    <FormField
+                        v-model="edited.id"
+                        label="ID"
+                        type="text"
+                        placeholder="Unique identifier (e.g. 1, F1)"
+                        prepend-icon="mdi-identifier"
+                    />
                 </v-col>
                 <v-col cols="6">
-                    <v-text-field label="Size (L)" type="number" v-model="edited.size" hint="Liters (e.g. 20)" persistent-hint />
+                    <FormField
+                        v-model="edited.size"
+                        label="Size (L)"
+                        type="number"
+                        placeholder="Liters (e.g. 20)"
+                        prepend-icon="mdi-cup-water"
+                    />
                 </v-col>
                 <v-col cols="6">
-                    <v-text-field label="Nickname" v-model="edited.name" hint="Optional name" persistent-hint />
+                    <FormField
+                        v-model="edited.name"
+                        label="Nickname"
+                        type="text"
+                        placeholder="Optional name"
+                        prepend-icon="mdi-tag"
+                    />
                 </v-col>
                 <v-col cols="12">
-                    <v-textarea label="Notes" v-model="edited.notes" hint="Optional notes" persistent-hint />
+                    <FormField
+                        v-model="edited.notes"
+                        label="Notes"
+                        type="textarea"
+                        placeholder="Optional notes"
+                        prepend-icon="mdi-note-text"
+                    />
                 </v-col>
             </v-row>
         </v-container>
@@ -66,13 +93,14 @@
 import { ref, computed, onMounted } from 'vue';
 
 const headers = ref([
-  { title: 'ID', value: 'id' },
-  { title: 'Nickname', value: 'name' },
-  { title: 'Size (L)', value: 'size' },
-  { title: '', value: 'actions', align: 'right' }
+  { title: 'ID', value: 'id', sortable: true, width: '100px' },
+  { title: 'Nickname', value: 'name', sortable: true },
+  { title: 'Size (L)', value: 'size', sortable: true, align: 'center', width: '120px' },
+  { title: 'Actions', value: 'actions', sortable: false, align: 'center', width: '100px' }
 ]);
 
 const dataStore = useDataStore();
+const loading = ref(false);
 
 const fermenters = computed(() => dataStore.fermenters);
 

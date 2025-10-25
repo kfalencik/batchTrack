@@ -21,11 +21,13 @@
             </v-col>
         </v-row>
 
-         <v-data-table
-            class="text-sm"
-            :headers="headers"
-            :items="displayedBatches"
-        >
+         <LoadingWrapper :loading="loading" text="Loading batches...">
+             <v-data-table
+                class="text-sm"
+                :headers="headers"
+                :items="displayedBatches"
+                :loading="loading"
+            >
             <template #item.recipe="{ item }">
                 <span>{{ getRecipeName(item.recipeId) }}</span>
             </template>
@@ -58,13 +60,11 @@
                 </div>
             </template>
             <template #item.status="{ item }">
-                <v-chip
-                    :color="getStatusColor(getStatus(item))"
-                    dark
-                >
-                    <v-icon class="mr-2">{{ getStatusIcon(getStatus(item)) }}</v-icon>
-                    <span class="uppercase">{{ getStatus(item) }}</span>
-                </v-chip>
+                <StatusChip 
+                    :status="getStatus(item)"
+                    type="batch"
+                    uppercase
+                />
             </template>
             <template #item.actions="{ item }">
                 <DataTableActions 
@@ -77,19 +77,16 @@
                 />
             </template>
         </v-data-table>
-        <v-dialog v-model="editDialog" width="1200">
-            <template #activator="{ props }"></template>
-            <v-card>
-                <v-toolbar color="primary" dark>
-                    <v-toolbar-title>{{ isPreview ? 'Preview Batch' : (isAdding ? 'Add Batch' : 'Update Batch') }}</v-toolbar-title>
-                    <spacer />
-                    <v-btn icon @click="closeEdit">
-                        <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                </v-toolbar>
-                <v-card-text v-if="edited">
-                    <v-form ref="formRef" lazy-validation>
-                        <v-container>
+        </LoadingWrapper>
+        <BaseDialog
+            v-model="editDialog"
+            :title="isPreview ? 'Preview Batch' : (isAdding ? 'Add Batch' : 'Update Batch')"
+            title-icon="mdi-barrel"
+            max-width="1200px"
+            @close="closeEdit"
+        >
+            <v-form v-if="edited" ref="formRef" lazy-validation>
+                <v-container>
                             <v-row>
                                 <v-col cols="6">
                                     <v-select
@@ -127,19 +124,63 @@
                                     />
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field class="required-field" label="Fermentation Days" type="number" v-model="edited.fermentationDays" hint="Number of days (e.g. 10)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
+                                    <FormField
+                                        v-model="edited.fermentationDays"
+                                        label="Fermentation Days"
+                                        type="number"
+                                        :required="true"
+                                        :readonly="isPreview"
+                                        placeholder="Number of days (e.g. 10)"
+                                        prepend-icon="mdi-calendar-clock"
+                                    />
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field class="required-field" label="OG" v-model="edited.readingOG" hint="Original Gravity — format 1.030" persistent-hint placeholder="1.030" :rules="[ogRule]" :readonly="isPreview" required />
+                                    <FormField
+                                        v-model="edited.readingOG"
+                                        label="Original Gravity"
+                                        type="number"
+                                        :required="true"
+                                        :readonly="isPreview"
+                                        placeholder="1.030"
+                                        prepend-icon="mdi-scale"
+                                    />
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field class="required-field" label="Start Date" type="date" v-model="edited.startDateDate" hint="YYYY-MM-DD" persistent-hint :rules="[requiredRule]" :readonly="isPreview" required />
+                                    <v-text-field
+                                        v-model="edited.startDateDate"
+                                        label="Start Date"
+                                        type="date"
+                                        variant="outlined"
+                                        class="mb-2"
+                                        :required="true"
+                                        :readonly="isPreview"
+                                        :rules="[requiredRule]"
+                                    >
+                                        <template #prepend-inner>
+                                            <v-icon color="primary">mdi-calendar</v-icon>
+                                        </template>
+                                    </v-text-field>
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field label="FG" v-model="edited.readingFG" hint="Final Gravity — format 1.000 (assumed if empty)" persistent-hint placeholder="1.000" :readonly="isPreview" />
+                                    <FormField
+                                        v-model="edited.readingFG"
+                                        label="Final Gravity"
+                                        type="number"
+                                        :readonly="isPreview"
+                                        placeholder="1.000"
+                                        prepend-icon="mdi-scale"
+                                    />
                                 </v-col>
                                 <v-col cols="6">
-                                    <v-text-field class="required-field" label="Temp (°C)" type="number" v-model="edited.temp" hint="Temperature in °C (e.g. 20)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
+                                    <FormField
+                                        v-model="edited.temp"
+                                        label="Temperature (°C)"
+                                        type="number"
+                                        :required="true"
+                                        :readonly="isPreview"
+                                        placeholder="Temperature in °C (e.g. 20)"
+                                        prepend-icon="mdi-thermometer"
+                                    />
                                 </v-col>
                                 <v-col cols="6">
                                     <v-text-field label="Flavouring Tea (kg)" type="number" v-model="edited.flavouringTea" hint="Kilograms" persistent-hint :readonly="isPreview" />
@@ -154,15 +195,27 @@
                             </v-row>
                         </v-container>
                     </v-form>
-                </v-card-text>
-                <v-card-actions>
-                    <div class="text-right">
-                        <v-btn text @click="closeEdit">Close</v-btn>
-                        <v-btn v-if="!isPreview" color="primary" @click="saveEdit" :disabled="!isFormValid">Save</v-btn>
-                    </div>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+            
+            <template #actions>
+                <v-spacer />
+                <v-btn 
+                    variant="outlined" 
+                    @click="closeEdit"
+                    class="mr-2"
+                >
+                    Close
+                </v-btn>
+                <v-btn 
+                    v-if="!isPreview" 
+                    color="primary" 
+                    @click="saveEdit" 
+                    :disabled="!isFormValid"
+                    prepend-icon="mdi-content-save"
+                >
+                    Save
+                </v-btn>
+            </template>
+        </BaseDialog>
 
         <!-- Packaging Dialog -->
         <v-dialog v-model="packDialog" width="1000">
@@ -296,22 +349,23 @@ import { ref, computed, onMounted, watch } from 'vue';
 import StatCard from '@/components/StatCard.vue'
     const headers = ref([
         { title: 'Recipe', value: 'recipe', sortable: true },
-        { title: 'Fermenter', value: 'fermenter', prefix: 'Fermenter #', sortable: true },
-        { title: 'Fermentation Days', value: 'fermentationDays', suffix: ' days', sortable: true },
-        { title: 'Batch Start Date', value: 'startDate', sortable: true },
-        { title: 'Batch End Date', value: 'endDate', sortable: true },
-        { title: 'OG (°)', value: 'readingOG', suffix: '°', align: 'center', sortable: true },
-        { title: 'FG (°)', value: 'readingFG', suffix: '°', align: 'center', sortable: true },
-        { title: 'ABV', value: 'abv', align: 'center', sortable: true, align: 'center' },
-        { title: 'Progress', value: 'progress', width: '160px', align: 'center', sortable: false },
-        { title: 'Status', value: 'status', sortable: true },
-        { title: '', value: 'actions', align: 'right' }
+        { title: 'Fermenter', value: 'fermenter', sortable: true, width: '120px' },
+        { title: 'Fermentation Days', value: 'fermentationDays', sortable: true, align: 'center', width: '140px' },
+        { title: 'Start Date', value: 'startDate', sortable: true, width: '120px' },
+        { title: 'End Date', value: 'endDate', sortable: true, width: '120px' },
+        { title: 'OG', value: 'readingOG', sortable: true, align: 'center', width: '80px' },
+        { title: 'FG', value: 'readingFG', sortable: true, align: 'center', width: '80px' },
+        { title: 'ABV', value: 'abv', sortable: true, align: 'center', width: '80px' },
+        { title: 'Progress', value: 'progress', sortable: false, align: 'center', width: '160px' },
+        { title: 'Status', value: 'status', sortable: true, align: 'center', width: '120px' },
+        { title: 'Actions', value: 'actions', sortable: false, align: 'center', width: '120px' }
     ]);
 
     // UI state for filtering & sorting
     const search = ref('')
     const activeFilter = ref('all')
     const sortDesc = ref(true)
+    const loading = ref(false)
 
     // Expose component
     const components = { StatCard }

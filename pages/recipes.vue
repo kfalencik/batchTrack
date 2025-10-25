@@ -18,11 +18,13 @@
             </v-col>
         </v-row>
 
-        <v-data-table
-            class="text-sm"
-            :headers="headers"
-            :items="processedRecipes"
-        >
+        <LoadingWrapper :loading="loading" text="Loading recipes...">
+            <v-data-table
+                class="text-sm"
+                :headers="headers"
+                :items="processedRecipes"
+                :loading="loading"
+            >
             <template #item.ingredients="{ item }">
                 <ChipDisplay 
                     :items="item.ingredients"
@@ -33,10 +35,10 @@
                 />
             </template>
             <template #item.canMake="{ item }">
-                <v-chip :color="canMakeRecipe(item) ? 'green' : 'red'" dark>
-                    <v-icon class="mr-2">{{ canMakeRecipe(item) ? 'mdi-check' : 'mdi-close' }}</v-icon>
-                    {{ canMakeRecipe(item) ? 'Available' : 'Missing Ingredients' }}
-                </v-chip>
+                <StatusChip 
+                    :status="canMakeRecipe(item) ? 'available' : 'missing ingredients'"
+                    type="availability"
+                />
             </template>
             <template #item.estimatedCost="{ item }">
                 <span>£{{ calculateRecipeCost(item).toFixed(2) }}</span>
@@ -49,6 +51,7 @@
                 />
             </template>
         </v-data-table>
+        </LoadingWrapper>
 
         <!-- Add/Edit Recipe Dialog -->
         <BaseDialog
@@ -64,31 +67,23 @@
                     <!-- Recipe Basic Info -->
                     <v-row>
                         <v-col cols="12">
-                            <v-text-field
+                            <FormField
                                 v-model="currentRecipe.name"
                                 label="Recipe Name"
-                                required
-                                :rules="[v => !!v || 'Recipe name is required']"
-                                variant="outlined"
-                                class="mb-2"
-                            >
-                                <template #prepend-inner>
-                                    <v-icon color="primary">mdi-silverware-fork-knife</v-icon>
-                                </template>
-                            </v-text-field>
+                                type="text"
+                                :required="true"
+                                prepend-icon="mdi-silverware-fork-knife"
+                            />
                         </v-col>
                         <v-col cols="12">
-                            <v-textarea
+                            <FormField
                                 v-model="currentRecipe.description"
                                 label="Description"
-                                rows="3"
-                                variant="outlined"
+                                type="textarea"
+                                :rows="3"
                                 placeholder="Describe your recipe..."
-                            >
-                                <template #prepend-inner>
-                                    <v-icon color="primary">mdi-text</v-icon>
-                                </template>
-                            </v-textarea>
+                                prepend-icon="mdi-text"
+                            />
                         </v-col>
                     </v-row>
 
@@ -116,8 +111,12 @@
                                                 label="Select Ingredient"
                                                 required
                                                 variant="outlined"
+                                                class="mb-2"
                                                 @update:model-value="(itemId) => onIngredientItemSelected(itemId, index)"
                                             >
+                                                <template #prepend-inner>
+                                                    <v-icon color="primary">mdi-package-variant</v-icon>
+                                                </template>
                                                 <template #item="{ props, item }">
                                                     <v-list-item v-bind="props">
                                                         <template #prepend>
@@ -138,24 +137,22 @@
                                             </v-select>
                                         </v-col>
                                         <v-col cols="3">
-                                            <v-text-field
+                                            <FormField
                                                 v-model="ingredient.amount"
                                                 label="Amount"
                                                 type="number"
-                                                step="0.1"
-                                                required
-                                                variant="outlined"
-                                            ></v-text-field>
+                                                :required="true"
+                                            />
                                         </v-col>
                                         <v-col cols="2">
-                                            <v-text-field
+                                            <FormField
                                                 v-model="ingredient.unit"
                                                 label="Unit"
+                                                type="text"
                                                 :placeholder="getIngredientPlaceholderUnit(ingredient.itemId)"
-                                                readonly
-                                                required
-                                                variant="outlined"
-                                            ></v-text-field>
+                                                :readonly="true"
+                                                :required="true"
+                                            />
                                         </v-col>
                                         <v-col cols="2" class="d-flex justify-center">
                                             <v-btn 
@@ -218,6 +215,7 @@ const dataStore = useDataStore()
 // Data
 const recipes = ref([])
 const stockGroups = ref([])
+const loading = ref(false)
 const dialog = ref(false)
 const isEditing = ref(false)
 const currentRecipe = ref({
@@ -229,12 +227,12 @@ const currentRecipe = ref({
 
 // Headers for data table
 const headers = [
-    { title: 'Name', key: 'name' },
-    { title: 'Description', key: 'description' },
-    { title: 'Ingredients', key: 'ingredients', sortable: false },
-    { title: 'Can Make', key: 'canMake', sortable: false },
-    { title: 'Est. Cost', key: 'estimatedCost' },
-    { title: 'Actions', key: 'actions', sortable: false }
+    { title: 'Name', key: 'name', sortable: true },
+    { title: 'Description', key: 'description', sortable: true },
+    { title: 'Ingredients', key: 'ingredients', sortable: false, width: '200px' },
+    { title: 'Can Make', key: 'canMake', sortable: false, align: 'center', width: '120px' },
+    { title: 'Est. Cost', key: 'estimatedCost', sortable: true, align: 'end' },
+    { title: 'Actions', key: 'actions', sortable: false, align: 'center', width: '100px' }
 ]
 
 // Computed properties
@@ -442,6 +440,7 @@ function isExpired(item) {
 
 // Lifecycle
 onMounted(async () => {
+    loading.value = true
     try {
         await Promise.all([
             dataStore.getRecipes(),
@@ -451,6 +450,8 @@ onMounted(async () => {
         stockGroups.value = dataStore.stockGroups || []
     } catch (error) {
         console.error('Error loading recipes data:', error)
+    } finally {
+        loading.value = false
     }
 })
 </script>

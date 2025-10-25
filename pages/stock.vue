@@ -20,11 +20,13 @@
 
         <v-window v-model="activeTab">
             <v-window-item value="ingredients">
-                <v-data-table
-                    class="text-sm"
-                    :headers="headers"
-                    :items="displayedGroups"
-                >
+                <LoadingWrapper :loading="loading" text="Loading ingredients...">
+                    <v-data-table
+                        class="text-sm"
+                        :headers="headers"
+                        :items="displayedGroups"
+                        :loading="loading"
+                    >
                     <template #item.usable="{ item }">
                         <span>{{ item.usableDisplay }}</span>
                     </template>
@@ -32,10 +34,11 @@
                         <span>{{ item.items.length }}</span>
                     </template>
                     <template #item.status="{ item }">
-                        <v-chip :color="getStatusColor(item.status)" dark>
-                            <v-icon class="mr-2">{{ getStatusIcon(item.status) }}</v-icon>
-                            <span class="uppercase">{{ item.status }}</span>
-                        </v-chip>
+                        <StatusChip 
+                            :status="item.status"
+                            type="stock"
+                            uppercase
+                        />
                     </template>
                     <template #item.actions="{ item }">
                         <DataTableActions 
@@ -97,15 +100,17 @@
                         </tr>
                     </template>
                 </v-data-table>
+                </LoadingWrapper>
             </v-window-item>
 
-            <!-- Products Section -->
             <v-window-item value="products">
-                <v-data-table
-                    class="text-sm"
-                    :headers="productHeaders"
-                    :items="displayedProducts"
-                >
+                <LoadingWrapper :loading="loadingProducts" text="Loading products...">
+                    <v-data-table
+                        class="text-sm"
+                        :headers="productHeaders"
+                        :items="products"
+                        :loading="loadingProducts"
+                    >
                     <template #item.productName="{ item }">
                         <div>
                             <div class="text-subtitle-2">{{ item.productName }}</div>
@@ -125,10 +130,11 @@
                         <div>{{ formatDate(item.packagedDate) }}</div>
                     </template>
                     <template #item.status="{ item }">
-                        <v-chip :color="getProductStatusColor(item.status)" dark>
-                            <v-icon class="mr-2">{{ getProductStatusIcon(item.status) }}</v-icon>
-                            <span class="uppercase">{{ item.status }}</span>
-                        </v-chip>
+                        <StatusChip 
+                            :status="item.status"
+                            type="product"
+                            uppercase
+                        />
                     </template>
                     <template #item.actions="{ item }">
                         <DataTableActions 
@@ -138,6 +144,7 @@
                         />
                     </template>
                 </v-data-table>
+                </LoadingWrapper>
             </v-window-item>
         </v-window>
 
@@ -155,7 +162,14 @@
                         <v-container>
                             <v-row>
                                 <v-col cols="12">
-                                    <v-text-field class="required-field" label="Group Name" v-model="edited.name" :readonly="isPreview" :rules="[requiredRule]" required />
+                                    <FormField
+                                        v-model="edited.name"
+                                        label="Group Name"
+                                        type="text"
+                                        :required="true"
+                                        :readonly="isPreview"
+                                        prepend-icon="mdi-folder"
+                                    />
                                 </v-col>
                             </v-row>
 
@@ -168,16 +182,41 @@
                                 <v-col cols="12" v-for="(item, idx) in edited.items" :key="idx">
                                     <v-row class="align-center">
                                         <v-col cols="5">
-                                            <v-text-field class="required-field" label="Product" v-model="item.product" :readonly="isPreview" :rules="[requiredRule]" required />
+                                            <FormField
+                                                v-model="item.product"
+                                                label="Product"
+                                                type="text"
+                                                :required="true"
+                                                :readonly="isPreview"
+                                                prepend-icon="mdi-package-variant"
+                                            />
                                         </v-col>
                                         <v-col cols="2">
-                                            <v-text-field class="required-field" label="Quantity" type="number" v-model="item.quantity" :readonly="isPreview" :rules="[requiredNumberRule]" required />
+                                            <FormField
+                                                v-model="item.quantity"
+                                                label="Quantity"
+                                                type="number"
+                                                :required="true"
+                                                :readonly="isPreview"
+                                            />
                                         </v-col>
                                         <v-col cols="2">
-                                            <v-select :items="units" label="Unit" v-model="item.unit" :readonly="isPreview" />
+                                            <FormField
+                                                v-model="item.unit"
+                                                label="Unit"
+                                                type="select"
+                                                :items="units"
+                                                :readonly="isPreview"
+                                            />
                                         </v-col>
                                         <v-col cols="2">
-                                            <v-text-field label="Price" type="number" v-model="item.price" prefix="£" :readonly="isPreview" />
+                                            <FormField
+                                                v-model="item.price"
+                                                label="Price"
+                                                type="number"
+                                                :readonly="isPreview"
+                                                prepend-icon="mdi-currency-gbp"
+                                            />
                                         </v-col>
                                         <v-col cols="1" class="d-flex align-center">
                                             <v-btn icon color="red" @click="removeItem(idx)" v-if="!isPreview"><v-icon>mdi-delete</v-icon></v-btn>
@@ -185,10 +224,32 @@
                                     </v-row>
                                     <v-row>
                                         <v-col cols="6">
-                                            <v-text-field label="Date Bought" type="date" v-model="item.dateBought" :readonly="isPreview" />
+                                            <v-text-field
+                                                v-model="item.dateBought"
+                                                label="Date Bought"
+                                                type="date"
+                                                variant="outlined"
+                                                class="mb-2"
+                                                :readonly="isPreview"
+                                            >
+                                                <template #prepend-inner>
+                                                    <v-icon color="primary">mdi-calendar</v-icon>
+                                                </template>
+                                            </v-text-field>
                                         </v-col>
                                         <v-col cols="6">
-                                            <v-text-field label="Expiry Date" type="date" v-model="item.expiryDate" :readonly="isPreview" />
+                                            <v-text-field
+                                                v-model="item.expiryDate"
+                                                label="Expiry Date"
+                                                type="date"
+                                                variant="outlined"
+                                                class="mb-2"
+                                                :readonly="isPreview"
+                                            >
+                                                <template #prepend-inner>
+                                                    <v-icon color="primary">mdi-calendar-alert</v-icon>
+                                                </template>
+                                            </v-text-field>
                                         </v-col>
                                     </v-row>
                                 </v-col>
@@ -442,19 +503,19 @@ import { useDataStore } from '@/stores/data'
 const headers = ref([
     { title: '', value: 'data-table-expand', sortable: false, width: '48px' },
     { title: 'Group', value: 'name', sortable: true },
-    { title: 'Usable', value: 'usable', align: 'center' },
-    { title: 'Items', value: 'itemsCount', align: 'center' },
-    { title: 'Status', value: 'status', sortable: true },
-    { title: 'Actions', value: 'actions', align: 'center' }
+    { title: 'Usable', value: 'usable', sortable: false, align: 'center', width: '100px' },
+    { title: 'Items', value: 'itemsCount', sortable: false, align: 'center', width: '80px' },
+    { title: 'Status', value: 'status', sortable: true, align: 'center', width: '120px' },
+    { title: 'Actions', value: 'actions', sortable: false, align: 'center', width: '100px' }
 ])
 
 // Replaced expanded v-row/v-col listing with a nested v-data-table for cleaner tabular display of items
 const itemHeaders = ref([
-    { title: 'Product', value: 'product' },
-    { title: 'Quantity', value: 'quantity', align: 'center' },
-    { title: 'Price', value: 'price', align: 'right' },
-    { title: 'Dates', value: 'dates' },
-    { title: 'Status', value: 'status', align: 'center' }
+    { title: 'Product', value: 'product', sortable: true },
+    { title: 'Quantity', value: 'quantity', sortable: true, align: 'center', width: '100px' },
+    { title: 'Price', value: 'price', sortable: true, align: 'end', width: '100px' },
+    { title: 'Dates', value: 'dates', sortable: false, width: '200px' },
+    { title: 'Status', value: 'status', sortable: true, align: 'center', width: '100px' }
 ])
 
 // Tab state
@@ -463,15 +524,17 @@ const activeTab = ref('ingredients')
 // Product headers for the products section
 const productHeaders = ref([
     { title: 'Product', value: 'productName', sortable: true },
-    { title: 'Quantity', value: 'quantity', align: 'center' },
-    { title: 'Total Volume', value: 'totalVolume', align: 'center' },
-    { title: 'ABV', value: 'abv', align: 'center' },
-    { title: 'Packaged Date', value: 'packagedDate', sortable: true },
-    { title: 'Status', value: 'status', sortable: true },
-    { title: 'Actions', value: 'actions', align: 'center' }
+    { title: 'Quantity', value: 'quantity', sortable: true, align: 'center', width: '100px' },
+    { title: 'Total Volume', value: 'totalVolume', sortable: true, align: 'center', width: '120px' },
+    { title: 'ABV', value: 'abv', sortable: true, align: 'center', width: '80px' },
+    { title: 'Packaged Date', value: 'packagedDate', sortable: true, width: '120px' },
+    { title: 'Status', value: 'status', sortable: true, align: 'center', width: '100px' },
+    { title: 'Actions', value: 'actions', sortable: false, align: 'center', width: '100px' }
 ])
 
 const dataStore = useDataStore()
+const loading = ref(false)
+const loadingProducts = ref(false)
 
 const editDialog = ref(false)
 const edited = ref(null)
