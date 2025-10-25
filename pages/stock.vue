@@ -174,7 +174,7 @@
                                         variant="text"
                                         size="small"
                                         @click="showHelp = !showHelp"
-                                        :color="showHelp ? 'primary' : 'default'"
+                                        :color="showHelp ? 'white' : 'rgba(255,255,255,0.7)'"
                                     >
                                         {{ showHelp ? 'Hide' : 'Show' }} Help
                                         <v-icon :class="{ 'rotate-180': showHelp }">mdi-chevron-down</v-icon>

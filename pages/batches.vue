@@ -358,10 +358,24 @@
 
                     <v-row>
                         <v-col cols="12">
-                            <v-alert type="info" class="mb-4">
-                                <div><strong>Available brew:</strong> {{ getTotalBrewAmount(packingBatch) }} L</div>
-                                <div><strong>Batch:</strong> {{ getFermenterLabelById(packingBatch.fermenter) }}</div>
-                            </v-alert>
+                            <h3 class="mb-3 d-flex align-center">
+                                <v-icon color="primary" class="mr-2">mdi-information</v-icon>
+                                Batch Summary
+                            </h3>
+                            <v-card outlined class="mb-4 summary-card">
+                                <v-card-text>
+                                    <div class="d-flex justify-space-between align-center">
+                                        <div>
+                                            <div class="text-h6 font-weight-bold">{{ getFermenterLabelById(packingBatch.fermenter) }}</div>
+                                            <div class="text-subtitle-2 text-medium-emphasis">Batch Identifier</div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-h6 font-weight-bold text-primary">{{ getTotalBrewAmount(packingBatch) }} L</div>
+                                            <div class="text-subtitle-2 text-medium-emphasis">Available Brew</div>
+                                        </div>
+                                    </div>
+                                </v-card-text>
+                            </v-card>
                         </v-col>
                     </v-row>
 
@@ -378,7 +392,6 @@
                         <v-col cols="12">
                             <v-card outlined class="pa-4 packaging-group-card">
                                 <div class="d-flex align-center justify-space-between mb-3">
-                                    <h4 class="text-h6">Group {{ idx + 1 }}</h4>
                                     <v-btn 
                                         v-if="packagingGroups.length > 1"
                                         icon="mdi-delete" 
@@ -387,9 +400,10 @@
                                         size="small"
                                         @click="removePackagingGroup(idx)"
                                     />
+                                    <v-spacer v-else />
                                 </div>
                                 <v-row class="align-center">
-                                    <v-col cols="3">
+                                    <v-col cols="12" md="6">
                                         <v-select
                                             :items="containerTypes"
                                             label="Container Type"
@@ -406,7 +420,7 @@
                                             </template>
                                         </v-select>
                                     </v-col>
-                                    <v-col cols="2">
+                                    <v-col cols="12" md="6">
                                         <v-text-field
                                             label="Container Size"
                                             type="number"
@@ -416,7 +430,7 @@
                                             hint="Volume per container"
                                             persistent-hint
                                             required
-                                            :rules="[requiredNumberRule]"
+                                            :rules="[containerSizeRule]"
                                             class="modern-field"
                                         >
                                             <template #prepend-inner>
@@ -424,7 +438,9 @@
                                             </template>
                                         </v-text-field>
                                     </v-col>
-                                    <v-col cols="2">
+                                </v-row>
+                                <v-row class="align-center">
+                                    <v-col cols="12" md="4">
                                         <v-text-field
                                             label="Quantity"
                                             type="number"
@@ -433,7 +449,7 @@
                                             hint="Number of containers"
                                             persistent-hint
                                             required
-                                            :rules="[requiredNumberRule]"
+                                            :rules="[quantityRule(group)]"
                                             class="modern-field"
                                         >
                                             <template #prepend-inner>
@@ -441,10 +457,10 @@
                                             </template>
                                         </v-text-field>
                                     </v-col>
-                                    <v-col cols="2">
+                                    <v-col cols="12" md="4">
                                         <v-text-field
                                             label="Total Volume"
-                                            :value="getGroupTotal(group)"
+                                            :model-value="getGroupTotal(group)"
                                             suffix="L"
                                             variant="outlined"
                                             readonly
@@ -457,7 +473,7 @@
                                             </template>
                                         </v-text-field>
                                     </v-col>
-                                    <v-col cols="3">
+                                    <v-col cols="12" md="4">
                                         <v-text-field
                                             label="Notes"
                                             v-model="group.notes"
@@ -489,13 +505,22 @@
                     <v-row>
                         <v-col cols="12">
                             <v-alert 
-                                :type="getTotalPackaged() < getTotalBrewAmount(packingBatch) ? 'warning' : 'success'" 
+                                :type="getTotalPackaged() > getTotalBrewAmount(packingBatch) ? 'error' : ((getTotalBrewAmount(packingBatch) - getTotalPackaged()) > 1 ? 'warning' : 'success')" 
                                 class="mt-4"
                             >
                                 <div><strong>Total packaged:</strong> {{ getTotalPackaged() }} L</div>
                                 <div><strong>Remaining:</strong> {{ (getTotalBrewAmount(packingBatch) - getTotalPackaged()).toFixed(1) }} L</div>
-                                <div v-if="getTotalPackaged() < getTotalBrewAmount(packingBatch)" class="mt-2">
-                                    <small>⚠️ You have remaining brew that won't be packaged. This could be intentional (testing, spillage, etc.)</small>
+                                <div v-if="getTotalPackaged() > getTotalBrewAmount(packingBatch)" class="mt-2">
+                                    <strong>Error: You are trying to package {{ (getTotalPackaged() - getTotalBrewAmount(packingBatch)).toFixed(1) }}L more than available!</strong>
+                                </div>
+                                <div v-else-if="(getTotalBrewAmount(packingBatch) - getTotalPackaged()) > 1" class="mt-2">
+                                    <small>You have {{ (getTotalBrewAmount(packingBatch) - getTotalPackaged()).toFixed(1) }}L remaining brew that won't be packaged. This could be intentional (testing, spillage, etc.)</small>
+                                </div>
+                                <div v-else-if="getTotalPackaged() < getTotalBrewAmount(packingBatch)" class="mt-2">
+                                    <small>Good! Only {{ (getTotalBrewAmount(packingBatch) - getTotalPackaged()).toFixed(1) }}L remaining (within acceptable range).</small>
+                                </div>
+                                <div v-else class="mt-2">
+                                    <small>Perfect! All available brew will be packaged.</small>
                                 </div>
                             </v-alert>
                         </v-col>
@@ -818,6 +843,35 @@ import StatCard from '@/components/StatCard.vue'
         const n = Number(v)
         return Number.isFinite(n) && n >= 1 && n < 2 || 'OG must be a gravity like 1.040'
     }
+    
+    // Packaging validation rules
+    const containerSizeRule = (v) => {
+        if (v === undefined || v === null || v === '') return 'Required'
+        const n = Number(v)
+        if (!Number.isFinite(n) || n <= 0) return 'Must be a positive number'
+        return true
+    }
+    
+    const quantityRule = (group) => (v) => {
+        if (v === undefined || v === null || v === '') return 'Required'
+        const n = Number(v)
+        if (!Number.isFinite(n) || n <= 0) return 'Must be a positive number'
+        
+        // Check if this group would exceed available brew
+        const groupTotal = Number(group.containerSize) * n
+        const otherGroupsTotal = packagingGroups.value
+            .filter(g => g !== group)
+            .reduce((total, g) => total + Number(getGroupTotal(g)), 0)
+        const totalWithThisGroup = groupTotal + otherGroupsTotal
+        const available = getTotalBrewAmount(packingBatch.value)
+        
+        if (totalWithThisGroup > available) {
+            const maxAllowed = Math.floor((available - otherGroupsTotal) / Number(group.containerSize))
+            return `Maximum ${maxAllowed} containers (would exceed available brew: ${available}L)`
+        }
+        
+        return true
+    }
 
     const isFormValid = computed(() => {
         if (!edited.value) return false;
@@ -940,6 +994,12 @@ import StatCard from '@/components/StatCard.vue'
     const isPackFormValid = computed(() => {
         if (!packagingGroups.value || packagingGroups.value.length === 0) return false
         
+        const totalAvailable = getTotalBrewAmount(packingBatch.value)
+        const totalPackaged = getTotalPackaged()
+        
+        // Check if total packaged exceeds available brew
+        if (totalPackaged > totalAvailable) return false
+        
         for (const group of packagingGroups.value) {
             if (!group.containerType) return false
             if (!Number.isFinite(Number(group.containerSize)) || Number(group.containerSize) <= 0) return false
@@ -957,14 +1017,15 @@ import StatCard from '@/components/StatCard.vue'
             if (!valid) return
         }
 
-        // Check if user hasn't used all brew and show warning
+        // Check if user hasn't used all brew and show warning (only if more than 1L remains)
         const totalBrew = getTotalBrewAmount(packingBatch.value)
         const totalPackaged = getTotalPackaged()
+        const remaining = totalBrew - totalPackaged
         
-        if (totalPackaged < totalBrew) {
+        if (remaining > 1) {
             const confirmed = confirm(
                 `You are packaging ${totalPackaged}L out of ${totalBrew}L available. ` +
-                `${(totalBrew - totalPackaged).toFixed(1)}L will remain unpackaged. ` +
+                `${remaining.toFixed(1)}L will remain unpackaged. ` +
                 `This could be intentional (testing, spillage, etc.). Continue?`
             )
             if (!confirmed) return
@@ -1398,6 +1459,18 @@ import StatCard from '@/components/StatCard.vue'
     border-color: rgb(99, 102, 241) !important;
     box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
     transform: translateY(-2px);
+}
+
+/* Summary card styling */
+.summary-card {
+    background: linear-gradient(135deg, rgb(248 250 252) 0%, rgb(241 245 249) 100%);
+    border: 2px solid rgb(99 102 241 / 0.2) !important;
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    border-color: rgb(99, 102, 241) !important;
+    box-shadow: 0 8px 25px -5px rgb(99 102 241 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05);
 }
 
 /* Modern page layout styles */
