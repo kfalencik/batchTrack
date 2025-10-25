@@ -94,7 +94,7 @@ const toggleHelp = () => {
 
 .help-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: 1fr;
   gap: 1.25rem;
 }
 
