@@ -6,6 +6,7 @@ export const useDataStore = defineStore('dataStore', {
         batches: [],
         stockGroups: [],
         fermenters: [],
+        products: [],
         loading: true, // Loader now shows immediately on first mount
         notification: null
     }),
@@ -178,6 +179,62 @@ export const useDataStore = defineStore('dataStore', {
                 text: 'Batch successfully removed!',
                 color: 'success',
                 delay: 5000
+            })
+        },
+        // Product CRUD
+        async getProducts() {
+            this.loading = true
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const productsRef = collection(db, "products");
+            const q = query(productsRef);
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const data = querySnapshot.docs.map(doc => doc.data());
+                this.products = data
+            } else {
+                this.products = []
+            }
+            this.loading = false
+        },
+        async addProduct(product) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const productsRef = collection(db, "products");
+            await addDoc(productsRef, product);
+            this.setNotification({
+                text: 'Product successfully added!',
+                color: 'success',
+                delay: 3000
+            })
+        },
+        async updateProduct(product) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const productsRef = collection(db, "products");
+            const q = query(productsRef, where('id', '==', product.id));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach(async (doc) => await setDoc(doc.ref, product))
+
+            this.setNotification({
+                text: 'Product successfully updated!',
+                color: 'success',
+                delay: 3000
+            })
+        },
+        async removeProduct(id) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const productsRef = collection(db, "products");
+            const q = query(productsRef, where('id', '==', id));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach( async (doc) => await deleteDoc(doc.ref))
+
+            this.setNotification({
+                text: 'Product successfully removed!',
+                color: 'success',
+                delay: 3000
             })
         }
     }

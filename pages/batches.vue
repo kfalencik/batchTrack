@@ -17,7 +17,7 @@
                     <StatCard :title="'Flavouring'" icon="mdi-leaf" color="orange-lighten-2" :count="stats.flavouring" :active="activeFilter === 'flavouring'" @click="setFilter('flavouring')" class="mr-2" />
                     <StatCard :title="'Complete'" icon="mdi-check-circle-outline" color="success" :count="stats.complete" :active="activeFilter === 'complete'" @click="setFilter('complete')" class="mr-2" />
                     <StatCard :title="'Failed'" icon="mdi-alert-circle-outline" color="red" :count="stats.failed" :active="activeFilter === 'failed'" @click="setFilter('failed')" class="mr-2" />
-                    <StatCard :title="'Packaged'" icon="mdi-package-variant-closed" color="purple" :count="stats.packaged" :active="activeFilter === 'packaged'" @click="setFilter('packaged')" class="mr-2" />
+                    <StatCard :title="'Ready to Pack'" icon="mdi-package-up" color="purple" :count="stats.readyToPack" :active="activeFilter === 'ready to pack'" @click="setFilter('ready to pack')" class="mr-2" />
                 </v-row>
             </v-col>
         </v-row>
@@ -68,6 +68,18 @@
                 <v-btn icon color="info" flat size="x-small" class="mr-2" @click="openEdit(item)" :title="item && item.status ? 'Preview' : 'Edit'">
                     <v-icon>{{ item && item.status ? 'mdi-eye' : 'mdi-pencil' }}</v-icon>
                 </v-btn>
+                <v-btn 
+                    v-if="getStatus(item) === 'ready to pack'" 
+                    icon 
+                    color="primary" 
+                    flat 
+                    size="x-small" 
+                    class="mr-2" 
+                    @click="openPackDialog(item)"
+                    title="Pack this batch"
+                >
+                    <v-icon>mdi-package-variant</v-icon>
+                </v-btn>
                 <v-menu offset-y>
                     <template #activator="{ props }">
                         <v-btn v-bind="props" icon flat size="x-small">
@@ -85,9 +97,9 @@
                                 <v-list-item-title class="align-center text-red text-sm"><v-icon color="red" class="mr-2" small>mdi-alert-circle-outline</v-icon> Mark Failed</v-list-item-title>
                             </v-list-item-content>
                         </v-list-item>
-                        <v-list-item @click="setStatus(item, 'packaged')">
+                        <v-list-item @click="setStatus(item, 'ready to pack')">
                             <v-list-item-content>
-                                <v-list-item-title class="align-center text-purple text-sm"><v-icon color="purple" class="mr-2" small>mdi-package-variant-closed</v-icon> Mark Packaged</v-list-item-title>
+                                <v-list-item-title class="align-center text-purple text-sm"><v-icon color="purple" class="mr-2" small>mdi-package-up</v-icon> Mark Ready to Pack</v-list-item-title>
                             </v-list-item-content>
                         </v-list-item>
                     </v-list>
@@ -175,6 +187,131 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <!-- Packaging Dialog -->
+        <v-dialog v-model="packDialog" width="1000">
+            <v-card>
+                <v-toolbar color="primary" dark>
+                    <v-toolbar-title>Pack Batch: {{ packingBatch ? getFermenterLabelById(packingBatch.fermenter) : '' }}</v-toolbar-title>
+                    <v-spacer />
+                    <v-btn icon @click="closePackDialog">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-toolbar>
+                <v-card-text v-if="packingBatch">
+                    <v-form ref="packFormRef" lazy-validation>
+                        <v-container>
+                            <v-row>
+                                <v-col cols="12">
+                                    <v-alert type="info" class="mb-4">
+                                        <div><strong>Available brew:</strong> {{ getTotalBrewAmount(packingBatch) }} L</div>
+                                        <div><strong>Batch:</strong> {{ getFermenterLabelById(packingBatch.fermenter) }}</div>
+                                    </v-alert>
+                                </v-col>
+                            </v-row>
+
+                            <v-row>
+                                <v-col cols="12">
+                                    <h3 class="mb-3">Packaging Groups</h3>
+                                    <p class="text-caption text--secondary mb-4">Split your brew into different container types. You can add multiple groups to distribute the total amount.</p>
+                                </v-col>
+                            </v-row>
+
+                            <v-row v-for="(group, idx) in packagingGroups" :key="idx" class="mb-4">
+                                <v-col cols="12">
+                                    <v-card outlined class="pa-4">
+                                        <v-row class="align-center">
+                                            <v-col cols="3">
+                                                <v-select
+                                                    :items="containerTypes"
+                                                    label="Container Type"
+                                                    v-model="group.containerType"
+                                                    required
+                                                    :rules="[requiredRule]"
+                                                />
+                                            </v-col>
+                                            <v-col cols="2">
+                                                <v-text-field
+                                                    label="Container Size"
+                                                    type="number"
+                                                    v-model="group.containerSize"
+                                                    suffix="L"
+                                                    hint="Size per container"
+                                                    required
+                                                    :rules="[requiredNumberRule]"
+                                                />
+                                            </v-col>
+                                            <v-col cols="2">
+                                                <v-text-field
+                                                    label="Quantity"
+                                                    type="number"
+                                                    v-model="group.quantity"
+                                                    hint="Number of containers"
+                                                    required
+                                                    :rules="[requiredNumberRule]"
+                                                />
+                                            </v-col>
+                                            <v-col cols="2">
+                                                <v-text-field
+                                                    label="Total Volume"
+                                                    :value="getGroupTotal(group)"
+                                                    suffix="L"
+                                                    readonly
+                                                    hint="Auto-calculated"
+                                                />
+                                            </v-col>
+                                            <v-col cols="2">
+                                                <v-text-field
+                                                    label="Notes"
+                                                    v-model="group.notes"
+                                                    hint="Optional"
+                                                />
+                                            </v-col>
+                                            <v-col cols="1" class="d-flex align-center">
+                                                <v-btn icon color="red" @click="removePackagingGroup(idx)" v-if="packagingGroups.length > 1">
+                                                    <v-icon>mdi-delete</v-icon>
+                                                </v-btn>
+                                            </v-col>
+                                        </v-row>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+
+                            <v-row>
+                                <v-col cols="12">
+                                    <v-btn text color="primary" @click="addPackagingGroup">
+                                        <v-icon class="mr-2">mdi-plus</v-icon>
+                                        Add Another Container Group
+                                    </v-btn>
+                                </v-col>
+                            </v-row>
+
+                            <v-row>
+                                <v-col cols="12">
+                                    <v-alert 
+                                        :type="getTotalPackaged() < getTotalBrewAmount(packingBatch) ? 'warning' : 'success'" 
+                                        class="mt-4"
+                                    >
+                                        <div><strong>Total packaged:</strong> {{ getTotalPackaged() }} L</div>
+                                        <div><strong>Remaining:</strong> {{ (getTotalBrewAmount(packingBatch) - getTotalPackaged()).toFixed(1) }} L</div>
+                                        <div v-if="getTotalPackaged() < getTotalBrewAmount(packingBatch)" class="mt-2">
+                                            <small>⚠️ You have remaining brew that won't be packaged. This could be intentional (testing, spillage, etc.)</small>
+                                        </div>
+                                    </v-alert>
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </v-form>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer />
+                    <v-btn text @click="closePackDialog">Cancel</v-btn>
+                    <v-btn color="primary" @click="savePackaging" :disabled="!isPackFormValid">
+                        Complete Packaging
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
@@ -213,7 +350,7 @@ import StatCard from '@/components/StatCard.vue'
     function getStatus(item) {
         // If backend provided a definitive status, use it
         const backendStatus = item && item.status;
-        const backendSet = backendStatus && ['failed', 'complete', 'packaged', 'sold'].includes(backendStatus);
+        const backendSet = backendStatus && ['failed', 'complete', 'ready to pack', 'packaged', 'sold'].includes(backendStatus);
         if (backendSet) return backendStatus;
 
         // Otherwise compute based on dates
@@ -236,7 +373,8 @@ import StatCard from '@/components/StatCard.vue'
         if (s === 'fermenting') return 'blue';
         if (s === 'flavouring') return 'orange';
         if (s === 'failed') return 'red';
-        if (s === 'packaged') return 'purple';
+        if (s === 'ready to pack') return 'purple';
+        if (s === 'packaged') return 'green';
         if (s === 'complete') return 'green';
         return 'grey';
     }
@@ -283,6 +421,7 @@ import StatCard from '@/components/StatCard.vue'
         if (s === 'flavouring') return 'mdi-leaf';
         if (s === 'failed') return 'mdi-alert-circle-outline';
         if (s === 'complete') return 'mdi-check-circle-outline';
+        if (s === 'ready to pack') return 'mdi-package-up';
         if (s === 'packaged') return 'mdi-package-variant-closed';
         return 'mdi-help-circle-outline';
     }
@@ -402,6 +541,14 @@ import StatCard from '@/components/StatCard.vue'
     const isPreview = ref(false)
     const formRef = ref(null)
 
+    // Packaging dialog state
+    const packDialog = ref(false)
+    const packingBatch = ref(null)
+    const packagingGroups = ref([])
+    const packFormRef = ref(null)
+    
+    const containerTypes = ['Cans', 'Kegs', 'Bottles', 'Other']
+
     // Validation rules
     const requiredRule = (v) => (v !== undefined && v !== null && v !== '' ) || 'Required'
     const requiredNumberRule = (v) => {
@@ -484,6 +631,131 @@ import StatCard from '@/components/StatCard.vue'
         editDialog.value = false
     }
 
+    // Packaging dialog methods
+    function openPackDialog(batch) {
+        packingBatch.value = batch
+        // Initialize with one packaging group
+        packagingGroups.value = [{
+            containerType: 'Cans',
+            containerSize: 0.33,
+            quantity: 1,
+            notes: ''
+        }]
+        packDialog.value = true
+    }
+
+    function closePackDialog() {
+        packingBatch.value = null
+        packagingGroups.value = []
+        packDialog.value = false
+    }
+
+    function addPackagingGroup() {
+        packagingGroups.value.push({
+            containerType: 'Cans',
+            containerSize: 0.33,
+            quantity: 1,
+            notes: ''
+        })
+    }
+
+    function removePackagingGroup(index) {
+        if (packagingGroups.value.length > 1) {
+            packagingGroups.value.splice(index, 1)
+        }
+    }
+
+    function getTotalBrewAmount(batch) {
+        if (!batch) return 0
+        // Get the fermenter size as the total brew amount
+        const waterLiters = getBatchWaterLiters(batch)
+        return waterLiters || 0
+    }
+
+    function getGroupTotal(group) {
+        const size = Number(group.containerSize) || 0
+        const qty = Number(group.quantity) || 0
+        return (size * qty).toFixed(1)
+    }
+
+    function getTotalPackaged() {
+        return packagingGroups.value.reduce((total, group) => {
+            return total + Number(getGroupTotal(group))
+        }, 0)
+    }
+
+    const isPackFormValid = computed(() => {
+        if (!packagingGroups.value || packagingGroups.value.length === 0) return false
+        
+        for (const group of packagingGroups.value) {
+            if (!group.containerType) return false
+            if (!Number.isFinite(Number(group.containerSize)) || Number(group.containerSize) <= 0) return false
+            if (!Number.isFinite(Number(group.quantity)) || Number(group.quantity) <= 0) return false
+        }
+        
+        return true
+    })
+
+    async function savePackaging() {
+        if (!packingBatch.value || !isPackFormValid.value) return
+        
+        if (packFormRef.value) {
+            const valid = await packFormRef.value.validate()
+            if (!valid) return
+        }
+
+        // Check if user hasn't used all brew and show warning
+        const totalBrew = getTotalBrewAmount(packingBatch.value)
+        const totalPackaged = getTotalPackaged()
+        
+        if (totalPackaged < totalBrew) {
+            const confirmed = confirm(
+                `You are packaging ${totalPackaged}L out of ${totalBrew}L available. ` +
+                `${(totalBrew - totalPackaged).toFixed(1)}L will remain unpackaged. ` +
+                `This could be intentional (testing, spillage, etc.). Continue?`
+            )
+            if (!confirmed) return
+        }
+
+        // Create product entries for the packaged items
+        const products = packagingGroups.value.map(group => ({
+            id: `${packingBatch.value.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            batchId: packingBatch.value.id,
+            productName: `${getFermenterLabelById(packingBatch.value.fermenter)} - ${group.containerType}`,
+            containerType: group.containerType,
+            containerSize: Number(group.containerSize),
+            quantity: Number(group.quantity),
+            totalVolume: Number(getGroupTotal(group)),
+            notes: group.notes || '',
+            packagedDate: new Date().toISOString().slice(0, 10),
+            status: 'packaged',
+            abv: getABV(packingBatch.value),
+            fermenter: packingBatch.value.fermenter
+        }))
+
+        // Save products to data store
+        for (const product of products) {
+            await dataStore.addProduct(product)
+        }
+
+        // Update batch status to 'packaged'
+        const updatedBatch = Object.assign({}, packingBatch.value, { status: 'packaged' })
+        await dataStore.updateBatch(updatedBatch)
+        
+        // Refresh batches
+        await dataStore.getBatches()
+        
+        // Close dialog
+        closePackDialog()
+        
+        // Show success message
+        dataStore.setNotification({
+            text: `Successfully packaged batch into ${products.length} product group${products.length > 1 ? 's' : ''}`,
+            color: 'success',
+            delay: 5000
+        })
+    }
+
     async function saveEdit() {
         if (!edited.value) return
         // validate form
@@ -541,12 +813,13 @@ import StatCard from '@/components/StatCard.vue'
     // Small helpers / computed state for UI
     const stats = computed(() => {
         const list = batches.value || [];
-        const s = { fermenting: 0, flavouring: 0, complete: 0, failed: 0, packaged: 0 };
+        const s = { fermenting: 0, flavouring: 0, complete: 0, failed: 0, readyToPack: 0, packaged: 0 };
         for (const b of list) {
             const st = getStatus(b) || '';
             const key = String(st).toLowerCase();
             if (key === 'fermenting') s.fermenting++;
             else if (key === 'flavouring') s.flavouring++;
+            else if (key === 'ready to pack') s.readyToPack++;
             else if (key === 'packaged') s.packaged++;
             else if (key === 'complete') s.complete++;
             else if (key === 'failed') s.failed++;

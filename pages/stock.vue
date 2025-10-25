@@ -2,90 +2,152 @@
     <div>
         <div class="d-flex justify-between mb-3">
             <h2 class="mb-5">Stock</h2>
-            <v-btn color="primary" @click="openAdd">
+            <v-btn v-if="activeTab === 'ingredients'" color="primary" @click="openAdd">
                 <v-icon class="mr-2">mdi-plus-circle</v-icon>
-                Add Group
+                Add Ingredient Group
+            </v-btn>
+            <v-btn v-if="activeTab === 'products'" color="primary" @click="openAddProduct">
+                <v-icon class="mr-2">mdi-package-variant</v-icon>
+                Add Product
             </v-btn>
         </div>
 
-        <v-data-table
-            class="text-sm"
-            :headers="headers"
-            :items="displayedGroups"
-        >
-            <template #item.usable="{ item }">
-                <span>{{ item.usableDisplay }}</span>
-            </template>
-            <template #item.itemsCount="{ item }">
-                <span>{{ item.items.length }}</span>
-            </template>
-            <template #item.status="{ item }">
-                <v-chip :color="getStatusColor(item.status)" dark>
-                    <v-icon class="mr-2">{{ getStatusIcon(item.status) }}</v-icon>
-                    <span class="uppercase">{{ item.status }}</span>
-                </v-chip>
-            </template>
-            <template #item.actions="{ item }">
-                <v-btn icon color="info" flat size="x-small" class="mr-2" @click="openEdit(item.raw)">
-                    <v-icon>mdi-pencil</v-icon>
-                </v-btn>
-                <v-btn icon color="red" flat size="x-small" @click="removeGroup(item.id)">
-                    <v-icon>mdi-delete</v-icon>
-                </v-btn>
-            </template>
-            
-                <template v-slot:expanded-row="{ item }">
-                    <tr>
-                        <td></td>
-                        <td :colspan="headers.length" style="padding: 0" class="bg-lightGrey pa-3">
-                            <div v-if="!item.items || item.items.length === 0" class="text--secondary">No items in this group.</div>
-                            <v-data-table
-                                v-else
-                                :headers="itemHeaders"
-                                :items="item.items"
-                                class="elevation-0 w-100 rounded-md"
-                                style="width: 100%"
-                                dense
-                                hide-default-header
-                                hide-default-footer=""
-                            >
-                            <template #item.product="{ item: it }">
-                                <div>
-                                    <div class="text-subtitle-2">{{ it.product }}</div>
-                                    <div class="text-caption text--secondary">{{ it.description || '' }}</div>
-                                </div>
-                            </template>
+        <!-- Section Tabs -->
+        <v-tabs v-model="activeTab" class="mb-4">
+            <v-tab value="ingredients">
+                <v-icon class="mr-2">mdi-clipboard-list-outline</v-icon>
+                Ingredients
+            </v-tab>
+            <v-tab value="products">
+                <v-icon class="mr-2">mdi-package-variant-closed</v-icon>
+                Products
+            </v-tab>
+        </v-tabs>
 
-                            <template #item.quantity="{ item: it }">
-                                <div class="font-weight-medium">{{ it.quantity ?? '-' }} {{ it.unit || '' }}</div>
-                            </template>
+        <v-window v-model="activeTab">
+            <v-window-item value="ingredients">
+                <v-data-table
+                    class="text-sm"
+                    :headers="headers"
+                    :items="displayedGroups"
+                >
+                    <template #item.usable="{ item }">
+                        <span>{{ item.usableDisplay }}</span>
+                    </template>
+                    <template #item.itemsCount="{ item }">
+                        <span>{{ item.items.length }}</span>
+                    </template>
+                    <template #item.status="{ item }">
+                        <v-chip :color="getStatusColor(item.status)" dark>
+                            <v-icon class="mr-2">{{ getStatusIcon(item.status) }}</v-icon>
+                            <span class="uppercase">{{ item.status }}</span>
+                        </v-chip>
+                    </template>
+                    <template #item.actions="{ item }">
+                        <v-btn icon color="info" flat size="x-small" class="mr-2" @click="openEdit(item.raw)">
+                            <v-icon>mdi-pencil</v-icon>
+                        </v-btn>
+                        <v-btn icon color="red" flat size="x-small" @click="removeGroup(item.id)">
+                            <v-icon>mdi-delete</v-icon>
+                        </v-btn>
+                    </template>
+                    
+                        <template v-slot:expanded-row="{ item }">
+                            <tr>
+                                <td></td>
+                                <td :colspan="headers.length" style="padding: 0" class="bg-lightGrey pa-3">
+                                    <div v-if="!item.items || item.items.length === 0" class="text--secondary">No items in this group.</div>
+                                    <v-data-table
+                                        v-else
+                                        :headers="itemHeaders"
+                                        :items="item.items"
+                                        class="elevation-0 w-100 rounded-md"
+                                        style="width: 100%"
+                                        dense
+                                        hide-default-header
+                                        hide-default-footer=""
+                                    >
+                                    <template #item.product="{ item: it }">
+                                        <div>
+                                            <div class="text-subtitle-2">{{ it.product }}</div>
+                                            <div class="text-caption text--secondary">{{ it.description || '' }}</div>
+                                        </div>
+                                    </template>
 
-                            <!-- packSize removed -->
+                                    <template #item.quantity="{ item: it }">
+                                        <div class="font-weight-medium">{{ it.quantity ?? '-' }} {{ it.unit || '' }}</div>
+                                    </template>
 
-                            <template #item.price="{ item: it }">
-                                <div>{{ it.price !== undefined && it.price !== null && it.price !== '' ? `£${Number(it.price).toFixed(2)}` : '-' }}</div>
-                            </template>
+                                    <!-- packSize removed -->
 
-                            <template #item.dates="{ item: it }">
-                                <div>
-                                    <div>Bought: <span class="text--secondary">{{ formatDate(it.dateBought) }}</span></div>
-                                    <div>Expiry: <span class="text--secondary">{{ formatDate(it.expiryDate) }}</span></div>
-                                </div>
-                            </template>
+                                    <template #item.price="{ item: it }">
+                                        <div>{{ it.price !== undefined && it.price !== null && it.price !== '' ? `£${Number(it.price).toFixed(2)}` : '-' }}</div>
+                                    </template>
 
-                            <template #item.status="{ item: it }">
-                                <v-chip :color="isExpired(it) ? getStatusColor('expired') : (daysUntilExpiry(it) !== null && daysUntilExpiry(it) <= 7 ? getStatusColor('warning') : getStatusColor('ok'))" dark>
-                                    <v-icon left small>{{ isExpired(it) ? getStatusIcon('expired') : (daysUntilExpiry(it) !== null && daysUntilExpiry(it) <= 7 ? getStatusIcon('warning') : getStatusIcon('ok')) }}</v-icon>
-                                    <span>
-                                        {{ isExpired(it) ? 'Expired' : (daysUntilExpiry(it) === null ? 'No date' : (daysUntilExpiry(it) <= 0 ? 'Expires today' : daysUntilExpiry(it) <= 7 ? `${daysUntilExpiry(it)}d` : `${daysUntilExpiry(it)}d`)) }}
-                                    </span>
-                                </v-chip>
-                            </template>
-                        </v-data-table>
-                    </td>
-                </tr>
-            </template>
-        </v-data-table>
+                                    <template #item.dates="{ item: it }">
+                                        <div>
+                                            <div>Bought: <span class="text--secondary">{{ formatDate(it.dateBought) }}</span></div>
+                                            <div>Expiry: <span class="text--secondary">{{ formatDate(it.expiryDate) }}</span></div>
+                                        </div>
+                                    </template>
+
+                                    <template #item.status="{ item: it }">
+                                        <v-chip :color="isExpired(it) ? getStatusColor('expired') : (daysUntilExpiry(it) !== null && daysUntilExpiry(it) <= 7 ? getStatusColor('warning') : getStatusColor('ok'))" dark>
+                                            <v-icon left small>{{ isExpired(it) ? getStatusIcon('expired') : (daysUntilExpiry(it) !== null && daysUntilExpiry(it) <= 7 ? getStatusIcon('warning') : getStatusIcon('ok')) }}</v-icon>
+                                            <span>
+                                                {{ isExpired(it) ? 'Expired' : (daysUntilExpiry(it) === null ? 'No date' : (daysUntilExpiry(it) <= 0 ? 'Expires today' : daysUntilExpiry(it) <= 7 ? `${daysUntilExpiry(it)}d` : `${daysUntilExpiry(it)}d`)) }}
+                                            </span>
+                                        </v-chip>
+                                    </template>
+                                </v-data-table>
+                            </td>
+                        </tr>
+                    </template>
+                </v-data-table>
+            </v-window-item>
+
+            <!-- Products Section -->
+            <v-window-item value="products">
+                <v-data-table
+                    class="text-sm"
+                    :headers="productHeaders"
+                    :items="displayedProducts"
+                >
+                    <template #item.productName="{ item }">
+                        <div>
+                            <div class="text-subtitle-2">{{ item.productName }}</div>
+                            <div class="text-caption text--secondary">{{ item.containerType }} - {{ item.containerSize }}L each</div>
+                        </div>
+                    </template>
+                    <template #item.quantity="{ item }">
+                        <div class="font-weight-medium">{{ item.quantity }} {{ item.containerType }}</div>
+                    </template>
+                    <template #item.totalVolume="{ item }">
+                        <div class="font-weight-medium">{{ item.totalVolume }}L</div>
+                    </template>
+                    <template #item.abv="{ item }">
+                        <div>{{ item.abv || '-' }}</div>
+                    </template>
+                    <template #item.packagedDate="{ item }">
+                        <div>{{ formatDate(item.packagedDate) }}</div>
+                    </template>
+                    <template #item.status="{ item }">
+                        <v-chip :color="getProductStatusColor(item.status)" dark>
+                            <v-icon class="mr-2">{{ getProductStatusIcon(item.status) }}</v-icon>
+                            <span class="uppercase">{{ item.status }}</span>
+                        </v-chip>
+                    </template>
+                    <template #item.actions="{ item }">
+                        <v-btn icon color="info" flat size="x-small" class="mr-2" @click="viewProduct(item)" title="Edit Product">
+                            <v-icon>mdi-pencil</v-icon>
+                        </v-btn>
+                        <v-btn icon color="red" flat size="x-small" @click="removeProduct(item.id)" title="Delete Product">
+                            <v-icon>mdi-delete</v-icon>
+                        </v-btn>
+                    </template>
+                </v-data-table>
+            </v-window-item>
+        </v-window>
 
         <v-dialog v-model="editDialog" width="1200">
             <v-card>
@@ -152,6 +214,232 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <!-- Product Dialog -->
+        <v-dialog v-model="productDialog" width="1000">
+            <v-card>
+                <v-toolbar color="primary" dark>
+                    <v-toolbar-title>{{ isAddingProduct ? 'Add Product from Batch' : 'Edit Product' }}</v-toolbar-title>
+                    <v-spacer />
+                    <v-btn icon @click="closeProductDialog">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-toolbar>
+                <v-card-text v-if="editedProduct">
+                    <v-form ref="productFormRef" lazy-validation>
+                        <v-container>
+                            <!-- Batch Selection Section (only for new products) -->
+                            <v-row v-if="isAddingProduct">
+                                <v-col cols="12">
+                                    <v-select
+                                        :items="readyToPackBatches"
+                                        label="Select Batch"
+                                        v-model="editedProduct.selectedBatch"
+                                        item-title="label"
+                                        item-value="value"
+                                        required
+                                        :rules="[requiredRule]"
+                                        hint="Choose a batch that's ready to pack"
+                                        persistent-hint
+                                        @update:modelValue="onBatchSelected"
+                                    />
+                                </v-col>
+                                <v-col cols="12" v-if="editedProduct.selectedBatch">
+                                    <v-alert type="info" class="mb-4">
+                                        <div><strong>Available brew:</strong> {{ getTotalBatchAmount(selectedBatchData) }} L</div>
+                                        <div><strong>Batch:</strong> {{ selectedBatchData ? getFermenterLabelById(selectedBatchData.fermenter) : '' }}</div>
+                                        <div><strong>ABV:</strong> {{ selectedBatchData ? getABV(selectedBatchData) : '' }}%</div>
+                                    </v-alert>
+                                </v-col>
+                            </v-row>
+
+                            <!-- Product Name -->
+                            <v-row>
+                                <v-col cols="12">
+                                    <v-text-field 
+                                        class="required-field" 
+                                        label="Product Name" 
+                                        v-model="editedProduct.productName" 
+                                        :rules="[requiredRule]" 
+                                        required 
+                                    />
+                                </v-col>
+                            </v-row>
+
+                            <!-- Container Groups Section (only for new products with batch selected) -->
+                            <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
+                                <v-col cols="12">
+                                    <h3 class="mb-3">Container Distribution</h3>
+                                    <p class="text-caption text--secondary mb-4">Distribute your brew across different container types. You can add multiple groups to split the total amount.</p>
+                                </v-col>
+                            </v-row>
+
+                            <v-row v-for="(group, idx) in containerGroups" :key="idx" class="mb-4" v-if="isAddingProduct && editedProduct.selectedBatch">
+                                <v-col cols="12">
+                                    <v-card outlined class="pa-4">
+                                        <v-row class="align-center">
+                                            <v-col cols="3">
+                                                <v-select
+                                                    :items="containerTypes"
+                                                    label="Container Type"
+                                                    v-model="group.containerType"
+                                                    required
+                                                    :rules="[requiredRule]"
+                                                />
+                                            </v-col>
+                                            <v-col cols="2">
+                                                <v-text-field
+                                                    label="Container Size"
+                                                    type="number"
+                                                    v-model="group.containerSize"
+                                                    suffix="L"
+                                                    hint="Size per container"
+                                                    required
+                                                    :rules="[requiredNumberRule, (v) => validateContainerInput(v, group, 'size')]"
+                                                />
+                                            </v-col>
+                                            <v-col cols="2">
+                                                <v-text-field
+                                                    label="Quantity"
+                                                    type="number"
+                                                    v-model="group.quantity"
+                                                    hint="Number of containers"
+                                                    required
+                                                    :rules="[requiredNumberRule, (v) => validateContainerInput(v, group, 'quantity')]"
+                                                />
+                                            </v-col>
+                                            <v-col cols="2">
+                                                <div class="text-center">
+                                                    <div class="text-h6">{{ getGroupTotal(group) }}L</div>
+                                                    <div class="text-caption">Total</div>
+                                                </div>
+                                            </v-col>
+                                            <v-col cols="2">
+                                                <v-text-field
+                                                    label="Notes"
+                                                    v-model="group.notes"
+                                                    hint="Optional"
+                                                />
+                                            </v-col>
+                                            <v-col cols="1" class="text-center">
+                                                <v-btn
+                                                    icon
+                                                    color="red"
+                                                    flat
+                                                    size="small"
+                                                    @click="removeContainerGroup(idx)"
+                                                    :disabled="containerGroups.length <= 1"
+                                                >
+                                                    <v-icon>mdi-delete</v-icon>
+                                                </v-btn>
+                                            </v-col>
+                                        </v-row>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+
+                            <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
+                                <v-col cols="12">
+                                    <v-btn
+                                        color="primary"
+                                        outlined
+                                        @click="addContainerGroup"
+                                        class="mb-4"
+                                    >
+                                        <v-icon class="mr-2">mdi-plus</v-icon>
+                                        Add Another Container Group
+                                    </v-btn>
+                                </v-col>
+                            </v-row>
+
+            <v-row v-if="isAddingProduct && editedProduct.selectedBatch">
+                <v-col cols="12">
+                    <v-alert 
+                        :type="getTotalDistributed() > getTotalBatchAmount(selectedBatchData) ? 'error' : (getTotalDistributed() < getTotalBatchAmount(selectedBatchData) ? 'warning' : 'success')" 
+                        class="mt-4"
+                    >
+                        <div><strong>Total distributed:</strong> {{ getTotalDistributed() }} L</div>
+                        <div><strong>Available:</strong> {{ getTotalBatchAmount(selectedBatchData) }} L</div>
+                        <div><strong>Remaining:</strong> {{ (getTotalBatchAmount(selectedBatchData) - getTotalDistributed()).toFixed(1) }} L</div>
+                        
+                        <div v-if="getTotalDistributed() > getTotalBatchAmount(selectedBatchData)" class="mt-2">
+                            <strong class="text-red">❌ OVER-ASSIGNED: You cannot distribute more than the available brew volume!</strong>
+                        </div>
+                        <div v-else-if="getTotalDistributed() < getTotalBatchAmount(selectedBatchData)" class="mt-2">
+                            <small>⚠️ You have remaining brew that won't be packaged. This could be intentional (testing, spillage, etc.)</small>
+                        </div>
+                        <div v-else class="mt-2">
+                            <strong class="text-green">✅ Perfect! All available brew has been distributed.</strong>
+                        </div>
+                    </v-alert>
+                </v-col>
+            </v-row>                            <!-- Legacy single container fields (only for editing existing products) -->
+                            <v-row v-if="!isAddingProduct">
+                                <v-col cols="6">
+                                    <v-select
+                                        :items="containerTypes"
+                                        label="Container Type"
+                                        v-model="editedProduct.containerType"
+                                        required
+                                        :rules="[requiredRule]"
+                                    />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field
+                                        label="Container Size"
+                                        type="number"
+                                        v-model="editedProduct.containerSize"
+                                        suffix="L"
+                                        required
+                                        :rules="[requiredNumberRule]"
+                                    />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field
+                                        label="Quantity"
+                                        type="number"
+                                        v-model="editedProduct.quantity"
+                                        required
+                                        :rules="[requiredNumberRule]"
+                                    />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-text-field
+                                        label="ABV"
+                                        v-model="editedProduct.abv"
+                                        suffix="%"
+                                        hint="e.g. 5.2%"
+                                    />
+                                </v-col>
+                                <v-col cols="12">
+                                    <v-text-field
+                                        label="Packaged Date"
+                                        type="date"
+                                        v-model="editedProduct.packagedDate"
+                                        required
+                                        :rules="[requiredRule]"
+                                    />
+                                </v-col>
+                                <v-col cols="12">
+                                    <v-textarea
+                                        label="Notes"
+                                        v-model="editedProduct.notes"
+                                        hint="Optional notes about this product"
+                                    />
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </v-form>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer />
+                    <v-btn text @click="closeProductDialog">Cancel</v-btn>
+                    <v-btn color="primary" @click="saveProduct" :disabled="!isProductFormValid">
+                        {{ isAddingProduct ? 'Create Products' : 'Save' }}
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
@@ -160,21 +448,35 @@ import { ref, computed, onMounted } from 'vue'
 import { useDataStore } from '@/stores/data'
 
 const headers = ref([
-    { text: '', value: 'data-table-expand', sortable: false, width: '48px' },
-    { text: 'Group', value: 'name', sortable: true },
-    { text: 'Usable', value: 'usable', align: 'center' },
-    { text: 'Items', value: 'itemsCount', align: 'center' },
-    { text: 'Status', value: 'status', sortable: true },
-    { text: 'Actions', value: 'actions', align: 'center' }
+    { title: '', value: 'data-table-expand', sortable: false, width: '48px' },
+    { title: 'Group', value: 'name', sortable: true },
+    { title: 'Usable', value: 'usable', align: 'center' },
+    { title: 'Items', value: 'itemsCount', align: 'center' },
+    { title: 'Status', value: 'status', sortable: true },
+    { title: 'Actions', value: 'actions', align: 'center' }
 ])
 
 // Replaced expanded v-row/v-col listing with a nested v-data-table for cleaner tabular display of items
 const itemHeaders = ref([
-    { text: 'Product', value: 'product' },
-    { text: 'Quantity', value: 'quantity', align: 'center' },
-    { text: 'Price', value: 'price', align: 'right' },
-    { text: 'Dates', value: 'dates' },
-    { text: 'Status', value: 'status', align: 'center' }
+    { title: 'Product', value: 'product' },
+    { title: 'Quantity', value: 'quantity', align: 'center' },
+    { title: 'Price', value: 'price', align: 'right' },
+    { title: 'Dates', value: 'dates' },
+    { title: 'Status', value: 'status', align: 'center' }
+])
+
+// Tab state
+const activeTab = ref('ingredients')
+
+// Product headers for the products section
+const productHeaders = ref([
+    { title: 'Product', value: 'productName', sortable: true },
+    { title: 'Quantity', value: 'quantity', align: 'center' },
+    { title: 'Total Volume', value: 'totalVolume', align: 'center' },
+    { title: 'ABV', value: 'abv', align: 'center' },
+    { title: 'Packaged Date', value: 'packagedDate', sortable: true },
+    { title: 'Status', value: 'status', sortable: true },
+    { title: 'Actions', value: 'actions', align: 'center' }
 ])
 
 const dataStore = useDataStore()
@@ -185,6 +487,17 @@ const isAdding = ref(false)
 const isPreview = ref(false)
 const formRef = ref(null)
 
+// Product dialog state
+const productDialog = ref(false)
+const editedProduct = ref(null)
+const isAddingProduct = ref(false)
+const productFormRef = ref(null)
+
+// Container groups for batch distribution
+const containerGroups = ref([])
+
+const containerTypes = ['Cans', 'Kegs', 'Bottles', 'Other']
+
 const units = ['g','kg','ml','l','pcs']
 
 const requiredRule = (v) => (v !== undefined && v !== null && v !== '' ) || 'Required'
@@ -192,6 +505,34 @@ const requiredNumberRule = (v) => {
     if (v === undefined || v === null || v === '') return 'Required'
     const n = Number(v)
     return Number.isFinite(n) && n >= 0 || 'Must be a number'
+}
+
+// Validation function to prevent over-assignment
+function validateContainerInput(value, group, field) {
+    if (!editedProduct.value?.selectedBatch) return true
+    
+    const availableVolume = getTotalBatchAmount(selectedBatchData.value)
+    if (!availableVolume) return true
+    
+    // Calculate what the total would be with this change
+    const tempGroup = { ...group }
+    if (field === 'size') tempGroup.containerSize = value
+    if (field === 'quantity') tempGroup.quantity = value
+    
+    const tempGroupTotal = Number(tempGroup.containerSize || 0) * Number(tempGroup.quantity || 0)
+    
+    // Calculate total from other groups
+    const otherGroupsTotal = containerGroups.value
+        .filter(g => g !== group)
+        .reduce((total, g) => total + (Number(g.containerSize || 0) * Number(g.quantity || 0)), 0)
+    
+    const wouldBeTotal = tempGroupTotal + otherGroupsTotal
+    
+    if (wouldBeTotal > availableVolume) {
+        return `This would exceed available brew (${availableVolume}L)`
+    }
+    
+    return true
 }
 
 function openEdit(group) {
@@ -257,9 +598,128 @@ async function removeGroup(id) {
     await dataStore.getStockGroups()
 }
 
-onMounted(async () => {
-    await dataStore.getStockGroups()
-})
+// Product dialog methods
+function openAddProduct() {
+    editedProduct.value = {
+        id: null,
+        productName: '',
+        selectedBatch: null,
+        containerType: 'Cans',
+        containerSize: 0.33,
+        quantity: 1,
+        totalVolume: 0,
+        abv: '',
+        packagedDate: new Date().toISOString().slice(0, 10),
+        status: 'packaged',
+        notes: ''
+    }
+    
+    // Initialize container groups for batch distribution
+    containerGroups.value = [{
+        containerType: 'Cans',
+        containerSize: 0.33,
+        quantity: 1,
+        notes: ''
+    }]
+    
+    isAddingProduct.value = true
+    productDialog.value = true
+}
+
+function closeProductDialog() {
+    editedProduct.value = null
+    containerGroups.value = []
+    productDialog.value = false
+}
+
+async function saveProduct() {
+    if (!editedProduct.value) return
+    
+    if (productFormRef.value) {
+        const valid = await productFormRef.value.validate()
+        if (!valid) return
+    }
+
+    if (isAddingProduct.value && editedProduct.value.selectedBatch) {
+        // Handle new product from batch with container groups
+        const selectedBatch = batches.value.find(b => b.id === editedProduct.value.selectedBatch)
+        if (!selectedBatch) return
+
+        const totalDistributed = getTotalDistributed()
+        const totalBatchAmount = getTotalBatchAmount(selectedBatch)
+        
+        // CRITICAL: Prevent over-assignment - this should never happen due to validation, but double-check
+        if (totalDistributed > totalBatchAmount) {
+            alert(`Cannot save: Total distributed (${totalDistributed}L) exceeds available brew (${totalBatchAmount}L)`)
+            return
+        }
+
+        // Check if user wants to proceed with remaining brew
+        if (totalDistributed < totalBatchAmount) {
+            const confirmed = confirm(
+                `You are distributing ${totalDistributed}L out of ${totalBatchAmount}L available. ` +
+                `${(totalBatchAmount - totalDistributed).toFixed(1)}L will remain unpackaged. ` +
+                `This could be intentional (testing, spillage, etc.). Continue?`
+            )
+            if (!confirmed) return
+        }
+
+        // Create product entries for each container group
+        const products = containerGroups.value.map(group => ({
+            id: `${selectedBatch.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            batchId: selectedBatch.id,
+            productName: `${editedProduct.value.productName} - ${group.containerType}`,
+            containerType: group.containerType,
+            containerSize: Number(group.containerSize),
+            quantity: Number(group.quantity),
+            totalVolume: Number(getGroupTotal(group)),
+            notes: group.notes || '',
+            packagedDate: new Date().toISOString().slice(0, 10),
+            status: 'packaged',
+            abv: getABV(selectedBatch),
+            fermenter: selectedBatch.fermenter
+        }))
+
+        // Save all products
+        for (const product of products) {
+            await dataStore.addProduct(product)
+        }
+
+        // Update batch status to 'packaged'
+        const updatedBatch = Object.assign({}, selectedBatch, { status: 'packaged' })
+        await dataStore.updateBatch(updatedBatch)
+        
+        // Refresh data
+        await dataStore.getBatches()
+        
+        // Show success message
+        dataStore.setNotification({
+            text: `Successfully packaged batch into ${products.length} product group${products.length > 1 ? 's' : ''}`,
+            color: 'success',
+            delay: 5000
+        })
+    } else {
+        // Handle legacy single product (editing existing products)
+        const containerSize = Number(editedProduct.value.containerSize) || 0
+        const quantity = Number(editedProduct.value.quantity) || 0
+        editedProduct.value.totalVolume = containerSize * quantity
+
+        // Ensure numeric conversions
+        if (editedProduct.value.containerSize) editedProduct.value.containerSize = Number(editedProduct.value.containerSize)
+        if (editedProduct.value.quantity) editedProduct.value.quantity = Number(editedProduct.value.quantity)
+
+        if (isAddingProduct.value) {
+            // Generate a unique ID for manual products
+            editedProduct.value.id = `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            await dataStore.addProduct(editedProduct.value)
+        } else {
+            await dataStore.updateProduct(editedProduct.value)
+        }
+    }
+    
+    await dataStore.getProducts()
+    closeProductDialog()
+}
 
 function isExpired(item) {
     if (!item || !item.expiryDate) return false
@@ -337,4 +797,199 @@ const isFormValid = computed(() => {
     }
     return true
 })
+
+const isProductFormValid = computed(() => {
+    if (!editedProduct.value) return false
+    if (!editedProduct.value.productName) return false
+    
+    if (isAddingProduct.value && editedProduct.value.selectedBatch) {
+        // Validation for batch-based product creation
+        if (!editedProduct.value.selectedBatch) return false
+        
+        // Validate all container groups
+        for (const group of containerGroups.value) {
+            if (!group.containerType) return false
+            if (!Number.isFinite(Number(group.containerSize)) || Number(group.containerSize) <= 0) return false
+            if (!Number.isFinite(Number(group.quantity)) || Number(group.quantity) <= 0) return false
+        }
+        
+        // CRITICAL: Prevent over-assignment - total distributed cannot exceed available batch volume
+        const totalDistributed = getTotalDistributed()
+        const availableVolume = getTotalBatchAmount(selectedBatchData.value)
+        if (totalDistributed > availableVolume) return false
+        
+        return true
+    } else {
+        // Validation for legacy single product (editing existing products)
+        if (!editedProduct.value.containerType) return false
+        if (!Number.isFinite(Number(editedProduct.value.containerSize)) || Number(editedProduct.value.containerSize) <= 0) return false
+        if (!Number.isFinite(Number(editedProduct.value.quantity)) || Number(editedProduct.value.quantity) <= 0) return false
+        if (!editedProduct.value.packagedDate) return false
+        
+        return true
+    }
+})
+
+// Products computed properties
+const products = computed(() => dataStore.products || [])
+
+const displayedProducts = computed(() => {
+    return products.value || []
+})
+
+// Product-related methods
+function getProductStatusColor(status) {
+    const s = (status || '').toLowerCase()
+    if (s === 'packaged') return 'green'
+    if (s === 'sold') return 'blue'
+    return 'grey'
+}
+
+function getProductStatusIcon(status) {
+    const s = (status || '').toLowerCase()
+    if (s === 'packaged') return 'mdi-package-variant-closed'
+    if (s === 'sold') return 'mdi-cash'
+    return 'mdi-help-circle-outline'
+}
+
+function viewProduct(product) {
+    editedProduct.value = Object.assign({}, product)
+    isAddingProduct.value = false
+    productDialog.value = true
+}
+
+async function removeProduct(id) {
+    if (!id) return
+    if (confirm('Are you sure you want to remove this product?')) {
+        await dataStore.removeProduct(id)
+        await dataStore.getProducts()
+    }
+}
+
+// Update onMounted to load products and batches
+onMounted(async () => {
+    await dataStore.getStockGroups()
+    await dataStore.getProducts()
+    await dataStore.getBatches()
+    await dataStore.getFermenters()
+})
+
+// Batch and fermenter related computed properties
+const batches = computed(() => dataStore.batches || [])
+const fermenters = computed(() => dataStore.fermenters || [])
+
+// Ready to pack batches for selection
+const readyToPackBatches = computed(() => {
+    const readyBatches = batches.value.filter(b => (b.status || '').toLowerCase() === 'ready to pack')
+    return readyBatches.map(b => ({
+        value: b.id,
+        label: `${getFermenterLabelById(b.fermenter)} - Started ${formatBatchDate(b.startDate)}`
+    }))
+})
+
+// Selected batch data
+const selectedBatchData = computed(() => {
+    if (!editedProduct.value?.selectedBatch) return null
+    return batches.value.find(b => b.id === editedProduct.value.selectedBatch)
+})
+
+// Helper functions
+function getFermenterLabelById(id) {
+    if (id === undefined || id === null) return '-'
+    const fermenter = fermenters.value.find(f => f.id === id)
+    return fermenter && fermenter.name ? `${fermenter.name} (${id})` : `Fermenter ${id}`
+}
+
+function formatBatchDate(dateObj) {
+    if (!dateObj) return '-'
+    if (dateObj.seconds) {
+        const date = new Date(dateObj.seconds * 1000)
+        return date.toLocaleDateString()
+    }
+    return new Date(dateObj).toLocaleDateString()
+}
+
+function getBatchWaterLiters(batch) {
+    if (!batch || !batch.fermenter) return 0
+    const fermenter = fermenters.value.find(f => f.id === batch.fermenter)
+    if (!fermenter) return 0
+    
+    // Common field names: size, liters, capacity
+    if (fermenter.size !== undefined) return Number(fermenter.size)
+    if (fermenter.liters !== undefined) return Number(fermenter.liters)
+    if (fermenter.capacity !== undefined) return Number(fermenter.capacity)
+    return 0
+}
+
+function getTotalBatchAmount(batch) {
+    if (!batch) return 0
+    return getBatchWaterLiters(batch) || 0
+}
+
+function getABV(batch) {
+    if (!batch) return ''
+    
+    // Calculate ABV from OG and FG if available
+    if (batch.readingOG && batch.readingFG) {
+        const og = Number(batch.readingOG)
+        const fg = Number(batch.readingFG)
+        if (Number.isFinite(og) && Number.isFinite(fg)) {
+            const abv = ((og - fg) * 131.25).toFixed(1)
+            return abv
+        }
+    }
+    
+    // Fallback to estimated calculation or return empty
+    if (batch.readingOG) {
+        const og = Number(batch.readingOG)
+        const estimatedFg = 1.000 // Default assumption
+        if (Number.isFinite(og)) {
+            const abv = ((og - estimatedFg) * 131.25).toFixed(1)
+            return abv
+        }
+    }
+    
+    return ''
+}
+
+// Container group management
+function addContainerGroup() {
+    containerGroups.value.push({
+        containerType: 'Cans',
+        containerSize: 0.33,
+        quantity: 1,
+        notes: ''
+    })
+}
+
+function removeContainerGroup(index) {
+    if (containerGroups.value.length > 1) {
+        containerGroups.value.splice(index, 1)
+    }
+}
+
+function getGroupTotal(group) {
+    const size = Number(group.containerSize) || 0
+    const qty = Number(group.quantity) || 0
+    return (size * qty).toFixed(1)
+}
+
+function getTotalDistributed() {
+    return containerGroups.value.reduce((total, group) => {
+        return total + Number(getGroupTotal(group))
+    }, 0)
+}
+
+// Batch selection handler
+function onBatchSelected(batchId) {
+    if (!batchId) return
+    
+    const batch = batches.value.find(b => b.id === batchId)
+    if (!batch) return
+    
+    // Auto-fill product name based on fermenter
+    if (!editedProduct.value.productName) {
+        editedProduct.value.productName = getFermenterLabelById(batch.fermenter)
+    }
+}
 </script>
