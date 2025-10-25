@@ -132,14 +132,14 @@
             <template #actions>
                 <v-spacer />
                 <v-btn 
-                    variant="outlined" 
+                    class="modern-btn-base modern-btn-secondary"
                     @click="closeDialog"
                     prepend-icon="mdi-close"
                 >
                     Cancel
                 </v-btn>
                 <v-btn 
-                    color="primary" 
+                    class="modern-btn-base modern-btn-primary" 
                     @click="saveRecipe" 
                     :disabled="!isFormValid"
                     prepend-icon="mdi-content-save"

@@ -152,8 +152,7 @@
                                     <v-col cols="1">
                                         <v-btn 
                                             icon="mdi-delete" 
-                                            color="red" 
-                                            variant="text" 
+                                            class="modern-btn-icon modern-btn-icon-danger" 
                                             @click="removeGroup(idx)"
                                             :disabled="containerGroups.length === 1"
                                         />
@@ -168,9 +167,8 @@
                         <v-col cols="12">
                             <v-btn 
                                 prepend-icon="mdi-plus" 
-                                variant="outlined" 
+                                class="modern-btn-base modern-btn-secondary modern-btn-small mb-3" 
                                 @click="addGroup"
-                                class="mb-3"
                             >
                                 Add Container Group
                             </v-btn>
@@ -258,14 +256,14 @@
             <template #actions>
                 <v-spacer />
                 <v-btn 
-                    variant="outlined" 
+                    class="modern-btn-base modern-btn-secondary"
                     @click="closeProductDialog"
                     prepend-icon="mdi-close"
                 >
                     Cancel
                 </v-btn>
                 <v-btn 
-                    color="primary" 
+                    class="modern-btn-base modern-btn-primary" 
                     @click="saveProduct" 
                     :disabled="!isProductFormValid"
                     prepend-icon="mdi-content-save"

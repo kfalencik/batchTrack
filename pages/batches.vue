@@ -210,7 +210,7 @@
             <template #actions>
                 <v-spacer />
                 <v-btn 
-                    variant="outlined" 
+                    class="modern-btn-base modern-btn-secondary" 
                     @click="closeEdit"
                     prepend-icon="mdi-close"
                 >
@@ -218,7 +218,7 @@
                 </v-btn>
                 <v-btn 
                     v-if="!isPreview" 
-                    color="primary" 
+                    class="modern-btn-base modern-btn-primary" 
                     @click="saveEdit" 
                     :disabled="!isFormValid"
                     prepend-icon="mdi-content-save"
@@ -340,8 +340,11 @@
 
                     <v-row>
                         <v-col cols="12">
-                            <v-btn text color="primary" @click="addPackagingGroup">
-                                <v-icon class="mr-2">mdi-plus</v-icon>
+                            <v-btn 
+                                class="modern-btn-base modern-btn-secondary modern-btn-small" 
+                                @click="addPackagingGroup"
+                                prepend-icon="mdi-plus"
+                            >
                                 Add Another Container Group
                             </v-btn>
                         </v-col>
@@ -376,14 +379,14 @@
             <template #actions>
                 <v-spacer />
                 <v-btn 
-                    variant="outlined" 
+                    class="modern-btn-base modern-btn-secondary"
                     @click="closePackDialog"
                     prepend-icon="mdi-close"
                 >
                     Cancel
                 </v-btn>
                 <v-btn 
-                    color="primary" 
+                    class="modern-btn-base modern-btn-primary" 
                     @click="savePackaging" 
                     :disabled="!isPackFormValid"
                     prepend-icon="mdi-package-variant"

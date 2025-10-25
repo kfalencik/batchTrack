@@ -280,7 +280,14 @@
                             </v-card>
                         </v-col>
                         <v-col cols="12">
-                            <v-btn text color="primary" @click="addItem" v-if="!isPreview"><v-icon class="mr-2">mdi-plus</v-icon>Add Item</v-btn>
+                            <v-btn 
+                                class="modern-btn-base modern-btn-secondary modern-btn-small" 
+                                @click="addItem" 
+                                v-if="!isPreview"
+                                prepend-icon="mdi-plus"
+                            >
+                                Add Item
+                            </v-btn>
                         </v-col>
                     </v-row>
                 </v-container>
@@ -289,7 +296,7 @@
             <template #actions>
                 <v-spacer />
                 <v-btn 
-                    variant="outlined" 
+                    class="modern-btn-base modern-btn-secondary"
                     @click="closeEdit"
                     prepend-icon="mdi-close"
                 >
@@ -297,7 +304,7 @@
                 </v-btn>
                 <v-btn 
                     v-if="!isPreview" 
-                    color="primary" 
+                    class="modern-btn-base modern-btn-primary" 
                     @click="saveEdit" 
                     :disabled="!isFormValid"
                     prepend-icon="mdi-content-save"

@@ -36,7 +36,8 @@ export default defineNuxtConfig({
     }
   ],
   css: [
-    "bootstrap-icons/font/bootstrap-icons.css"
+    "bootstrap-icons/font/bootstrap-icons.css",
+    "~/assets/styles/modern-buttons.css"
   ],
   runtimeConfig: {
     public: {

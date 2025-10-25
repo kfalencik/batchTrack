@@ -4,8 +4,7 @@
       <v-btn 
         v-if="showDelete"
         icon="mdi-delete" 
-        color="red" 
-        variant="text" 
+        class="modern-btn-icon modern-btn-icon-danger"
         size="small"
         @click="$emit('delete')"
       />

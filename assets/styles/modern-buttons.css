@@ -1,0 +1,255 @@
+/* Modern Button Styles - Import this in your main CSS file or use as a mixin */
+
+/* Vuetify Button Overrides for Modern Design */
+.v-btn.modern-btn-base {
+    border-radius: 0.75rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.025em !important;
+    text-transform: none !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    min-height: 40px !important;
+}
+
+/* Primary Button (Main actions) */
+.v-btn.modern-btn-primary {
+    background: linear-gradient(135deg, #36a367, #2d8653) !important;
+    color: white !important;
+    box-shadow: 0 4px 16px rgba(54, 163, 103, 0.3) !important;
+    border: none !important;
+}
+
+.v-btn.modern-btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(54, 163, 103, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+.v-btn.modern-btn-primary:disabled {
+    opacity: 0.6 !important;
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Secondary Button (Cancel, etc.) */
+.v-btn.modern-btn-secondary {
+    background: white !important;
+    color: #374151 !important;
+    border: 2px solid #e5e7eb !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+.v-btn.modern-btn-secondary:hover {
+    border-color: #36a367 !important;
+    color: #36a367 !important;
+    background: rgba(54, 163, 103, 0.02) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(54, 163, 103, 0.1) !important;
+}
+
+/* Success Button */
+.v-btn.modern-btn-success {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    color: white !important;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3) !important;
+    border: none !important;
+}
+
+.v-btn.modern-btn-success:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Warning Button */
+.v-btn.modern-btn-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: white !important;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3) !important;
+    border: none !important;
+}
+
+.v-btn.modern-btn-warning:hover {
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Error/Danger Button */
+.v-btn.modern-btn-error {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    color: white !important;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3) !important;
+    border: none !important;
+}
+
+.v-btn.modern-btn-error:hover {
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Info Button */
+.v-btn.modern-btn-info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    color: white !important;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3) !important;
+    border: none !important;
+}
+
+.v-btn.modern-btn-info:hover {
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Ghost/Text Button */
+.v-btn.modern-btn-ghost {
+    background: transparent !important;
+    color: #6b7280 !important;
+    border: 1px solid transparent !important;
+    box-shadow: none !important;
+}
+
+.v-btn.modern-btn-ghost:hover {
+    background: rgba(107, 114, 128, 0.1) !important;
+    color: #374151 !important;
+    border-color: rgba(107, 114, 128, 0.2) !important;
+}
+
+/* Icon Button Base */
+.v-btn.modern-btn-icon {
+    border-radius: 0.5rem !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    background: rgba(107, 114, 128, 0.1) !important;
+    color: #6b7280 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+    border: none !important;
+}
+
+.v-btn.modern-btn-icon:hover {
+    background: rgba(54, 163, 103, 0.1) !important;
+    color: #36a367 !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 4px 8px rgba(54, 163, 103, 0.15) !important;
+}
+
+/* Icon Button - Primary */
+.v-btn.modern-btn-icon-primary {
+    background: rgba(54, 163, 103, 0.1) !important;
+    color: #36a367 !important;
+}
+
+.v-btn.modern-btn-icon-primary:hover {
+    background: #36a367 !important;
+    color: white !important;
+}
+
+/* Icon Button - Danger */
+.v-btn.modern-btn-icon-danger {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: #ef4444 !important;
+}
+
+.v-btn.modern-btn-icon-danger:hover {
+    background: #ef4444 !important;
+    color: white !important;
+}
+
+/* Size Variations */
+.v-btn.modern-btn-small {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+    min-height: 36px !important;
+}
+
+.v-btn.modern-btn-large {
+    padding: 1rem 2rem !important;
+    font-size: 1rem !important;
+    min-height: 48px !important;
+}
+
+/* Full Width Button */
+.v-btn.modern-btn-block {
+    width: 100% !important;
+}
+
+/* Loading State */
+.v-btn.modern-btn-loading {
+    pointer-events: none !important;
+    position: relative !important;
+}
+
+.v-btn.modern-btn-loading .v-btn__loader {
+    color: currentColor !important;
+}
+
+/* Disabled State Override */
+.v-btn.modern-btn-base:disabled {
+    opacity: 0.6 !important;
+    pointer-events: none !important;
+}
+
+.v-btn.modern-btn-base:disabled:hover {
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Remove Vuetify's default elevation */
+.v-btn.modern-btn-base .v-btn__elevation {
+    box-shadow: none !important;
+}
+
+/* Override Vuetify's focus styles */
+.v-btn.modern-btn-base:focus {
+    box-shadow: 0 0 0 3px rgba(54, 163, 103, 0.2) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .v-btn.modern-btn-large {
+        padding: 0.875rem 1.5rem !important;
+        font-size: 0.95rem !important;
+        min-height: 44px !important;
+    }
+    
+    .v-btn.modern-btn-base {
+        border-radius: 0.625rem !important;
+    }
+    
+    .v-btn.modern-btn-icon {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .v-btn.modern-btn-secondary {
+        background: #1f2937 !important;
+        color: #e5e7eb !important;
+        border-color: #374151 !important;
+    }
+    
+    .v-btn.modern-btn-ghost {
+        color: #9ca3af !important;
+    }
+    
+    .v-btn.modern-btn-ghost:hover {
+        background: rgba(156, 163, 175, 0.1) !important;
+        color: #e5e7eb !important;
+    }
+}
+
+/* Animation Keyframes */
+@keyframes modernBtnSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Ensure proper spacing in button groups */
+.v-btn-group .v-btn.modern-btn-base {
+    margin-right: 0.5rem;
+}
+
+.v-btn-group .v-btn.modern-btn-base:last-child {
+    margin-right: 0;
+}

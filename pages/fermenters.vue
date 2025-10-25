@@ -98,14 +98,14 @@
         <template #actions>
             <v-spacer />
             <v-btn 
-                variant="outlined" 
+                class="modern-btn-base modern-btn-secondary"
                 @click="closeEdit"
                 prepend-icon="mdi-close"
             >
                 Cancel
             </v-btn>
             <v-btn 
-                color="primary" 
+                class="modern-btn-base modern-btn-primary" 
                 @click="save"
                 prepend-icon="mdi-content-save"
             >
