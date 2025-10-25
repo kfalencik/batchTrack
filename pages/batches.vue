@@ -15,9 +15,9 @@
                     <StatCard :title="'All'" icon="mdi-view-grid" color="black darken-1" :count="batches.length" :active="activeFilter === 'all'" @click="setFilter('all')" class="mr-2" />
                     <StatCard :title="'Fermenting'" icon="mdi-flask" color="blue-lighten-1" :count="stats.fermenting" :active="activeFilter === 'fermenting'" @click="setFilter('fermenting')" class="mr-2" />
                     <StatCard :title="'Flavouring'" icon="mdi-leaf" color="orange-lighten-2" :count="stats.flavouring" :active="activeFilter === 'flavouring'" @click="setFilter('flavouring')" class="mr-2" />
-                    <StatCard :title="'Complete'" icon="mdi-check-circle-outline" color="success" :count="stats.complete" :active="activeFilter === 'complete'" @click="setFilter('complete')" class="mr-2" />
                     <StatCard :title="'Failed'" icon="mdi-alert-circle-outline" color="red" :count="stats.failed" :active="activeFilter === 'failed'" @click="setFilter('failed')" class="mr-2" />
                     <StatCard :title="'Ready to Pack'" icon="mdi-package-up" color="purple" :count="stats.readyToPack" :active="activeFilter === 'ready to pack'" @click="setFilter('ready to pack')" class="mr-2" />
+                    <StatCard :title="'Packaged'" icon="mdi-package-variant-closed" color="green" :count="stats.packaged" :active="activeFilter === 'packaged'" @click="setFilter('packaged')" class="mr-2" />
                 </v-row>
             </v-col>
         </v-row>
@@ -65,8 +65,8 @@
                 </v-chip>
             </template>
             <template #item.actions="{ item }">
-                <v-btn icon color="info" flat size="x-small" class="mr-2" @click="openEdit(item)" :title="item && item.status ? 'Preview' : 'Edit'">
-                    <v-icon>{{ item && item.status ? 'mdi-eye' : 'mdi-pencil' }}</v-icon>
+                <v-btn icon color="info" flat size="x-small" class="mr-2" @click="openEdit(item)" :title="(item && item.status) || getStatus(item) === 'packaged' ? 'Preview' : 'Edit'">
+                    <v-icon>{{ (item && item.status) || getStatus(item) === 'packaged' ? 'mdi-eye' : 'mdi-pencil' }}</v-icon>
                 </v-btn>
                 <v-btn 
                     v-if="getStatus(item) === 'ready to pack'" 
@@ -80,18 +80,13 @@
                 >
                     <v-icon>mdi-package-variant</v-icon>
                 </v-btn>
-                <v-menu offset-y>
+                <v-menu offset-y v-if="getStatus(item) !== 'packaged'">
                     <template #activator="{ props }">
                         <v-btn v-bind="props" icon flat size="x-small">
                             <v-icon>mdi-dots-vertical</v-icon>
                         </v-btn>
                     </template>
                     <v-list>
-                        <v-list-item @click="setStatus(item, 'complete')">
-                            <v-list-item-content>
-                                <v-list-item-title class="align-center text-success text-sm"><v-icon color="success" class="mr-2" small>mdi-check-circle-outline</v-icon> Mark Complete</v-list-item-title>
-                            </v-list-item-content>
-                        </v-list-item>
                         <v-list-item @click="setStatus(item, 'failed')">
                             <v-list-item-content>
                                 <v-list-item-title class="align-center text-red text-sm"><v-icon color="red" class="mr-2" small>mdi-alert-circle-outline</v-icon> Mark Failed</v-list-item-title>
@@ -350,7 +345,7 @@ import StatCard from '@/components/StatCard.vue'
     function getStatus(item) {
         // If backend provided a definitive status, use it
         const backendStatus = item && item.status;
-        const backendSet = backendStatus && ['failed', 'complete', 'ready to pack', 'packaged', 'sold'].includes(backendStatus);
+        const backendSet = backendStatus && ['failed', 'ready to pack', 'packaged', 'sold'].includes(backendStatus);
         if (backendSet) return backendStatus;
 
         // Otherwise compute based on dates
@@ -362,7 +357,7 @@ import StatCard from '@/components/StatCard.vue'
             // after fermentation
             // if flavouring fields present, mark as Flavouring
             if (item.flavouringEssence || item.flavouringTea || item.flavouringSweetener) return 'flavouring';
-            return 'complete';
+            return 'ready to pack';
         }
 
         return backendStatus || 'Unknown';
@@ -375,7 +370,6 @@ import StatCard from '@/components/StatCard.vue'
         if (s === 'failed') return 'red';
         if (s === 'ready to pack') return 'purple';
         if (s === 'packaged') return 'green';
-        if (s === 'complete') return 'green';
         return 'grey';
     }
 
@@ -420,7 +414,6 @@ import StatCard from '@/components/StatCard.vue'
         if (s === 'fermenting') return 'mdi-flask';
         if (s === 'flavouring') return 'mdi-leaf';
         if (s === 'failed') return 'mdi-alert-circle-outline';
-        if (s === 'complete') return 'mdi-check-circle-outline';
         if (s === 'ready to pack') return 'mdi-package-up';
         if (s === 'packaged') return 'mdi-package-variant-closed';
         return 'mdi-help-circle-outline';
@@ -596,8 +589,8 @@ import StatCard from '@/components/StatCard.vue'
             edited.value.startDateDate = d.toISOString().slice(0,10);
         }
     isAdding.value = false
-    // if the batch already has a status, open in preview mode (read-only)
-    isPreview.value = !!(item && item.status)
+    // if the batch already has a status or is packaged, open in preview mode (read-only)
+    isPreview.value = !!(item && (item.status || getStatus(item) === 'packaged'))
     editDialog.value = true
     }
 
@@ -813,7 +806,7 @@ import StatCard from '@/components/StatCard.vue'
     // Small helpers / computed state for UI
     const stats = computed(() => {
         const list = batches.value || [];
-        const s = { fermenting: 0, flavouring: 0, complete: 0, failed: 0, readyToPack: 0, packaged: 0 };
+        const s = { fermenting: 0, flavouring: 0, failed: 0, readyToPack: 0, packaged: 0 };
         for (const b of list) {
             const st = getStatus(b) || '';
             const key = String(st).toLowerCase();
@@ -821,7 +814,6 @@ import StatCard from '@/components/StatCard.vue'
             else if (key === 'flavouring') s.flavouring++;
             else if (key === 'ready to pack') s.readyToPack++;
             else if (key === 'packaged') s.packaged++;
-            else if (key === 'complete') s.complete++;
             else if (key === 'failed') s.failed++;
         }
         return s;
