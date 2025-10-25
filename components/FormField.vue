@@ -170,3 +170,97 @@ const computedRules = computed(() => {
   return rules
 })
 </script>
+
+<style scoped>
+:deep(.v-text-field) {
+  transition: all 0.2s ease;
+}
+
+:deep(.v-text-field .v-field) {
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  transition: all 0.2s ease;
+}
+
+:deep(.v-text-field .v-field:hover) {
+  border-color: rgb(148 163 184);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1);
+}
+
+:deep(.v-text-field.v-input--focused .v-field) {
+  border-color: rgb(99, 102, 241);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  background: white;
+}
+
+:deep(.v-text-field .v-field__input) {
+  font-weight: 500;
+  color: rgb(15 23 42);
+}
+
+:deep(.v-text-field .v-label) {
+  color: rgb(100 116 139);
+  font-weight: 500;
+}
+
+:deep(.v-text-field.v-input--focused .v-label) {
+  color: rgb(99, 102, 241);
+}
+
+:deep(.v-textarea .v-field) {
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  transition: all 0.2s ease;
+}
+
+:deep(.v-textarea .v-field:hover) {
+  border-color: rgb(148 163 184);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1);
+}
+
+:deep(.v-textarea.v-input--focused .v-field) {
+  border-color: rgb(99, 102, 241);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  background: white;
+}
+
+:deep(.v-select .v-field) {
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  transition: all 0.2s ease;
+}
+
+:deep(.v-select .v-field:hover) {
+  border-color: rgb(148 163 184);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1);
+}
+
+:deep(.v-select.v-input--focused .v-field) {
+  border-color: rgb(99, 102, 241);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  background: white;
+}
+
+:deep(.v-autocomplete .v-field) {
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  transition: all 0.2s ease;
+}
+
+:deep(.v-autocomplete .v-field:hover) {
+  border-color: rgb(148 163 184);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1);
+}
+
+:deep(.v-autocomplete.v-input--focused .v-field) {
+  border-color: rgb(99, 102, 241);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  background: white;
+}
+
+:deep(.v-messages__message) {
+  color: rgb(239, 68, 68);
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+</style>

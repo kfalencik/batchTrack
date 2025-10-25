@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="recipes-page">
         <PageHeader 
             title="Recipes"
             action-text="Add Recipe"
@@ -7,50 +7,67 @@
             @action="openAdd"
         />
 
-        <!-- Stat cards -->
-        <v-row class="mb-15 mt-10" dense>
-            <v-col cols="12">
-                <v-row>
-                    <StatCard :title="'Total Recipes'" icon="mdi-chef-hat" color="blue-lighten-1" :count="recipes.length" :active="true" class="mr-2" />
-                    <StatCard :title="'Available Recipes'" icon="mdi-check-circle" color="green" :count="availableRecipes" :active="false" class="mr-2" />
-                    <StatCard :title="'Missing Ingredients'" icon="mdi-alert-circle" color="red" :count="unavailableRecipes" :active="false" class="mr-2" />
-                </v-row>
-            </v-col>
-        </v-row>
+        <!-- Modern Stat cards grid -->
+        <div class="stats-grid">
+            <StatCard 
+                title="Total Recipes" 
+                icon="mdi-chef-hat" 
+                color="primary" 
+                :count="recipes.length" 
+                :active="true" 
+            />
+            <StatCard 
+                title="Available Recipes" 
+                icon="mdi-check-circle" 
+                color="success" 
+                :count="availableRecipes" 
+                :active="false" 
+            />
+            <StatCard 
+                title="Missing Ingredients" 
+                icon="mdi-alert-circle" 
+                color="error" 
+                :count="unavailableRecipes" 
+                :active="false" 
+            />
+        </div>
 
         <LoadingWrapper :loading="loading" text="Loading recipes...">
-            <v-data-table
-                class="text-sm"
-                :headers="headers"
-                :items="processedRecipes"
-                :loading="loading"
-            >
-            <template #item.ingredients="{ item }">
-                <ChipDisplay 
-                    :items="item.ingredients"
-                    :max-visible="3"
-                    text-field="displayText"
-                    color="blue-grey-lighten-4"
-                    size="small"
-                />
-            </template>
-            <template #item.canMake="{ item }">
-                <StatusChip 
-                    :status="canMakeRecipe(item) ? 'available' : 'missing ingredients'"
-                    type="availability"
-                />
-            </template>
-            <template #item.estimatedCost="{ item }">
-                <span>£{{ calculateRecipeCost(item).toFixed(2) }}</span>
-            </template>
-            <template #item.actions="{ item }">
-                <DataTableActions 
-                    :item="item"
-                    @edit="openEdit"
-                    @delete="removeRecipe"
-                />
-            </template>
-        </v-data-table>
+            <div class="data-table-wrapper">
+                <v-data-table
+                    class="modern-data-table"
+                    :headers="headers"
+                    :items="processedRecipes"
+                    :loading="loading"
+                    density="comfortable"
+                >
+                <template #item.ingredients="{ item }">
+                    <ChipDisplay 
+                        :items="item.ingredients"
+                        :max-visible="3"
+                        text-field="displayText"
+                        color="blue-grey-lighten-4"
+                        size="small"
+                    />
+                </template>
+                <template #item.canMake="{ item }">
+                    <StatusChip 
+                        :status="canMakeRecipe(item) ? 'available' : 'missing ingredients'"
+                        type="availability"
+                    />
+                </template>
+                <template #item.estimatedCost="{ item }">
+                    <div class="cost-display">£{{ calculateRecipeCost(item).toFixed(2) }}</div>
+                </template>
+                <template #item.actions="{ item }">
+                    <DataTableActions 
+                        :item="item"
+                        @edit="openEdit"
+                        @delete="removeRecipe"
+                    />
+                </template>
+            </v-data-table>
+            </div>
         </LoadingWrapper>
 
         <!-- Add/Edit Recipe Dialog -->
@@ -482,6 +499,83 @@ onMounted(async () => {
     --v-field-border-width: 2px;
 }
 
+/* Modern page layout styles */
+.recipes-page {
+    padding: 0 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0 3rem 0;
+}
+
+.data-table-wrapper {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid rgb(226 232 240 / 0.8);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+}
+
+.modern-data-table {
+    background: transparent !important;
+}
+
+.modern-data-table :deep(.v-data-table__wrapper) {
+    border-radius: 1rem;
+}
+
+.modern-data-table :deep(.v-data-table-header) {
+    background: rgb(248 250 252);
+    border-bottom: 1px solid rgb(226 232 240 / 0.5);
+}
+
+.modern-data-table :deep(.v-data-table-header .v-data-table__th) {
+    font-weight: 600;
+    color: rgb(71 85 105);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    padding: 1rem;
+}
+
+.modern-data-table :deep(.v-data-table__tr) {
+    border-bottom: 1px solid rgb(226 232 240 / 0.3);
+    transition: all 0.2s ease;
+}
+
+.modern-data-table :deep(.v-data-table__tr:hover) {
+    background: rgb(248 250 252 / 0.5);
+}
+
+.modern-data-table :deep(.v-data-table__td) {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.cost-display {
+    font-weight: 600;
+    color: rgb(15 23 42);
+    font-feature-settings: 'tnum';
+}
+
+@media (max-width: 768px) {
+    .recipes-page {
+        padding: 0 0.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin: 1.5rem 0 2rem 0;
+    }
+}
+</style>
 .v-select.v-input--is-focused .v-field__outline {
     --v-field-border-width: 2px;
 }
@@ -498,4 +592,3 @@ onMounted(async () => {
     color: #1976d2;
     font-weight: 600;
 }
-</style>

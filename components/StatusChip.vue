@@ -3,11 +3,16 @@
     :color="chipColor" 
     :variant="variant"
     :size="size"
-    :dark="dark"
-    :class="chipClass"
+    :class="['modern-status-chip', chipClass]"
   >
-    <v-icon v-if="icon" :class="iconClass">{{ icon }}</v-icon>
-    <span v-if="showText" :class="textClass">{{ displayText }}</span>
+    <v-icon 
+      v-if="icon && showIcon" 
+      :class="['chip-icon', iconClass]"
+      :size="iconSize"
+    >
+      {{ icon }}
+    </v-icon>
+    <span v-if="showText" :class="['chip-text', textClass]">{{ displayText }}</span>
   </v-chip>
 </template>
 
@@ -101,6 +106,79 @@ const iconClass = computed(() => {
 })
 
 const textClass = computed(() => {
-  return props.uppercase ? 'text-uppercase' : ''
+  return 'font-medium'
+})
+
+const iconSize = computed(() => {
+  return props.size === 'small' ? '14' : '16'
 })
 </script>
+
+<style scoped>
+.modern-status-chip {
+  font-weight: 600 !important;
+  letter-spacing: 0.025em !important;
+  border: 1px solid transparent !important;
+  backdrop-filter: blur(8px) !important;
+  transition: all 0.2s ease !important;
+}
+
+.modern-status-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
+
+/* Status-specific styling */
+:deep(.v-chip--color-green) {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(34, 211, 238, 0.05) 100%) !important;
+  color: rgb(5, 150, 105) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+:deep(.v-chip--color-red) {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(245, 101, 101, 0.05) 100%) !important;
+  color: rgb(220, 38, 38) !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+:deep(.v-chip--color-blue) {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%) !important;
+  color: rgb(37, 99, 235) !important;
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+:deep(.v-chip--color-yellow) {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%) !important;
+  color: rgb(217, 119, 6) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+:deep(.v-chip--color-purple) {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(167, 139, 250, 0.05) 100%) !important;
+  color: rgb(109, 40, 217) !important;
+  border-color: rgba(139, 92, 246, 0.2) !important;
+}
+
+:deep(.v-chip--color-grey) {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.1) 0%, rgba(156, 163, 175, 0.05) 100%) !important;
+  color: rgb(75, 85, 99) !important;
+  border-color: rgba(107, 114, 128, 0.2) !important;
+}
+
+.chip-icon {
+  opacity: 0.9;
+}
+
+.chip-text {
+  font-size: 0.875rem;
+}
+
+/* Size variations */
+:deep(.v-chip--size-small) .chip-text {
+  font-size: 0.75rem;
+}
+
+:deep(.v-chip--size-large) .chip-text {
+  font-size: 1rem;
+}
+</style>
