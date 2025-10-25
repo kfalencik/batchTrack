@@ -8,14 +8,12 @@
         @action="openAdd"
     />
 
-    <LoadingWrapper :loading="loading" text="Loading fermenters...">
-        <div class="data-table-wrapper">
-            <v-data-table
-                class="modern-data-table"
-                :headers="headers"
-                :items="fermenters"
-                :loading="loading"
-            >
+    <EnhancedDataTable
+        :headers="headers"
+        :items="fermenters"
+        :loading="loading"
+        loading-text="Loading fermenters..."
+    >
       <template #item.id="{ item }">
         <span>{{ item && item.id ? `Fermenter #${item.id}` : '-' }}</span>
       </template>
@@ -32,9 +30,7 @@
             @delete="remove"
         />
       </template>
-    </v-data-table>
-        </div>
-    </LoadingWrapper>
+    </EnhancedDataTable>
 
     <BaseDialog
         v-model="editDialog"
@@ -46,57 +42,10 @@
             <!-- Help Section -->
             <v-row>
                 <v-col cols="12">
-                    <v-card variant="flat" class="help-card mb-6">
-                        <v-card-title class="help-card-title">
-                            <v-icon class="help-icon">mdi-lightbulb-on</v-icon>
-                            <span>Fermenter Setup Guidelines</span>
-                            <v-spacer />
-                            <v-btn
-                                variant="text"
-                                size="small"
-                                @click="showHelp = !showHelp"
-                                :color="showHelp ? 'white' : 'rgba(255,255,255,0.7)'"
-                            >
-                                {{ showHelp ? 'Hide' : 'Show' }} Help
-                                <v-icon :class="{ 'rotate-180': showHelp }">mdi-chevron-down</v-icon>
-                            </v-btn>
-                        </v-card-title>
-                        <v-expand-transition>
-                            <v-card-text v-show="showHelp" class="help-card-content">
-                                <div class="help-grid">
-                                    <div class="help-item">
-                                        <div class="help-item-header">
-                                            <v-avatar size="40" class="help-avatar">
-                                                <v-icon color="white">mdi-identifier</v-icon>
-                                            </v-avatar>
-                                            <h4>Fermenter ID</h4>
-                                        </div>
-                                        <p>Unique identifier for tracking and organization. Use simple codes like "1", "F1", "Tank-A".</p>
-                                    </div>
-                                    
-                                    <div class="help-item">
-                                        <div class="help-item-header">
-                                            <v-avatar size="40" class="help-avatar">
-                                                <v-icon color="white">mdi-water</v-icon>
-                                            </v-avatar>
-                                            <h4>Capacity Planning</h4>
-                                        </div>
-                                        <p>Set the maximum brewing capacity to prevent overfilling and help with batch planning. Leave some headspace for fermentation activity.</p>
-                                    </div>
-                                    
-                                    <div class="help-item">
-                                        <div class="help-item-header">
-                                            <v-avatar size="40" class="help-avatar">
-                                                <v-icon color="white">mdi-tag</v-icon>
-                                            </v-avatar>
-                                            <h4>Organization</h4>
-                                        </div>
-                                        <p>Use nicknames and notes to distinguish between similar fermenters and track important details like maintenance schedules.</p>
-                                    </div>
-                                </div>
-                            </v-card-text>
-                        </v-expand-transition>
-                    </v-card>
+                    <HelpSection
+                        title="Fermenter Setup Guidelines"
+                        :help-items="fermenterHelpItems"
+                    />
                 </v-col>
             </v-row>
 
@@ -169,6 +118,27 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import HelpSection from '@/components/HelpSection.vue'
+import EnhancedDataTable from '@/components/EnhancedDataTable.vue'
+
+// Help items for fermenter setup
+const fermenterHelpItems = ref([
+    {
+        icon: 'mdi-identifier',
+        title: 'Fermenter ID',
+        description: 'Unique identifier for tracking and organization. Use simple codes like "1", "F1", "Tank-A".'
+    },
+    {
+        icon: 'mdi-water',
+        title: 'Capacity Planning',
+        description: 'Set the maximum brewing capacity to prevent overfilling and help with batch planning. Leave some headspace for fermentation activity.'
+    },
+    {
+        icon: 'mdi-tag',
+        title: 'Organization',
+        description: 'Use nicknames and notes to distinguish between similar fermenters and track important details like maintenance schedules.'
+    }
+])
 
 const headers = ref([
   { title: 'ID', value: 'id', sortable: true },

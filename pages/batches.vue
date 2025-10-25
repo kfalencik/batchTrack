@@ -10,7 +10,7 @@
 
         <!-- Modern Stat cards grid -->
         <div class="stats-grid">
-            <StatCard :title="'All'" icon="mdi-view-grid" color="black darken-1" :count="batches.length" :active="activeFilter === 'all'" @click="setFilter('all')" />
+            <StatCard :title="'All'" icon="mdi-view-grid" color="black" :count="batches.length" :active="activeFilter === 'all'" @click="setFilter('all')" />
             <StatCard :title="'Fermenting'" icon="mdi-flask" color="blue-lighten-1" :count="stats.fermenting" :active="activeFilter === 'fermenting'" @click="setFilter('fermenting')" />
             <StatCard :title="'Flavouring'" icon="mdi-leaf" color="orange-lighten-2" :count="stats.flavouring" :active="activeFilter === 'flavouring'" @click="setFilter('flavouring')" />
             <StatCard :title="'Failed'" icon="mdi-alert-circle-outline" color="red" :count="stats.failed" :active="activeFilter === 'failed'" @click="setFilter('failed')" />
@@ -18,14 +18,12 @@
             <StatCard :title="'Packaged'" icon="mdi-package-variant-closed" color="green" :count="stats.packaged" :active="activeFilter === 'packaged'" @click="setFilter('packaged')" />
         </div>
 
-         <LoadingWrapper :loading="loading" text="Loading batches...">
-            <div class="data-table-wrapper">
-                <v-data-table
-                    class="modern-data-table"
-                    :headers="headers"
-                    :items="displayedBatches"
-                    :loading="loading"
-                >
+         <EnhancedDataTable
+            :headers="headers"
+            :items="displayedBatches"
+            :loading="loading"
+            loading-text="Loading batches..."
+        >
             <template #item.recipe="{ item }">
                 <span>{{ getRecipeName(item.recipeId) }}</span>
             </template>
@@ -53,9 +51,10 @@
                 </span>
             </template>
              <template #item.progress="{ item }">
-                <div v-tooltip:top="getProgress(item).label">
-                    <v-progress-linear :buffer-value="getProgress(item).percent" height="10" rounded color="success" striped></v-progress-linear>
-                </div>
+                <ProgressDisplay 
+                    :progress="getProgress(item)"
+                    :tooltip="getProgress(item).label"
+                />
             </template>
             <template #item.status="{ item }">
                 <StatusChip 
@@ -74,9 +73,7 @@
                     @custom-action="handleCustomAction"
                 />
             </template>
-        </v-data-table>
-            </div>
-        </LoadingWrapper>
+        </EnhancedDataTable>
         <BaseDialog
             v-model="editDialog"
             :title="isPreview ? 'Preview Batch' : (isAdding ? 'Add Batch' : 'Update Batch')"
@@ -89,68 +86,10 @@
                     <!-- Help Section -->
                     <v-row v-if="!isPreview">
                         <v-col cols="12">
-                            <v-card variant="flat" class="help-card mb-6">
-                                <v-card-title class="help-card-title">
-                                    <v-icon class="help-icon">mdi-lightbulb-on</v-icon>
-                                    <span>Batch Creation Guidelines</span>
-                                    <v-spacer />
-                                    <v-btn
-                                        variant="text"
-                                        size="small"
-                                        @click="showHelp = !showHelp"
-                                        :color="showHelp ? 'white' : 'rgba(255,255,255,0.7)'"
-                                    >
-                                        {{ showHelp ? 'Hide' : 'Show' }} Help
-                                        <v-icon :class="{ 'rotate-180': showHelp }">mdi-chevron-down</v-icon>
-                                    </v-btn>
-                                </v-card-title>
-                                <v-expand-transition>
-                                    <v-card-text v-show="showHelp" class="help-card-content">
-                                        <div class="help-grid">
-                                            <div class="help-item">
-                                                <div class="help-item-header">
-                                                    <v-avatar size="40" class="help-avatar">
-                                                        <v-icon color="white">mdi-chef-hat</v-icon>
-                                                    </v-avatar>
-                                                    <h4>Recipe & Fermenter</h4>
-                                                </div>
-                                                <p>Choose your recipe to define ingredients and the fermenter vessel for processing. These cannot be changed once the batch is created to maintain tracking integrity.</p>
-                                            </div>
-                                            
-                                            <div class="help-item">
-                                                <div class="help-item-header">
-                                                    <v-avatar size="40" class="help-avatar">
-                                                        <v-icon color="white">mdi-calendar-clock</v-icon>
-                                                    </v-avatar>
-                                                    <h4>Fermentation Schedule</h4>
-                                                </div>
-                                                <p>Set fermentation duration (typically 7-21 days) and start date. The system calculates completion dates automatically.</p>
-                                            </div>
-                                            
-                                            <div class="help-item">
-                                                <div class="help-item-header">
-                                                    <v-avatar size="40" class="help-avatar">
-                                                        <v-icon color="white">mdi-scale</v-icon>
-                                                    </v-avatar>
-                                                    <h4>Gravity Readings</h4>
-                                                </div>
-                                                <p><strong>Original Gravity (OG):</strong> Initial sugar content (e.g., 1.045). Required for alcohol calculation.<br>
-                                                <strong>Final Gravity (FG):</strong> Final reading when fermentation completes (e.g., 1.010). Optional initially.</p>
-                                            </div>
-                                            
-                                            <div class="help-item">
-                                                <div class="help-item-header">
-                                                    <v-avatar size="40" class="help-avatar">
-                                                        <v-icon color="white">mdi-thermometer</v-icon>
-                                                    </v-avatar>
-                                                    <h4>Temperature Control</h4>
-                                                </div>
-                                                <p>Maintain consistent fermentation temperature. Ales: 18-22°C, Lagers: 8-12°C. Too high causes off-flavors, too low may stall fermentation.</p>
-                                            </div>
-                                        </div>
-                                    </v-card-text>
-                                </v-expand-transition>
-                            </v-card>
+                            <HelpSection
+                                title="Batch Creation Guidelines"
+                                :help-items="batchHelpItems"
+                            />
                         </v-col>
                     </v-row>
 
@@ -390,106 +329,12 @@
 
                     <v-row v-for="(group, idx) in packagingGroups" :key="idx" class="mb-4">
                         <v-col cols="12">
-                            <v-card outlined class="pa-4 packaging-group-card">
-                                <div class="d-flex align-center justify-space-between mb-3">
-                                    <v-btn 
-                                        v-if="packagingGroups.length > 1"
-                                        icon="mdi-delete" 
-                                        color="red" 
-                                        variant="text" 
-                                        size="small"
-                                        @click="removePackagingGroup(idx)"
-                                    />
-                                    <v-spacer v-else />
-                                </div>
-                                <v-row class="align-center">
-                                    <v-col cols="12" md="6">
-                                        <v-select
-                                            :items="containerTypes"
-                                            label="Container Type"
-                                            v-model="group.containerType"
-                                            variant="outlined"
-                                            required
-                                            :rules="[requiredRule]"
-                                            hint="Choose container type"
-                                            persistent-hint
-                                            class="modern-select"
-                                        >
-                                            <template #prepend-inner>
-                                                <v-icon color="primary">mdi-cup</v-icon>
-                                            </template>
-                                        </v-select>
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field
-                                            label="Container Size"
-                                            type="number"
-                                            v-model="group.containerSize"
-                                            suffix="L"
-                                            variant="outlined"
-                                            hint="Volume per container"
-                                            persistent-hint
-                                            required
-                                            :rules="[containerSizeRule]"
-                                            class="modern-field"
-                                        >
-                                            <template #prepend-inner>
-                                                <v-icon color="primary">mdi-resize</v-icon>
-                                            </template>
-                                        </v-text-field>
-                                    </v-col>
-                                </v-row>
-                                <v-row class="align-center">
-                                    <v-col cols="12" md="4">
-                                        <v-text-field
-                                            label="Quantity"
-                                            type="number"
-                                            v-model="group.quantity"
-                                            variant="outlined"
-                                            hint="Number of containers"
-                                            persistent-hint
-                                            required
-                                            :rules="[quantityRule(group)]"
-                                            class="modern-field"
-                                        >
-                                            <template #prepend-inner>
-                                                <v-icon color="primary">mdi-counter</v-icon>
-                                            </template>
-                                        </v-text-field>
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <v-text-field
-                                            label="Total Volume"
-                                            :model-value="getGroupTotal(group)"
-                                            suffix="L"
-                                            variant="outlined"
-                                            readonly
-                                            hint="Auto-calculated"
-                                            persistent-hint
-                                            class="calculated-field"
-                                        >
-                                            <template #prepend-inner>
-                                                <v-icon color="success">mdi-calculator</v-icon>
-                                            </template>
-                                        </v-text-field>
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <v-text-field
-                                            label="Notes"
-                                            v-model="group.notes"
-                                            variant="outlined"
-                                            hint="Optional notes for this group"
-                                            persistent-hint
-                                            placeholder="e.g., Gift bottles, Personal stock..."
-                                            class="modern-field"
-                                        >
-                                            <template #prepend-inner>
-                                                <v-icon color="primary">mdi-note-text</v-icon>
-                                            </template>
-                                        </v-text-field>
-                                    </v-col>
-                                </v-row>
-                            </v-card>
+                            <PackagingGroup
+                                v-model="packagingGroups[idx]"
+                                :container-types="containerTypes"
+                                :show-delete="packagingGroups.length > 1"
+                                @delete="removePackagingGroup(idx)"
+                            />
                         </v-col>
                     </v-row>
 
@@ -553,6 +398,34 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import StatCard from '@/components/StatCard.vue'
+import HelpSection from '@/components/HelpSection.vue'
+import EnhancedDataTable from '@/components/EnhancedDataTable.vue'
+import ProgressDisplay from '@/components/ProgressDisplay.vue'
+import PackagingGroup from '@/components/PackagingGroup.vue'
+
+    // Help items for batch creation
+    const batchHelpItems = ref([
+        {
+            icon: 'mdi-chef-hat',
+            title: 'Recipe & Fermenter',
+            description: 'Choose your recipe to define ingredients and the fermenter vessel for processing. These cannot be changed once the batch is created to maintain tracking integrity.'
+        },
+        {
+            icon: 'mdi-calendar-clock',
+            title: 'Fermentation Schedule',
+            description: 'Set fermentation duration (typically 7-21 days) and start date. The system calculates completion dates automatically.'
+        },
+        {
+            icon: 'mdi-scale',
+            title: 'Gravity Readings',
+            description: 'Original Gravity (OG): Initial sugar content (e.g., 1.045). Required for alcohol calculation. Final Gravity (FG): Final reading when fermentation completes (e.g., 1.010). Optional initially.'
+        },
+        {
+            icon: 'mdi-thermometer',
+            title: 'Temperature Control',
+            description: 'Maintain consistent fermentation temperature. Ales: 18-22°C, Lagers: 8-12°C. Too high causes off-flavors, too low may stall fermentation.'
+        }
+    ])
     const headers = ref([
         { title: 'Recipe', value: 'recipe', sortable: true },
         { title: 'Fermenter', value: 'fermenter', sortable: true, width: '120px' },
@@ -1482,8 +1355,8 @@ import StatCard from '@/components/StatCard.vue'
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
     margin: 2rem 0 3rem 0;
 }
 
@@ -1579,8 +1452,8 @@ import StatCard from '@/components/StatCard.vue'
     }
     
     .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
         margin: 1.5rem 0 2rem 0;
     }
     
@@ -1623,6 +1496,11 @@ import StatCard from '@/components/StatCard.vue'
 
 /* Extra small devices */
 @media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+    
     .modern-data-table :deep(.v-data-table-header .v-data-table__th) {
         padding: 0.75rem 0.5rem;
         font-size: 0.65rem;

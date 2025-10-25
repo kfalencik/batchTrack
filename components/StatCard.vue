@@ -8,20 +8,20 @@
     @click="$emit('click')"
   >
     <div class="stat-card__gradient" :class="`stat-card__gradient--${color}`"></div>
-    <v-card-text class="pa-6 position-relative">
+    <v-card-text class="pa-4 position-relative">
       <div class="d-flex justify-space-between align-start">
         <div class="stat-body flex-grow-1">
-          <div class="stat-title mb-2">{{ title }}</div>
-          <div class="stat-count mb-3">{{ formattedCount }}</div>
+          <div class="stat-title mb-1">{{ title }}</div>
+          <div class="stat-count mb-2">{{ formattedCount }}</div>
           <div v-if="deltaText" class="stat-delta" :class="deltaClass">
-            <v-icon size="14" class="mr-1">{{ deltaIcon }}</v-icon>
+            <v-icon size="12" class="mr-1">{{ deltaIcon }}</v-icon>
             <span>{{ deltaText }}</span>
           </div>
         </div>
 
         <div class="stat-icon">
           <div class="icon-wrapper" :class="`icon-wrapper--${color}`">
-            <v-icon :color="iconColor" size="24">{{ icon }}</v-icon>
+            <v-icon :color="iconColor" size="20">{{ icon }}</v-icon>
           </div>
         </div>
       </div>
@@ -128,6 +128,18 @@ const iconColor = computed(() => {
   background: linear-gradient(90deg, #60a5fa 0%, #93c5fd 100%);
 }
 
+.stat-card__gradient--orange-lighten-2 {
+  background: linear-gradient(90deg, #fb923c 0%, #fdba74 100%);
+}
+
+.stat-card__gradient--purple {
+  background: linear-gradient(90deg, #a855f7 0%, #c084fc 100%);
+}
+
+.stat-card__gradient--black {
+  background: linear-gradient(90deg, #374151 0%, #4b5563 100%);
+}
+
 .stat-card__gradient--green {
   background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
 }
@@ -137,7 +149,7 @@ const iconColor = computed(() => {
 }
 
 .stat-title {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: rgb(100 116 139);
   text-transform: uppercase;
@@ -145,7 +157,7 @@ const iconColor = computed(() => {
 }
 
 .stat-count {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: rgb(15 23 42);
   line-height: 1.2;
@@ -154,14 +166,14 @@ const iconColor = computed(() => {
 .stat-delta {
   display: flex;
   align-items: center;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 500;
 }
 
 .icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -197,17 +209,32 @@ const iconColor = computed(() => {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
   border: 1px solid rgba(59, 130, 246, 0.1);
 }
+
+.icon-wrapper--orange-lighten-2 {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(251, 146, 60, 0.05) 100%);
+  border: 1px solid rgba(251, 146, 60, 0.1);
+}
+
+.icon-wrapper--purple {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.1);
+}
+
+.icon-wrapper--black {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.1) 0%, rgba(55, 65, 81, 0.05) 100%);
+  border: 1px solid rgba(55, 65, 81, 0.1);
+}
 </style>
 
 <style scoped>
-.stat-card { min-width: 180px; cursor: pointer; }
+.stat-card { min-width: 140px; cursor: pointer; }
 .stat-body { display: flex; flex-direction: column; }
-.stat-title { color: rgba(0,0,0,0.6); margin-bottom: 6px; }
-.stat-count { font-size: 28px; font-weight: 700; line-height: 1; }
-.stat-delta { margin-top: 6px; display: flex; align-items: center; }
-.stat-delta .v-icon { font-size: 14px; }
+.stat-title { color: rgba(0,0,0,0.6); margin-bottom: 4px; }
+.stat-count { font-size: 20px; font-weight: 700; line-height: 1; }
+.stat-delta { margin-top: 4px; display: flex; align-items: center; }
+.stat-delta .v-icon { font-size: 12px; }
 .stat-icon { display:flex; align-items:center; }
-.icon-circle { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.icon-circle { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
 .bg-opacity-10 { opacity: 0.12; }
 .text-red { color: #e53935 !important; }
 .text-green { color: #43a047 !important; }

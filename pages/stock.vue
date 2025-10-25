@@ -8,27 +8,17 @@
         />
 
         <!-- Section Tabs -->
-        <v-tabs v-model="activeTab" class="mb-4">
-            <v-tab value="ingredients">
-                <v-icon class="mr-2">mdi-clipboard-list-outline</v-icon>
-                Ingredients
-            </v-tab>
-            <v-tab value="products">
-                <v-icon class="mr-2">mdi-package-variant-closed</v-icon>
-                Products
-            </v-tab>
-        </v-tabs>
-
-        <v-window v-model="activeTab">
-            <v-window-item value="ingredients">
-                <LoadingWrapper :loading="loading" text="Loading ingredients...">
-                    <div class="data-table-wrapper">
-                        <v-data-table
-                            class="modern-data-table"
-                            :headers="headers"
-                            :items="displayedGroups"
-                            :loading="loading"
-                        >
+        <TabNavigation 
+            v-model="activeTab"
+            :tabs="stockTabs"
+        >
+            <template #ingredients>
+                <EnhancedDataTable
+                    :headers="headers"
+                    :items="displayedGroups"
+                    :loading="loading"
+                    loading-text="Loading ingredients..."
+                >
                     <template #item.usable="{ item }">
                         <span>{{ item.usableDisplay }}</span>
                     </template>
@@ -101,20 +91,16 @@
                             </td>
                         </tr>
                     </template>
-                </v-data-table>
-                    </div>
-                </LoadingWrapper>
-            </v-window-item>
+                </EnhancedDataTable>
+            </template>
 
-            <v-window-item value="products">
-                <LoadingWrapper :loading="loadingProducts" text="Loading products...">
-                    <div class="data-table-wrapper">
-                        <v-data-table
-                            class="modern-data-table"
-                            :headers="productHeaders"
-                            :items="products"
-                            :loading="loadingProducts"
-                        >
+            <template #products>
+                <EnhancedDataTable
+                    :headers="productHeaders"
+                    :items="products"
+                    :loading="loadingProducts"
+                    loading-text="Loading products..."
+                >
                     <template #item.productName="{ item }">
                         <div>
                             <div class="text-subtitle-2">{{ item.productName }}</div>
@@ -147,11 +133,9 @@
                             @delete="removeProductWrapper"
                         />
                     </template>
-                </v-data-table>
-                    </div>
-                </LoadingWrapper>
-            </v-window-item>
-        </v-window>
+                </EnhancedDataTable>
+            </template>
+        </TabNavigation>
 
         <BaseDialog
             v-model="editDialog"
@@ -614,6 +598,22 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useDataStore } from '@/stores/data'
+import TabNavigation from '@/components/TabNavigation.vue'
+import EnhancedDataTable from '@/components/EnhancedDataTable.vue'
+
+// Tab configuration
+const stockTabs = ref([
+    {
+        value: 'ingredients',
+        label: 'Ingredients',
+        icon: 'mdi-clipboard-list-outline'
+    },
+    {
+        value: 'products',
+        label: 'Products',
+        icon: 'mdi-package-variant-closed'
+    }
+])
 
 const headers = ref([
     { title: '', value: 'data-table-expand', sortable: false, width: '48px' },
