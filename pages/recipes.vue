@@ -2,6 +2,7 @@
     <div class="recipes-page">
         <PageHeader 
             title="Recipes"
+            description="Create and manage your brewing recipes. Track ingredient requirements and availability for consistent brewing results."
             action-text="Add Recipe"
             action-icon="mdi-plus-circle"
             @action="openAdd"

@@ -2,6 +2,7 @@
   <div class="page-header">
     <div class="page-header__title-section">
       <h1 class="page-header__title">{{ title }}</h1>
+      <p v-if="description" class="page-header__description">{{ description }}</p>
     </div>
     
     <div v-if="actions && actions.length" class="page-header__actions">
@@ -37,6 +38,10 @@ defineProps({
   title: {
     type: String,
     required: true
+  },
+  description: {
+    type: String,
+    default: null
   },
   actionText: {
     type: String,
@@ -78,8 +83,13 @@ defineEmits(['action'])
   font-weight: 700;
   color: rgb(15 23 42);
   margin: 0;
-  letter-spacing: -0.025em;
-  line-height: 1.2;
+}
+
+.page-header__description {
+  font-size: 1rem;
+  color: rgb(100 116 139);
+  margin: 0.5rem 0 0 0;
+  line-height: 1.5;
 }
 
 .page-header__actions {

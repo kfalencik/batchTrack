@@ -1,33 +1,31 @@
 <template>
-    <div>
+    <div class="batches-page">
         <PageHeader 
             title="Batches"
+            description="Track your brewing batches from start to finish. Monitor fermentation progress, manage packaging, and maintain quality records."
             action-text="Add Batch"
             action-icon="mdi-plus-circle"
             @action="openAdd"
         />
 
-        <!-- Stat cards -->
-        <v-row class="mb-15 mt-10" dense>
-            <v-col cols="12">
-                <v-row>
-                    <StatCard :title="'All'" icon="mdi-view-grid" color="black darken-1" :count="batches.length" :active="activeFilter === 'all'" @click="setFilter('all')" class="mr-2" />
-                    <StatCard :title="'Fermenting'" icon="mdi-flask" color="blue-lighten-1" :count="stats.fermenting" :active="activeFilter === 'fermenting'" @click="setFilter('fermenting')" class="mr-2" />
-                    <StatCard :title="'Flavouring'" icon="mdi-leaf" color="orange-lighten-2" :count="stats.flavouring" :active="activeFilter === 'flavouring'" @click="setFilter('flavouring')" class="mr-2" />
-                    <StatCard :title="'Failed'" icon="mdi-alert-circle-outline" color="red" :count="stats.failed" :active="activeFilter === 'failed'" @click="setFilter('failed')" class="mr-2" />
-                    <StatCard :title="'Ready to Pack'" icon="mdi-package-up" color="purple" :count="stats.readyToPack" :active="activeFilter === 'ready to pack'" @click="setFilter('ready to pack')" class="mr-2" />
-                    <StatCard :title="'Packaged'" icon="mdi-package-variant-closed" color="green" :count="stats.packaged" :active="activeFilter === 'packaged'" @click="setFilter('packaged')" class="mr-2" />
-                </v-row>
-            </v-col>
-        </v-row>
+        <!-- Modern Stat cards grid -->
+        <div class="stats-grid">
+            <StatCard :title="'All'" icon="mdi-view-grid" color="black darken-1" :count="batches.length" :active="activeFilter === 'all'" @click="setFilter('all')" />
+            <StatCard :title="'Fermenting'" icon="mdi-flask" color="blue-lighten-1" :count="stats.fermenting" :active="activeFilter === 'fermenting'" @click="setFilter('fermenting')" />
+            <StatCard :title="'Flavouring'" icon="mdi-leaf" color="orange-lighten-2" :count="stats.flavouring" :active="activeFilter === 'flavouring'" @click="setFilter('flavouring')" />
+            <StatCard :title="'Failed'" icon="mdi-alert-circle-outline" color="red" :count="stats.failed" :active="activeFilter === 'failed'" @click="setFilter('failed')" />
+            <StatCard :title="'Ready to Pack'" icon="mdi-package-up" color="purple" :count="stats.readyToPack" :active="activeFilter === 'ready to pack'" @click="setFilter('ready to pack')" />
+            <StatCard :title="'Packaged'" icon="mdi-package-variant-closed" color="green" :count="stats.packaged" :active="activeFilter === 'packaged'" @click="setFilter('packaged')" />
+        </div>
 
          <LoadingWrapper :loading="loading" text="Loading batches...">
-             <v-data-table
-                class="text-sm"
-                :headers="headers"
-                :items="displayedBatches"
-                :loading="loading"
-            >
+            <div class="data-table-wrapper">
+                <v-data-table
+                    class="modern-data-table"
+                    :headers="headers"
+                    :items="displayedBatches"
+                    :loading="loading"
+                >
             <template #item.recipe="{ item }">
                 <span>{{ getRecipeName(item.recipeId) }}</span>
             </template>
@@ -77,6 +75,7 @@
                 />
             </template>
         </v-data-table>
+            </div>
         </LoadingWrapper>
         <BaseDialog
             v-model="editDialog"
@@ -1067,5 +1066,64 @@ import StatCard from '@/components/StatCard.vue'
     content: ' *';
     color: #e53935;
     margin-left: 2px;
+}
+
+/* Modern page layout styles */
+.batches-page {
+    padding: 0 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0 3rem 0;
+}
+
+.data-table-wrapper {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid rgb(226 232 240 / 0.8);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+}
+
+.modern-data-table {
+    background: transparent !important;
+}
+
+.modern-data-table :deep(.v-data-table__wrapper) {
+    border-radius: 1rem;
+}
+
+.modern-data-table :deep(.v-data-table-header) {
+    background: rgb(248 250 252);
+    border-bottom: 1px solid rgb(226 232 240 / 0.5);
+}
+
+.modern-data-table :deep(.v-data-table-header .v-data-table__th) {
+    font-weight: 600;
+    color: rgb(71 85 105);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    padding: 1rem;
+}
+
+.modern-data-table :deep(.v-data-table__tr) {
+    border-bottom: 1px solid rgb(226 232 240 / 0.3);
+    transition: all 0.2s ease;
+}
+
+.modern-data-table :deep(.v-data-table__tr:hover) {
+    background: rgb(248 250 252 / 0.5);
+}
+
+.modern-data-table :deep(.v-data-table__td) {
+    padding: 1rem;
+    vertical-align: middle;
 }
 </style>

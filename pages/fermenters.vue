@@ -1,19 +1,21 @@
 <template>
-  <div>
+  <div class="fermenters-page">
     <PageHeader 
         title="Fermenters"
+        description="Manage your fermentation vessels. Track capacity, assign unique IDs, and monitor which fermenters are currently in use."
         action-text="Add Fermenter"
         action-icon="mdi-plus-circle"
         @action="openAdd"
     />
 
     <LoadingWrapper :loading="loading" text="Loading fermenters...">
-        <v-data-table
-          class="text-sm"
-          :headers="headers"
-          :items="fermenters"
-          :loading="loading"
-        >
+        <div class="data-table-wrapper">
+            <v-data-table
+                class="modern-data-table"
+                :headers="headers"
+                :items="fermenters"
+                :loading="loading"
+            >
       <template #item.id="{ item }">
         <span>{{ item && item.id ? `Fermenter #${item.id}` : '-' }}</span>
       </template>
@@ -31,6 +33,7 @@
         />
       </template>
     </v-data-table>
+        </div>
     </LoadingWrapper>
 
     <BaseDialog
@@ -152,3 +155,57 @@ onMounted(async () => {
 definePageMeta({ layout: 'default' });
 useHead({ title: 'Fermenters | BatchTrack' });
 </script>
+
+<style scoped>
+/* Modern page layout styles */
+.fermenters-page {
+    padding: 0 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.data-table-wrapper {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid rgb(226 232 240 / 0.8);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+}
+
+.modern-data-table {
+    background: transparent !important;
+}
+
+.modern-data-table :deep(.v-data-table__wrapper) {
+    border-radius: 1rem;
+}
+
+.modern-data-table :deep(.v-data-table-header) {
+    background: rgb(248 250 252);
+    border-bottom: 1px solid rgb(226 232 240 / 0.5);
+}
+
+.modern-data-table :deep(.v-data-table-header .v-data-table__th) {
+    font-weight: 600;
+    color: rgb(71 85 105);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    padding: 1rem;
+}
+
+.modern-data-table :deep(.v-data-table__tr) {
+    border-bottom: 1px solid rgb(226 232 240 / 0.3);
+    transition: all 0.2s ease;
+}
+
+.modern-data-table :deep(.v-data-table__tr:hover) {
+    background: rgb(248 250 252 / 0.5);
+}
+
+.modern-data-table :deep(.v-data-table__td) {
+    padding: 1rem;
+    vertical-align: middle;
+}
+</style>
