@@ -15,6 +15,10 @@
                 <v-icon size="small" class="mr-2">mdi-barrel</v-icon>
                 <span>Batches</span>
             </v-btn>
+            <v-btn to="recipes" variant="outline" class="my-1 w-full justify-start text-left" color="black">
+                <v-icon size="small" class="mr-2">mdi-chef-hat</v-icon>
+                <span>Recipes</span>
+            </v-btn>
             <v-btn to="stock" variant="outline" class="my-1 w-full justify-start text-left" color="black">
                 <v-icon size="small" class="mr-2">mdi-clipboard-list-outline</v-icon>
                 <span>Stock</span>

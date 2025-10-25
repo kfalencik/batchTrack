@@ -7,6 +7,7 @@ export const useDataStore = defineStore('dataStore', {
         stockGroups: [],
         fermenters: [],
         products: [],
+        recipes: [],
         loading: true, // Loader now shows immediately on first mount
         notification: null
     }),
@@ -236,6 +237,96 @@ export const useDataStore = defineStore('dataStore', {
                 color: 'success',
                 delay: 3000
             })
+        },
+        // Recipe CRUD
+        async getRecipes() {
+            this.loading = true
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const recipesRef = collection(db, "recipes");
+            const q = query(recipesRef);
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const data = querySnapshot.docs.map(doc => doc.data());
+                this.recipes = data
+            } else {
+                this.recipes = []
+            }
+            this.loading = false
+        },
+        async addRecipe(recipe) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const recipesRef = collection(db, "recipes");
+            await addDoc(recipesRef, recipe);
+            this.setNotification({
+                text: 'Recipe successfully added!',
+                color: 'success',
+                delay: 3000
+            })
+        },
+        async updateRecipe(recipe) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const recipesRef = collection(db, "recipes");
+            const q = query(recipesRef, where('id', '==', recipe.id));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach(async (doc) => await setDoc(doc.ref, recipe))
+
+            this.setNotification({
+                text: 'Recipe successfully updated!',
+                color: 'success',
+                delay: 3000
+            })
+        },
+        async removeRecipe(id) {
+            const nuxtApp = useNuxtApp()
+            const db = getFirestore(nuxtApp.$firebase);
+            const recipesRef = collection(db, "recipes");
+            const q = query(recipesRef, where('id', '==', id));
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach( async (doc) => await deleteDoc(doc.ref))
+
+            this.setNotification({
+                text: 'Recipe successfully removed!',
+                color: 'success',
+                delay: 3000
+            })
+        },
+        // Helper method to deduct ingredients from stock when creating a batch
+        async deductIngredientsFromStock(recipeIngredients) {
+            for (const ingredient of recipeIngredients) {
+                // Find the specific item and its group
+                let targetGroup = null
+                let targetItem = null
+                
+                // Search through all stock groups to find the item
+                for (const group of this.stockGroups) {
+                    if (group.items) {
+                        const item = group.items.find(item => 
+                            (item.id === ingredient.itemId) || 
+                            (`${group.id}_${item.product}` === ingredient.itemId)
+                        )
+                        if (item) {
+                            targetGroup = group
+                            targetItem = item
+                            break
+                        }
+                    }
+                }
+                
+                if (!targetGroup || !targetItem) continue
+
+                const deductAmount = parseFloat(ingredient.amount)
+                const currentQuantity = parseFloat(targetItem.quantity) || 0
+                
+                if (currentQuantity >= deductAmount) {
+                    targetItem.quantity = (currentQuantity - deductAmount).toString()
+                    // Update the stock group in Firebase
+                    await this.updateStockGroup(targetGroup)
+                }
+            }
         }
     }
 })

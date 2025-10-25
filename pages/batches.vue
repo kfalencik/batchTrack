@@ -27,6 +27,9 @@
             :headers="headers"
             :items="displayedBatches"
         >
+            <template #item.recipe="{ item }">
+                <span>{{ getRecipeName(item.recipeId) }}</span>
+            </template>
             <template #item.startDate="{ item }">
                 <span>{{ formatValue(item, 'startDate') }}</span>
             </template>
@@ -117,6 +120,24 @@
                             <v-row>
                                 <v-col cols="6">
                                     <v-select
+                                        label="Recipe"
+                                        v-model="edited.recipeId"
+                                        :items="recipeOptions"
+                                        item-title="label"
+                                        item-value="value"
+                                        :item-disabled="(opt) => !!opt.disabled"
+                                        hint="Select a recipe for this batch"
+                                        persistent-hint
+                                        dense
+                                        :rules="[requiredRule]"
+                                        required
+                                        class="required-field"
+                                        :readonly="isPreview"
+                                        @update:model-value="onRecipeSelected"
+                                    />
+                                </v-col>
+                                <v-col cols="6">
+                                    <v-select
                                         label="Fermenter"
                                         v-model="edited.fermenter"
                                         :items="visibleFermenterOptions"
@@ -144,21 +165,8 @@
                                 <v-col cols="6">
                                     <v-text-field label="FG" v-model="edited.readingFG" hint="Final Gravity — format 1.000 (assumed if empty)" persistent-hint placeholder="1.000" :readonly="isPreview" />
                                 </v-col>
-                                <!-- Water removed: fermenter size is used instead -->
-                                <v-col cols="6">
-                                    <v-text-field class="required-field" label="Sugar (kg)" type="number" v-model="edited.sugar" hint="Kilograms of sugar (e.g. 1)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
-                                </v-col>
-                                <v-col cols="6">
-                                    <v-text-field class="required-field" label="Tea (kg)" type="number" v-model="edited.tea" hint="Kilograms of tea" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
-                                </v-col>
                                 <v-col cols="6">
                                     <v-text-field class="required-field" label="Temp (°C)" type="number" v-model="edited.temp" hint="Temperature in °C (e.g. 20)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
-                                </v-col>
-                                <v-col cols="6">
-                                    <v-text-field class="required-field" label="Yeast (g)" type="number" v-model="edited.yeast" hint="Yeast weight in grams (e.g. 40)" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
-                                </v-col>
-                                <v-col cols="6">
-                                    <v-text-field class="required-field" label="Yeast Nutrients (g)" type="number" v-model="edited.yeastNutrients" hint="Nutrients in grams" persistent-hint :rules="[requiredNumberRule]" :readonly="isPreview" required />
                                 </v-col>
                                 <v-col cols="6">
                                     <v-text-field label="Flavouring Tea (kg)" type="number" v-model="edited.flavouringTea" hint="Kilograms" persistent-hint :readonly="isPreview" />
@@ -314,6 +322,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import StatCard from '@/components/StatCard.vue'
     const headers = ref([
+        { title: 'Recipe', value: 'recipe', sortable: true },
         { title: 'Fermenter', value: 'fermenter', prefix: 'Fermenter #', sortable: true },
         { title: 'Fermentation Days', value: 'fermentationDays', suffix: ' days', sortable: true },
         { title: 'Batch Start Date', value: 'startDate', sortable: true },
@@ -558,6 +567,8 @@ import StatCard from '@/components/StatCard.vue'
     const isFormValid = computed(() => {
         if (!edited.value) return false;
         const e = edited.value;
+        // recipe (required)
+        if (!e.recipeId) return false;
         // fermenter
         if (e.fermenter === undefined || e.fermenter === null || e.fermenter === '') return false;
         // fermentationDays
@@ -566,12 +577,9 @@ import StatCard from '@/components/StatCard.vue'
         // OG
         const og = Number(e.readingOG);
         if (!Number.isFinite(og) || og < 1 || og >= 2) return false;
-        // sugar, tea, temp, yeast, yeastNutrients
-        const requiredNums = ['sugar','tea','temp','yeast','yeastNutrients'];
-        for (const k of requiredNums) {
-            const n = Number(e[k]);
-            if (!Number.isFinite(n)) return false;
-        }
+        // temp (only required field now, ingredients come from recipe)
+        const temp = Number(e.temp);
+        if (!Number.isFinite(temp)) return false;
         // start date
         if (!e.startDateDate) return false;
         const ms = Date.parse(e.startDateDate);
@@ -760,8 +768,8 @@ import StatCard from '@/components/StatCard.vue'
         if (edited.value.fermentationDays) edited.value.fermentationDays = Number(edited.value.fermentationDays)
         if (edited.value.readingOG) edited.value.readingOG = Number(edited.value.readingOG)
         if (edited.value.readingFG) edited.value.readingFG = Number(edited.value.readingFG)
-        // other numeric fields
-        ;['sugar','tea','temp','yeast','yeastNutrients','flavouringTea','flavouringSweetener','flavouringEssence'].forEach(k => {
+        // other numeric fields (only temp and flavoring fields now)
+        ;['temp','flavouringTea','flavouringSweetener','flavouringEssence'].forEach(k => {
             if (edited.value[k] !== undefined && edited.value[k] !== null && edited.value[k] !== '') edited.value[k] = Number(edited.value[k])
         })
         // convert date input to Firestore-like timestamp
@@ -771,6 +779,45 @@ import StatCard from '@/components/StatCard.vue'
                 edited.value.startDate = { seconds: Math.floor(ms/1000), nanoseconds: 0 }
             }
         }
+
+        // Recipe is now required - deduct ingredients from stock
+        if (edited.value.recipeId) {
+            const recipe = recipes.value?.find(r => r.id === edited.value.recipeId)
+            if (recipe && recipe.ingredients) {
+                // For new batches, check availability and deduct ingredients
+                if (isAdding.value) {
+                    // Check if we still have enough ingredients before deducting
+                    const canMake = canMakeRecipe(recipe)
+                    if (!canMake) {
+                        dataStore.setNotification({
+                            text: 'Insufficient ingredients to make this recipe!',
+                            color: 'error',
+                            delay: 5000
+                        })
+                        return
+                    }
+                    
+                    // Deduct ingredients from stock
+                    try {
+                        await dataStore.deductIngredientsFromStock(recipe.ingredients)
+                        dataStore.setNotification({
+                            text: 'Ingredients deducted from stock for recipe: ' + recipe.name,
+                            color: 'success',
+                            delay: 3000
+                        })
+                    } catch (error) {
+                        console.error('Error deducting ingredients:', error)
+                        dataStore.setNotification({
+                            text: 'Error deducting ingredients from stock',
+                            color: 'error',
+                            delay: 5000
+                        })
+                        return
+                    }
+                }
+            }
+        }
+
         // call store to persist
         if (isAdding.value) {
             await dataStore.addBatch(edited.value)
@@ -779,6 +826,10 @@ import StatCard from '@/components/StatCard.vue'
         }
         // refresh list
         await dataStore.getBatches()
+        if (isAdding.value) {
+            // Refresh stock groups after ingredient deduction (recipe is always required now)
+            await dataStore.getStockGroups()
+        }
         updateABVEstimatedFlag()
         closeEdit()
     }
@@ -797,11 +848,15 @@ import StatCard from '@/components/StatCard.vue'
     onMounted(async () => {
         await dataStore.getFermenters()
         await dataStore.getBatches()
+        await dataStore.getRecipes()
+        await dataStore.getStockGroups()
         updateABVEstimatedFlag()
     })
 
     const fermenters = computed(() => dataStore.fermenters)
     const batches = computed(() => dataStore.batches)
+    const recipes = computed(() => dataStore.recipes)
+    const stockGroups = computed(() => dataStore.stockGroups)
 
     // Small helpers / computed state for UI
     const stats = computed(() => {
@@ -865,12 +920,65 @@ import StatCard from '@/components/StatCard.vue'
     // Items shown to pick from — exclude disabled ones so they can't be selected
     const visibleFermenterOptions = computed(() => (fermenterOptions.value || []).filter(o => !o.disabled))
 
+    // Recipe options - only show available recipes since they're required
+    const recipeOptions = computed(() => {
+        const list = recipes.value || [];
+        return list
+            .filter(recipe => canMakeRecipe(recipe)) // Only show available recipes
+            .map(recipe => ({
+                value: recipe.id,
+                label: recipe.name,
+                disabled: false
+            }))
+    })
+
+    function canMakeRecipe(recipe) {
+        if (!recipe || !recipe.ingredients) return false
+        return recipe.ingredients.every(ingredient => {
+            // Find the specific item in stock groups
+            for (const group of stockGroups.value || []) {
+                if (group.items) {
+                    const item = group.items.find(item => 
+                        (item.id === ingredient.itemId) || 
+                        (`${group.id}_${item.product}` === ingredient.itemId)
+                    )
+                    if (item && item.quantity && !isExpired(item)) {
+                        return parseFloat(item.quantity) >= parseFloat(ingredient.amount)
+                    }
+                }
+            }
+            return false
+        })
+    }
+
+    function isExpired(item) {
+        if (!item.expiryDate) return false
+        return new Date(item.expiryDate) < new Date()
+    }
+
+    function onRecipeSelected(recipeId) {
+        if (!recipeId || !recipes.value) return
+        
+        const recipe = recipes.value.find(r => r.id === recipeId)
+        if (!recipe) return
+
+        // Recipe ingredients are now handled automatically - no manual form population needed
+        // The recipe selection is sufficient for batch creation
+        console.log('Recipe selected:', recipe.name)
+    }
+
     function getFermenterLabelById(id) {
         if (id === undefined || id === null) return '-';
         const list = fermenters.value || [];
         const found = list.find(f => f && (f.id === id || String(f.id) === String(id)));
         if (!found) return `Fermenter #${id}`;
         return found.name ? `${found.name}` : `Fermenter #${found.id}`;
+    }
+
+    function getRecipeName(recipeId) {
+        if (!recipeId) return '-';
+        const recipe = recipes.value?.find(r => r.id === recipeId);
+        return recipe ? recipe.name : 'Unknown Recipe';
     }
 
     // update header when batches change
