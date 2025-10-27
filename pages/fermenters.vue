@@ -20,6 +20,13 @@
       <template #item.size="{ item }">
         <span>{{ item && item.size ? item.size + ' L' : '-' }}</span>
       </template>
+      <template #item.status="{ item }">
+        <FermenterStatusIndicator 
+          :fermenter="item"
+          :batches="batches"
+          :recipes="recipes"
+        />
+      </template>
       <template #item.name="{ item }">
         <span>{{ item && item.name ? item.name : '-' }}</span>
       </template>
@@ -120,6 +127,7 @@
 import { ref, computed, onMounted } from 'vue';
 import HelpSection from '@/components/HelpSection.vue'
 import EnhancedDataTable from '@/components/EnhancedDataTable.vue'
+import FermenterStatusIndicator from '@/components/FermenterStatusIndicator.vue'
 
 // Help items for fermenter setup
 const fermenterHelpItems = ref([
@@ -144,6 +152,7 @@ const headers = ref([
   { title: 'ID', value: 'id', sortable: true },
   { title: 'Nickname', value: 'name', sortable: true },
   { title: 'Size (L)', value: 'size', sortable: true, align: 'center' },
+  { title: 'Status', value: 'status', sortable: true, align: 'center', width: '150px' },
   { title: 'Actions', value: 'actions', sortable: false, align: 'center', width: '100px' }
 ]);
 
@@ -151,6 +160,8 @@ const dataStore = useDataStore();
 const loading = ref(false);
 
 const fermenters = computed(() => dataStore.fermenters);
+const batches = computed(() => dataStore.batches || []);
+const recipes = computed(() => dataStore.recipes || []);
 
 const editDialog = ref(false);
 const edited = ref(null);
@@ -195,7 +206,11 @@ async function remove(item) {
 }
 
 onMounted(async () => {
-  await dataStore.getFermenters();
+  await Promise.all([
+    dataStore.getFermenters(),
+    dataStore.getBatches(),
+    dataStore.getRecipes()
+  ]);
 });
 
 definePageMeta({ layout: 'default' });

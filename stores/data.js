@@ -296,6 +296,9 @@ export const useDataStore = defineStore('dataStore', {
         },
         // Helper method to deduct ingredients from stock when creating a batch
         async deductIngredientsFromStock(recipeIngredients) {
+            // Import unit conversion utilities
+            const { isAmountSufficient, convertToBaseUnit, areUnitsCompatible } = await import('@/utils/units.js')
+            
             for (const ingredient of recipeIngredients) {
                 // Find the specific item and its group
                 let targetGroup = null
@@ -321,8 +324,24 @@ export const useDataStore = defineStore('dataStore', {
                 const deductAmount = parseFloat(ingredient.amount)
                 const currentQuantity = parseFloat(targetItem.quantity) || 0
                 
-                if (currentQuantity >= deductAmount) {
-                    targetItem.quantity = (currentQuantity - deductAmount).toString()
+                // Check if we have sufficient amount considering units
+                if (isAmountSufficient(currentQuantity, targetItem.unit, deductAmount, ingredient.unit)) {
+                    // If units are compatible, convert the deduction amount to the stock item's unit
+                    if (areUnitsCompatible(targetItem.unit, ingredient.unit)) {
+                        const stockInBase = convertToBaseUnit(currentQuantity, targetItem.unit)
+                        const deductInBase = convertToBaseUnit(deductAmount, ingredient.unit)
+                        const remainingInBase = stockInBase - deductInBase
+                        
+                        // Convert back to the stock item's original unit
+                        const conversionFactor = convertToBaseUnit(1, targetItem.unit)
+                        const remainingInOriginalUnit = remainingInBase / conversionFactor
+                        
+                        targetItem.quantity = Math.max(0, remainingInOriginalUnit).toString()
+                    } else {
+                        // If units are incompatible, use simple subtraction (fallback)
+                        targetItem.quantity = Math.max(0, currentQuantity - deductAmount).toString()
+                    }
+                    
                     // Update the stock group in Firebase
                     await this.updateStockGroup(targetGroup)
                 }

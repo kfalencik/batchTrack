@@ -154,6 +154,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { generateId } from '@/helpers/rules'
+import { isAmountSufficient, areUnitsCompatible, convertToBaseUnit } from '@/utils/units.js'
 import HelpSection from '@/components/HelpSection.vue'
 import EnhancedDataTable from '@/components/EnhancedDataTable.vue'
 import IngredientForm from '@/components/IngredientForm.vue'
@@ -366,23 +367,76 @@ function getIngredientItemName(itemId) {
 }
 
 function canMakeRecipe(recipe) {
+    console.log(`🔍 Checking recipe: "${recipe.name}"`);
+    
     return recipe.ingredients.every(ingredient => {
+        console.log(`  📝 Checking ingredient:`, {
+            itemId: ingredient.itemId,
+            requiredAmount: ingredient.amount,
+            requiredUnit: ingredient.unit
+        });
+        
         // Find the specific item in the ingredients options
         const itemOption = ingredientItemOptions.value.find(i => i.value === ingredient.itemId)
-        if (!itemOption) return false
+        if (!itemOption) {
+            console.log(`  ❌ Item option not found for itemId: ${ingredient.itemId}`);
+            return false
+        }
+        
+        console.log(`  ✅ Found item option:`, {
+            label: itemOption.label,
+            product: itemOption.product,
+            groupId: itemOption.groupId,
+            available: itemOption.available
+        });
         
         // Find the actual item in the stock groups
         const group = stockGroups.value.find(g => g.id === itemOption.groupId)
-        if (!group || !group.items) return false
+        if (!group || !group.items) {
+            console.log(`  ❌ Group not found or has no items. GroupId: ${itemOption.groupId}`);
+            return false
+        }
+        
+        console.log(`  ✅ Found group: "${group.name}" with ${group.items.length} items`);
         
         const item = group.items.find(item => 
             (item.id === itemOption.value) || 
             (`${group.id}_${item.product}` === itemOption.value)
         )
         
-        if (!item || !item.quantity || isExpired(item)) return false
+        if (!item) {
+            console.log(`  ❌ Item not found in group. Looking for: ${itemOption.value} or ${group.id}_${itemOption.product}`);
+            console.log(`  Available items in group:`, group.items.map(i => ({ id: i.id, product: i.product, generatedId: `${group.id}_${i.product}` })));
+            return false
+        }
         
-        return parseFloat(item.quantity) >= parseFloat(ingredient.amount)
+        console.log(`  ✅ Found item in stock:`, {
+            product: item.product,
+            currentQuantity: item.quantity,
+            unit: item.unit,
+            price: item.price,
+            expiryDate: item.expiryDate
+        });
+        
+        if (!item.quantity) {
+            console.log(`  ❌ Item has no quantity`);
+            return false
+        }
+        
+        if (isExpired(item)) {
+            console.log(`  ❌ Item is expired. Expiry: ${item.expiryDate}`);
+            return false
+        }
+        
+        // Use unit conversion to properly compare amounts
+        const sufficient = isAmountSufficient(item.quantity, item.unit, ingredient.amount, ingredient.unit)
+        console.log(`  ${sufficient ? '✅' : '❌'} Amount check:`, {
+            available: `${item.quantity} ${item.unit}`,
+            required: `${ingredient.amount} ${ingredient.unit}`,
+            sufficient: sufficient
+        });
+        
+        return sufficient
     })
 }
 
@@ -402,7 +456,25 @@ function calculateRecipeCost(recipe) {
         if (!item || !item.price || !item.quantity) return total
         
         const costPerUnit = parseFloat(item.price) / parseFloat(item.quantity)
-        return total + (costPerUnit * parseFloat(ingredient.amount))
+        const ingredientAmount = parseFloat(ingredient.amount)
+        
+        // If units match, calculate directly
+        if (item.unit === ingredient.unit) {
+            return total + (costPerUnit * ingredientAmount)
+        }
+        
+        // If units are different but compatible, convert for cost calculation
+        if (areUnitsCompatible(item.unit, ingredient.unit)) {
+            // Convert both to base units to get the ratio
+            const itemBaseUnit = convertToBaseUnit(1, item.unit)
+            const ingredientBaseUnit = convertToBaseUnit(ingredientAmount, ingredient.unit)
+            const ingredientInItemUnits = ingredientBaseUnit / itemBaseUnit
+            
+            return total + (costPerUnit * ingredientInItemUnits)
+        }
+        
+        // Fallback: use raw amounts if units are incompatible
+        return total + (costPerUnit * ingredientAmount)
     }, 0)
 }
 

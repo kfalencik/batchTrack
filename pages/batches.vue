@@ -10,7 +10,7 @@
 
         <!-- Modern Stat cards grid -->
         <div class="stats-grid">
-            <StatCard :title="'All'" icon="mdi-view-grid" color="black" :count="batches.length" :active="activeFilter === 'all'" @click="setFilter('all')" />
+            <StatCard :title="'All'" icon="mdi-view-grid" color="black" :count="batches?.length" :active="activeFilter === 'all'" @click="setFilter('all')" />
             <StatCard :title="'Fermenting'" icon="mdi-flask" color="blue-lighten-1" :count="stats.fermenting" :active="activeFilter === 'fermenting'" @click="setFilter('fermenting')" />
             <StatCard :title="'Flavouring'" icon="mdi-leaf" color="orange-lighten-2" :count="stats.flavouring" :active="activeFilter === 'flavouring'" @click="setFilter('flavouring')" />
             <StatCard :title="'Failed'" icon="mdi-alert-circle-outline" color="red" :count="stats.failed" :active="activeFilter === 'failed'" @click="setFilter('failed')" />
@@ -400,6 +400,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import { isAmountSufficient } from '@/utils/units.js'
 import StatCard from '@/components/StatCard.vue'
 import HelpSection from '@/components/HelpSection.vue'
 import EnhancedDataTable from '@/components/EnhancedDataTable.vue'
@@ -1132,7 +1133,8 @@ import PackagingGroup from '@/components/PackagingGroup.vue'
                         (`${group.id}_${item.product}` === ingredient.itemId)
                     )
                     if (item && item.quantity && !isExpired(item)) {
-                        return parseFloat(item.quantity) >= parseFloat(ingredient.amount)
+                        // Use unit conversion to properly compare amounts
+                        return isAmountSufficient(item.quantity, item.unit, ingredient.amount, ingredient.unit)
                     }
                 }
             }
