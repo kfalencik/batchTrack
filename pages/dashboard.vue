@@ -100,8 +100,7 @@ onMounted(async () => {
         dataStore.getFermenters(),
         dataStore.getStockGroups(),
         dataStore.getProducts(),
-        dataStore.getRecipes(),
-        dataStore.getLogs()
+        dataStore.getRecipes()
     ])
 })
 
