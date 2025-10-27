@@ -80,7 +80,20 @@ export const useDataStore = defineStore('dataStore', {
             const querySnapshot = await getDocs(q);
 
             if (!querySnapshot.empty) {
-                const batchesData = querySnapshot.docs.map(doc => doc.data());
+                const batchesData = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    // Include the Firestore document ID as the batch ID
+                    return { ...data, id: doc.id };
+                });
+                console.log('Loaded batches from database:', batchesData);
+                // Log which batches have status fields
+                batchesData.forEach(batch => {
+                    if (batch.status) {
+                        console.log(`Batch ${batch.id} has status: ${batch.status}`);
+                    } else {
+                        console.log(`Batch ${batch.id} has no status field`);
+                    }
+                });
                 this.batches = batchesData
             } else {
                 this.batches = null
@@ -157,10 +170,20 @@ export const useDataStore = defineStore('dataStore', {
         async updateBatch(batch) {
             const nuxtApp = useNuxtApp()
             const db = getFirestore(nuxtApp.$firebase);
-            const batchesRef = collection(db, "batches");
-            const q = query(batchesRef, where('id', '==', batch.id));
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach(async (doc) => await setDoc(doc.ref, batch))
+            
+            if (!batch.id) {
+                console.error('Cannot update batch: missing ID', batch);
+                return;
+            }
+            
+            // Create a copy of the batch without the id field since Firestore document ID is separate
+            const { id, ...batchData } = batch;
+            
+            // Update the document directly using the document ID
+            const docRef = doc(db, "batches", id);
+            await setDoc(docRef, batchData);
+            
+            console.log(`Batch ${id} updated successfully`);
 
             this.setNotification({
                 text: 'Batch successfully updated!',

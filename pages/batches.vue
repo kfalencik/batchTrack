@@ -465,6 +465,18 @@ import PackagingGroup from '@/components/PackagingGroup.vue'
         // If backend provided a definitive status, use it
         const backendStatus = item && item.status;
         const backendSet = backendStatus && ['failed', 'ready to pack', 'packaged', 'sold'].includes(backendStatus);
+        
+        // Debug logging to troubleshoot the Ready To Pack issue
+        if (backendStatus) {
+            console.log('getStatus debug:', {
+                itemId: item.id,
+                backendStatus,
+                backendSet,
+                statusArray: ['failed', 'ready to pack', 'packaged', 'sold'],
+                includes: ['failed', 'ready to pack', 'packaged', 'sold'].includes(backendStatus)
+            });
+        }
+        
         if (backendSet) return backendStatus;
 
         // Otherwise compute based on dates
@@ -791,7 +803,6 @@ import PackagingGroup from '@/components/PackagingGroup.vue'
     function openAdd() {
         edited.value = {
             // default fields for new batch
-            id: null,
             fermenter: null,
             fermentationDays: null,
             readingOG: null,
@@ -803,7 +814,8 @@ import PackagingGroup from '@/components/PackagingGroup.vue'
             yeastNutrients: null,
             pasteurised: false,
             taxPaid: false,
-            startDateDate: null
+            startDateDate: null,
+            status: null // Initialize with null status - will be computed until manually set
         }
         isAdding.value = true
     isPreview.value = false
@@ -1025,12 +1037,35 @@ import PackagingGroup from '@/components/PackagingGroup.vue'
     }
 
     async function setStatus(item, status) {
-        console.log(item, status)
-        if (!item || !item.id) return;
+        console.log('setStatus called with:', item, status)
+        if (!item || !item.id) {
+            console.error('Invalid item or missing ID:', item);
+            return;
+        }
+        
+        // Create a proper copy with the status field
         const copy = Object.assign({}, item, { status });
-        console.log(copy)
-        await dataStore.updateBatch(copy);
-        await dataStore.getBatches();
+        console.log('Updated batch object:', copy)
+        
+        try {
+            await dataStore.updateBatch(copy);
+            console.log('Batch updated in database');
+            
+            // Wait a moment for database to update, then refresh
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await dataStore.getBatches();
+            console.log('Status update completed successfully, batches refreshed');
+            
+            // Verify the update worked
+            const updatedBatches = batches.value || [];
+            const updatedBatch = updatedBatches.find(b => b.id === item.id);
+            console.log('Updated batch from database:', updatedBatch);
+            if (updatedBatch) {
+                console.log('New status in database:', updatedBatch.status);
+            }
+        } catch (error) {
+            console.error('Error updating batch status:', error);
+        }
     }
 
     const dataStore = useDataStore()
