@@ -89,6 +89,13 @@ const statusConfigs = {
     'available': { color: 'green', icon: 'mdi-check' },
     'missing ingredients': { color: 'red', icon: 'mdi-close' },
     'out of stock': { color: 'red', icon: 'mdi-alert-circle' }
+  },
+  // Duty statuses
+  duty: {
+    'untaxed': { color: 'orange', icon: 'mdi-clock-outline' },
+    'tax paid': { color: 'green', icon: 'mdi-check-circle' },
+    'destroyed': { color: 'red', icon: 'mdi-delete-outline' },
+    'transferred': { color: 'blue', icon: 'mdi-truck-delivery' }
   }
 }
 
