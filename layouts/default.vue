@@ -9,7 +9,7 @@
         </main>
     </div>
     <div v-if="userStore.authenticated === null" class="bg-lightGrey text-primary text-center p-5 w-screen h-screen">
-    <img class="mx-auto" src="/img/logo.png" alt="Hollenders Immobilien" style="height: 90px"/>
+    <img class="mx-auto" :src="settingsStore.logoUrl" :alt="settingsStore.appName" style="height: 90px"/>
         <v-progress-circular class="mt-5 fixed top-1/3" indeterminate></v-progress-circular>
     </div>
 </template>
@@ -21,6 +21,8 @@
 
     const userStore = useUserStore()
     const dataStore = useDataStore()
+    const settingsStore = useSettingsStore()
+    const { initializeTheme, watchSettings } = useThemeManager()
     const viewport = useViewport()
     const router = useRouter();
 
@@ -35,8 +37,13 @@
         userStore.authenticated = nuxtStorage.localStorage.getData('authenticated')
         userStore.user = nuxtStorage.localStorage.getData('user')
     }
+    
     onMounted(() => {
         window.addEventListener('click', () => mobileMenu.value = true)
+        
+        // Initialize theme management
+        initializeTheme()
+        watchSettings()
     })
 </script>
 

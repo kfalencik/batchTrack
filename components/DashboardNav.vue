@@ -1,12 +1,12 @@
 <template>
-    <div class="nav-container">
+    <div class="nav-container" :style="themeStyles">
         <!-- Header Section -->
         <div class="nav-header">
             <div class="logo-container">
-                <img src="/public/img/logo.png" width="42" class="logo-image" />
+                <img :src="settingsStore.logoUrl" width="42" class="logo-image" />
             </div>
-            <h1 class="brand-title">BatchTrack</h1>
-            <div class="brand-subtitle">Brewing Management</div>
+            <h1 class="brand-title">{{ settingsStore.appName }}</h1>
+            <div class="brand-subtitle">{{ settingsStore.appSubtitle }}</div>
         </div>
 
         <!-- Navigation Links -->
@@ -66,6 +66,14 @@
                 <span class="nav-item__text">Taxes</span>
                 <div class="nav-item__indicator"></div>
             </NuxtLink>
+
+            <NuxtLink to="/settings" class="nav-item" active-class="nav-item--active">
+                <div class="nav-item__icon">
+                    <v-icon size="20">mdi-cog</v-icon>
+                </div>
+                <span class="nav-item__text">Settings</span>
+                <div class="nav-item__indicator"></div>
+            </NuxtLink>
         </nav>
 
         <!-- Footer Section -->
@@ -95,12 +103,38 @@
 
 <script setup>
     import { useRouter } from "vue-router";
+    import { computed, onMounted } from 'vue';
+    
     const userStore = useUserStore()
+    const settingsStore = useSettingsStore()
     const router = useRouter();
 
     function logout() {
         userStore.logout()
         router.push('/')
+    }
+
+    // Computed styles based on current theme
+    const themeStyles = computed(() => {
+        const theme = settingsStore.currentTheme
+        return {
+            '--nav-primary-color': theme.primary,
+            '--nav-secondary-color': theme.secondary,
+            '--nav-primary-rgb': hexToRgb(theme.primary),
+            '--nav-secondary-rgb': hexToRgb(theme.secondary)
+        }
+    })
+
+    // Helper function to convert hex to RGB
+    function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+        if (result) {
+            const r = parseInt(result[1], 16)
+            const g = parseInt(result[2], 16)
+            const b = parseInt(result[3], 16)
+            return `${r}, ${g}, ${b}`
+        }
+        return '99, 102, 241' // fallback
     }
 </script>
 
@@ -128,7 +162,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, #36a367, #6366f1, #06b6d4);
+    background: linear-gradient(90deg, var(--nav-primary-color), var(--nav-secondary-color), var(--nav-primary-color));
     border-radius: 1.5rem 1.5rem 0 0;
 }
 
@@ -146,13 +180,13 @@
 .logo-image {
     margin: 0 auto;
     border-radius: 50%;
-    box-shadow: 0 4px 16px rgba(54, 163, 103, 0.3);
+    box-shadow: 0 4px 16px rgba(var(--nav-primary-rgb), 0.3);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .logo-image:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(54, 163, 103, 0.4);
+    box-shadow: 0 6px 20px rgba(var(--nav-primary-rgb), 0.4);
 }
 
 .brand-title {
@@ -160,7 +194,7 @@
     font-weight: 700;
     color: #1f2937;
     margin-bottom: 0.25rem;
-    background: linear-gradient(135deg, #36a367, #6366f1);
+    background: linear-gradient(135deg, var(--nav-primary-color), var(--nav-secondary-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -204,7 +238,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(54, 163, 103, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(var(--nav-primary-rgb), 0.1), transparent);
     transition: left 0.5s ease;
 }
 
@@ -213,10 +247,10 @@
 }
 
 .nav-item:hover {
-    background: rgba(54, 163, 103, 0.08);
-    border-color: rgba(54, 163, 103, 0.2);
+    background: rgba(var(--nav-primary-rgb), 0.08);
+    border-color: rgba(var(--nav-primary-rgb), 0.2);
     transform: translateX(4px);
-    color: #36a367;
+    color: var(--nav-primary-color);
 }
 
 .nav-item__icon {
@@ -228,12 +262,12 @@
     height: 2rem;
     border-radius: 0.5rem;
     transition: all 0.3s ease;
-    background: rgba(54, 163, 103, 0.1);
-    color: #36a367;
+    background: rgba(var(--nav-primary-rgb), 0.1);
+    color: var(--nav-primary-color);
 }
 
 .nav-item:hover .nav-item__icon {
-    background: rgba(54, 163, 103, 0.2);
+    background: rgba(var(--nav-primary-rgb), 0.2);
     transform: scale(1.1);
 }
 
@@ -256,9 +290,9 @@
 /* Active State */
 .nav-item--active {
     color: white;
-    background: linear-gradient(135deg, #36a367, #2d8653);
-    border-color: #36a367;
-    box-shadow: 0 4px 16px rgba(54, 163, 103, 0.3);
+    background: linear-gradient(135deg, var(--nav-primary-color), var(--nav-secondary-color));
+    border-color: var(--nav-primary-color);
+    box-shadow: 0 4px 16px rgba(var(--nav-primary-rgb), 0.3);
 }
 
 .nav-item--active::before {
@@ -267,7 +301,7 @@
 
 .nav-item--active:hover {
     transform: translateX(2px);
-    box-shadow: 0 6px 20px rgba(54, 163, 103, 0.4);
+    box-shadow: 0 6px 20px rgba(var(--nav-primary-rgb), 0.4);
 }
 
 .nav-item--active .nav-item__icon {
@@ -297,7 +331,7 @@
 }
 
 .user-section:hover {
-    background: rgba(54, 163, 103, 0.05);
+    background: rgba(var(--nav-primary-rgb), 0.05);
 }
 
 .user-avatar {
