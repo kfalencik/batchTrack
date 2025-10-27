@@ -25,9 +25,12 @@
             loading-text="Loading tax records..."
         >
             <template #item.batchId="{ item }">
+                <span class="text-subtitle-2 font-weight-medium">{{ item.id || '-' }}</span>
+            </template>
+            <template #item.recipe="{ item }">
                 <div>
-                    <div class="text-subtitle-2 font-weight-medium">{{ getBatchLabel(item) }}</div>
-                    <div class="text-caption text--secondary">{{ getRecipeName(item.recipeId) }}</div>
+                    <div class="text-subtitle-2">{{ getRecipeName(item.recipeId) }}</div>
+                    <div class="text-caption text--secondary">{{ getBatchLabel(item) }}</div>
                 </div>
             </template>
             <template #item.abv="{ item }">
@@ -35,6 +38,9 @@
             </template>
             <template #item.totalVolume="{ item }">
                 <span>{{ getTotalVolume(item) }}L</span>
+            </template>
+            <template #item.pureAlcohol="{ item }">
+                <span class="font-weight-medium text-primary">{{ getPureAlcohol(item) }}L</span>
             </template>
             <template #item.dutyStatus="{ item }">
                 <StatusChip 
@@ -97,6 +103,7 @@
                                         <div class="text-right">
                                             <div class="text-h6 font-weight-bold text-primary">{{ getABV(edited) }}% ABV</div>
                                             <div class="text-subtitle-2 text-medium-emphasis">{{ getTotalVolume(edited) }}L Total</div>
+                                            <div class="text-subtitle-1 font-weight-bold text-orange">{{ getPureAlcohol(edited) }}L Pure Alcohol</div>
                                         </div>
                                     </div>
                                 </v-card-text>
@@ -253,9 +260,11 @@ const headerActions = computed(() => [
 
 // Table headers
 const headers = ref([
-    { title: 'Batch ID', value: 'batchId', sortable: true, width: '200px' },
-    { title: 'ABV (%)', value: 'abv', sortable: true, align: 'center', width: '100px' },
-    { title: 'Volume (L)', value: 'totalVolume', sortable: true, align: 'center', width: '120px' },
+    { title: 'Batch ID', value: 'batchId', sortable: true, width: '150px' },
+    { title: 'Recipe', value: 'recipe', sortable: true, width: '200px' },
+    { title: 'ABV (%)', value: 'abv', sortable: true, align: 'center', width: '80px' },
+    { title: 'Volume (L)', value: 'totalVolume', sortable: true, align: 'center', width: '100px' },
+    { title: 'Pure Alcohol (L)', value: 'pureAlcohol', sortable: true, align: 'center', width: '120px' },
     { title: 'Duty Status', value: 'dutyStatus', sortable: true, align: 'center', width: '130px' },
     { title: 'Duty Point Date', value: 'dutyPointDate', sortable: true, width: '150px' },
     { title: 'Duty Paid Date', value: 'dutyPaidDate', sortable: true, width: '150px' },
@@ -313,18 +322,20 @@ function getRecipeName(recipeId) {
 function getABV(batch) {
     if (!batch) return '-'
     
-    // Try to get from products first (packaged ABV)
-    const batchProducts = products.value.filter(p => p.fermenter === batch.fermenter)
-    if (batchProducts.length > 0 && batchProducts[0].abv) {
-        return Number(batchProducts[0].abv).toFixed(1)
+    // First try to get ABV from the batch's original and final gravity readings
+    const og = Number(batch.originalGravity || batch.readingOG)
+    const fg = Number(batch.finalGravity || batch.readingFG)
+    
+    if (Number.isFinite(og) && Number.isFinite(fg) && og > 0 && fg > 0) {
+        const abv = ((og - fg) * 131.25).toFixed(1)
+        return abv
     }
     
-    // Fallback to calculated ABV from batch readings
-    const og = Number(batch.readingOG)
-    const fg = Number(batch.readingFG)
-    if (Number.isFinite(og) && Number.isFinite(fg)) {
-        const abv = (og - fg) * 131
-        return abv.toFixed(1)
+    // Try to get from products (packaged ABV)
+    const batchProducts = products.value.filter(p => p.fermenter === batch.fermenter)
+    if (batchProducts.length > 0 && batchProducts[0].abv) {
+        const abv = Number(batchProducts[0].abv)
+        return Number.isFinite(abv) ? abv.toFixed(1) : '-'
     }
     
     return '-'
@@ -342,6 +353,21 @@ function getTotalVolume(batch) {
     
     // Fallback to batch amount if no products
     return Number(batch.amount || 0).toFixed(1)
+}
+
+function getPureAlcohol(batch) {
+    if (!batch) return '-'
+    
+    const volume = Number(getTotalVolume(batch))
+    const abv = Number(getABV(batch))
+    
+    if (!Number.isFinite(volume) || !Number.isFinite(abv) || volume <= 0 || abv <= 0) {
+        return '-'
+    }
+    
+    // Pure Alcohol (L) = Volume (L) × ABV% ÷ 100
+    const pureAlcohol = (volume * abv) / 100
+    return pureAlcohol.toFixed(2)
 }
 
 function getDutyStatus(batch) {
@@ -514,10 +540,12 @@ async function handleDutyAction(actionKey, batch) {
 
 function exportToCSV() {
     const csvData = taxBatches.value.map(batch => ({
-        'Batch ID': getBatchLabel(batch),
+        'Batch ID': batch.id || '-',
+        'Fermenter': getBatchLabel(batch),
         'Recipe': getRecipeName(batch.recipeId),
         'ABV (%)': getABV(batch),
         'Total Volume (L)': getTotalVolume(batch),
+        'Pure Alcohol (L)': getPureAlcohol(batch),
         'Duty Status': getDutyStatus(batch),
         'Duty Point Date': formatDate(batch.dutyPointDate),
         'Duty Paid Date': formatDate(batch.dutyPaidDate),
