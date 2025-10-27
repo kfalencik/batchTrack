@@ -29,6 +29,26 @@ export const LOG_ENTITIES = {
 }
 
 /**
+ * Sanitize metadata object to ensure Firebase compatibility
+ * Converts undefined values to null and removes them if they're not meaningful
+ */
+function sanitizeMetadata(metadata) {
+  if (!metadata || typeof metadata !== 'object') {
+    return {}
+  }
+  
+  const sanitized = {}
+  for (const [key, value] of Object.entries(metadata)) {
+    if (value !== undefined) {
+      sanitized[key] = value
+    }
+    // Skip undefined values entirely to avoid Firebase errors
+  }
+  
+  return sanitized
+}
+
+/**
  * Create a standardized log entry
  * @param {Object} params - Log parameters
  * @param {string} params.action - The action performed (from LOG_ACTIONS)
@@ -54,6 +74,9 @@ export async function createLogEntry({
     const nuxtApp = useNuxtApp()
     const db = getFirestore(nuxtApp.$firebase)
     
+    // Sanitize metadata to prevent Firebase errors with undefined values
+    const sanitizedMetadata = sanitizeMetadata(metadata)
+    
     const logEntry = {
       action,
       entity,
@@ -62,7 +85,7 @@ export async function createLogEntry({
       changes,
       description,
       userId,
-      metadata,
+      metadata: sanitizedMetadata,
       timestamp: new Date(),
       createdAt: new Date().toISOString()
     }

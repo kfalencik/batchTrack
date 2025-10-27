@@ -2,99 +2,80 @@
     <div class="dashboard-page">
         <PageHeader 
             title="Dashboard"
-            description="Overview of your brewing operations. Monitor production, track inventory, and view recent activity."
+            description="Overview of your brewing operations"
         />
 
-        <!-- Quick Stats Grid -->
-        <div class="stats-section mb-6">
-            <h2 class="section-title">Production Overview</h2>
-            <div class="stats-grid">
-                <StatCard 
-                    title="Total Batches" 
-                    icon="mdi-barrel" 
-                    color="primary" 
-                    :count="stats.totalBatches"
-                    :delta-text="stats.batchesDelta" 
-                />
+        <!-- Key Metrics - Streamlined -->
+        <div class="metrics-section">
+            <div class="primary-metrics">
                 <StatCard 
                     title="Active Batches" 
                     icon="mdi-flask" 
-                    color="blue" 
+                    color="primary" 
                     :count="stats.activeBatches"
                     :delta-text="stats.activeDelta" 
                 />
                 <StatCard 
                     title="Ready to Pack" 
                     icon="mdi-package-up" 
-                    color="green" 
+                    color="success" 
                     :count="stats.readyToPack"
                     :delta-text="stats.readyDelta" 
                 />
                 <StatCard 
-                    title="Packaged" 
-                    icon="mdi-package-variant-closed" 
-                    color="purple" 
-                    :count="stats.packaged"
-                    :delta-text="stats.packagedDelta" 
-                />
-            </div>
-        </div>
-
-        <!-- Secondary Stats Grid -->
-        <div class="stats-section mb-6">
-            <h2 class="section-title">System Overview</h2>
-            <div class="stats-grid-secondary">
-                <StatCard 
-                    title="Fermenters" 
+                    title="Fermenter Usage" 
                     icon="mdi-beer" 
-                    color="indigo" 
-                    :count="fermenters.length"
-                    :delta-text="`${stats.fermenterUtilization}% utilization`" 
+                    color="info" 
+                    :count="`${stats.fermenterUtilization}%`"
+                    :delta-text="`${fermenters.length} total`" 
                 />
-                <StatCard 
-                    title="Stock Groups" 
-                    icon="mdi-package-variant" 
-                    color="orange" 
-                    :count="stockGroups.length"
-                    :delta-text="`${stats.lowStockCount} low stock`" 
-                />
-                <StatCard 
-                    title="Products" 
-                    icon="mdi-bottle-wine" 
-                    color="teal" 
-                    :count="products.length"
-                    :delta-text="`${stats.totalVolume}L produced`" 
-                />
-                <StatCard 
-                    title="Recipes" 
-                    icon="mdi-chef-hat" 
-                    color="pink" 
-                    :count="recipes.length"
-                    :delta-text="`${stats.availableRecipes} available`" 
-                />
+            </div>
+            
+            <!-- Secondary metrics in compact row -->
+            <div class="secondary-metrics">
+                <div class="metric-item">
+                    <span class="metric-label">Total Batches</span>
+                    <span class="metric-value">{{ stats.totalBatches }}</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Products</span>
+                    <span class="metric-value">{{ products.length }}</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Stock Groups</span>
+                    <span class="metric-value">{{ stockGroups.length }}</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Available Recipes</span>
+                    <span class="metric-value">{{ stats.availableRecipes }}</span>
+                </div>
             </div>
         </div>
 
-        <!-- Main Content Grid -->
-        <div class="dashboard-grid">
-            <!-- Fermenter Status -->
-            <div class="dashboard-card">
-                <FermenterStatusDashboard />
+        <!-- Main Content - Improved Layout -->
+        <div class="content-section">
+            <div class="content-row">
+                <!-- Fermenter Status -->
+                <div class="content-card primary-card">
+                    <FermenterStatusDashboard />
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="content-card secondary-card">
+                    <QuickActionsDashboard />
+                </div>
             </div>
 
-            <!-- Production Analytics -->
-            <div class="dashboard-card">
-                <ProductionAnalytics />
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="dashboard-card">
-                <QuickActionsDashboard />
+            <div class="content-row">
+                <!-- Production Analytics -->
+                <div class="content-card full-width">
+                    <ProductionAnalytics />
+                </div>
             </div>
 
             <!-- Recent Activity -->
-            <div class="dashboard-card">
-                <ActivityTimeline :limit="10" />
+            <div class="content-card activity-card">
+                <ActivityTimeline :limit="8" />
             </div>
         </div>
     </div>
@@ -252,77 +233,139 @@ useHead({
 
 <style scoped>
 .dashboard-page {
-    padding: 0 1rem;
+    padding: 0 1.5rem;
     max-width: 1400px;
     margin: 0 auto;
 }
 
-.stats-section {
+/* Metrics Section */
+.metrics-section {
+    margin-bottom: 3rem;
+}
+
+.primary-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-.section-title {
-    font-size: 1.25rem;
-    font-weight: 600;
+.secondary-metrics {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 1.5rem 2rem;
+    background: rgb(248 250 252);
+    border-radius: 1rem;
+    border: 1px solid rgb(226 232 240 / 0.4);
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    flex: 1;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: rgb(100 116 139);
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
     color: rgb(15 23 42);
-    margin-bottom: 1rem;
 }
 
-.stats-grid {
+/* Content Section */
+.content-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.content-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
 }
 
-.stats-grid-secondary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 1.5rem;
-}
-
-.dashboard-card {
+.content-card {
     background: white;
-    border-radius: 1.5rem;
-    border: 1px solid rgb(226 232 240 / 0.6);
-    box-shadow: 
-        0 4px 6px -1px rgb(0 0 0 / 0.1), 
-        0 2px 4px -2px rgb(0 0 0 / 0.1),
-        0 0 0 1px rgb(255 255 255 / 0.05);
+    border-radius: 1rem;
+    border: 1px solid rgb(226 232 240 / 0.4);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
     overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
 }
 
-.dashboard-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+.content-card:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+.activity-card {
+    margin-top: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .content-row {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .secondary-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        padding: 1.25rem;
+    }
+    
+    .metric-item {
+        align-items: flex-start;
+    }
 }
 
 @media (max-width: 768px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .stats-grid-secondary {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-    }
-    
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
     .dashboard-page {
-        padding: 0 0.5rem;
+        padding: 0 1rem;
+    }
+    
+    .primary-metrics {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .secondary-metrics {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .content-section {
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-page {
+        padding: 0 0.75rem;
+    }
+    
+    .secondary-metrics {
+        padding: 0.75rem;
+    }
+    
+    .metric-value {
+        font-size: 1.25rem;
     }
 }
 </style>
