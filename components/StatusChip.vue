@@ -101,7 +101,6 @@ const statusConfigs = {
   fermenter: {
     'available': { color: 'green', icon: 'mdi-check-circle' },
     'fermenting': { color: 'blue', icon: 'mdi-flask' },
-    'flavouring': { color: 'orange', icon: 'mdi-leaf' },
     'ready to pack': { color: 'purple', icon: 'mdi-package-up' },
     'failed': { color: 'red', icon: 'mdi-alert-circle-outline' },
     'packaged': { color: 'green', icon: 'mdi-package-variant-closed' }

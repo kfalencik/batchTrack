@@ -57,11 +57,6 @@
               <div class="fermenter-name">
                 {{ fermenter.name || `Fermenter #${fermenter.id}` }}
               </div>
-              <StatusChip 
-                :status="getFermenterStatus(fermenter)" 
-                :type="'fermenter'"
-                size="small"
-              />
             </div>
             
             <div class="fermenter-details">
@@ -191,7 +186,9 @@ function getFermenterStatus(fermenter) {
   const activeBatch = getActiveBatch(fermenter)
   if (!activeBatch) return 'available'
   
-  return getBatchStatus(activeBatch)
+  const status = getBatchStatus(activeBatch)
+  
+  return status
 }
 
 // Get active batch info

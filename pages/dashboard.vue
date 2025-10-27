@@ -5,6 +5,35 @@
             description="Overview of your brewing operations"
         />
 
+        <!-- Alerts & Notifications -->
+        <div v-if="alerts.length > 0" class="alerts-section">
+            <v-alert
+                v-for="alert in alerts"
+                :key="alert.id"
+                :type="alert.type"
+                :icon="alert.icon"
+                variant="tonal"
+                class="alert-item"
+                closable
+                @click:close="dismissAlert(alert.id)"
+            >
+                <div class="alert-content">
+                    <div class="alert-title">{{ alert.title }}</div>
+                    <div class="alert-message">{{ alert.message }}</div>
+                    <v-btn
+                        v-if="alert.action"
+                        :color="alert.type"
+                        size="small"
+                        variant="outlined"
+                        class="mt-2"
+                        @click="handleAlertAction(alert)"
+                    >
+                        {{ alert.action.text }}
+                    </v-btn>
+                </div>
+            </v-alert>
+        </div>
+
         <!-- Key Metrics - Streamlined -->
         <div class="metrics-section">
             <div class="primary-metrics">
@@ -82,8 +111,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useDataStore } from '@/stores/data'
+import { useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
 import StatCard from '@/components/StatCard.vue'
 import ActivityTimeline from '@/components/ActivityTimeline.vue'
@@ -92,6 +122,8 @@ import ProductionAnalytics from '@/components/ProductionAnalytics.vue'
 import QuickActionsDashboard from '@/components/QuickActionsDashboard.vue'
 
 const dataStore = useDataStore()
+const router = useRouter()
+const dismissedAlerts = ref(new Set())
 
 // Load all data on mount
 onMounted(async () => {
@@ -147,6 +179,105 @@ function isInUse(fermenter) {
         const status = getBatchStatus(batch)
         return !['packaged', 'failed', 'sold'].includes(status)
     })
+}
+
+// Calculate key metrics for alerts
+const readyToPackCount = computed(() => {
+    return batches.value.filter(batch => getBatchStatus(batch) === 'ready to pack').length
+})
+
+const lowStockCount = computed(() => {
+    // Simple heuristic for low stock - groups with less than 5 total items
+    return stockGroups.value.filter(group => {
+        const totalItems = group.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0
+        return totalItems < 5
+    }).length
+})
+
+const failedBatchesCount = computed(() => {
+    return batches.value.filter(batch => getBatchStatus(batch) === 'failed').length
+})
+
+const availableFermentersCount = computed(() => {
+    return fermenters.value.filter(f => !isInUse(f)).length
+})
+
+// Generate alerts
+const alerts = computed(() => {
+    const alertList = []
+    
+    // Ready to pack alert
+    if (readyToPackCount.value > 0 && !dismissedAlerts.value.has('ready-to-pack')) {
+        alertList.push({
+            id: 'ready-to-pack',
+            type: 'success',
+            icon: 'mdi-package-up',
+            title: 'Batches Ready for Packaging',
+            message: `${readyToPackCount.value} batch${readyToPackCount.value > 1 ? 'es are' : ' is'} ready to be packaged.`,
+            action: {
+                text: 'View Batches',
+                handler: () => router.push('/batches?filter=ready-to-pack')
+            }
+        })
+    }
+    
+    // Low stock alert
+    if (lowStockCount.value > 0 && !dismissedAlerts.value.has('low-stock')) {
+        alertList.push({
+            id: 'low-stock',
+            type: 'warning',
+            icon: 'mdi-package-variant',
+            title: 'Low Stock Warning',
+            message: `${lowStockCount.value} stock group${lowStockCount.value > 1 ? 's have' : ' has'} low inventory levels.`,
+            action: {
+                text: 'Check Stock',
+                handler: () => router.push('/stock')
+            }
+        })
+    }
+    
+    // Failed batches alert
+    if (failedBatchesCount.value > 0 && !dismissedAlerts.value.has('failed-batches')) {
+        alertList.push({
+            id: 'failed-batches',
+            type: 'error',
+            icon: 'mdi-alert-circle',
+            title: 'Failed Batches',
+            message: `${failedBatchesCount.value} batch${failedBatchesCount.value > 1 ? 'es have' : ' has'} failed and need attention.`,
+            action: {
+                text: 'Review Batches',
+                handler: () => router.push('/batches?filter=failed')
+            }
+        })
+    }
+    
+    // No available fermenters alert
+    if (availableFermentersCount.value === 0 && fermenters.value.length > 0 && !dismissedAlerts.value.has('no-fermenters')) {
+        alertList.push({
+            id: 'no-fermenters',
+            type: 'warning',
+            icon: 'mdi-beer',
+            title: 'All Fermenters in Use',
+            message: 'All fermenters are currently occupied. New batches cannot be started.',
+            action: {
+                text: 'View Fermenters',
+                handler: () => router.push('/fermenters')
+            }
+        })
+    }
+    
+    return alertList
+})
+
+// Alert handling methods
+function dismissAlert(alertId) {
+    dismissedAlerts.value.add(alertId)
+}
+
+function handleAlertAction(alert) {
+    if (alert.action?.handler) {
+        alert.action.handler()
+    }
 }
 
 // Calculate statistics
@@ -235,6 +366,33 @@ useHead({
     padding: 0 1.5rem;
     max-width: 1400px;
     margin: 0 auto;
+}
+
+/* Alerts Section */
+.alerts-section {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.alert-item {
+    border-radius: 0.75rem;
+}
+
+.alert-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.alert-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.alert-message {
+    font-size: 0.875rem;
+    opacity: 0.9;
 }
 
 /* Metrics Section */

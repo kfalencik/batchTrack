@@ -11,41 +11,6 @@
     </div>
 
     <div class="actions-content">
-      <!-- Alerts Section -->
-      <div v-if="alerts.length > 0" class="alerts-section">
-        <h4 class="section-title">
-          <v-icon class="mr-1" color="warning">mdi-alert</v-icon>
-          Alerts & Notifications
-        </h4>
-        <div class="alerts-list">
-          <v-alert
-            v-for="alert in alerts"
-            :key="alert.id"
-            :type="alert.type"
-            :icon="alert.icon"
-            variant="tonal"
-            class="alert-item"
-            closable
-            @click:close="dismissAlert(alert.id)"
-          >
-            <div class="alert-content">
-              <div class="alert-title">{{ alert.title }}</div>
-              <div class="alert-message">{{ alert.message }}</div>
-              <v-btn
-                v-if="alert.action"
-                :color="alert.type"
-                size="small"
-                variant="outlined"
-                class="mt-2"
-                @click="handleAlertAction(alert)"
-              >
-                {{ alert.action.text }}
-              </v-btn>
-            </div>
-          </v-alert>
-        </div>
-      </div>
-
       <!-- Primary Actions -->
       <div class="primary-actions-section">
         <h4 class="section-title">
@@ -146,7 +111,6 @@ import { useRouter } from 'vue-router'
 
 const dataStore = useDataStore()
 const router = useRouter()
-const dismissedAlerts = ref(new Set())
 
 // Get data from store
 const batches = computed(() => dataStore.batches || [])
@@ -197,85 +161,6 @@ const availableFermenters = computed(() => {
 
 const readyToPackCount = computed(() => {
   return batches.value.filter(batch => getBatchStatus(batch) === 'ready to pack').length
-})
-
-const lowStockCount = computed(() => {
-  // Simple heuristic for low stock - groups with less than 5 total items
-  return stockGroups.value.filter(group => {
-    const totalItems = group.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0
-    return totalItems < 5
-  }).length
-})
-
-const failedBatchesCount = computed(() => {
-  return batches.value.filter(batch => getBatchStatus(batch) === 'failed').length
-})
-
-// Generate alerts
-const alerts = computed(() => {
-  const alertList = []
-  
-  // Ready to pack alert
-  if (readyToPackCount.value > 0 && !dismissedAlerts.value.has('ready-to-pack')) {
-    alertList.push({
-      id: 'ready-to-pack',
-      type: 'success',
-      icon: 'mdi-package-up',
-      title: 'Batches Ready for Packaging',
-      message: `${readyToPackCount.value} batch${readyToPackCount.value > 1 ? 'es are' : ' is'} ready to be packaged.`,
-      action: {
-        text: 'View Batches',
-        handler: () => navigateTo('/batches?filter=ready-to-pack')
-      }
-    })
-  }
-  
-  // Low stock alert
-  if (lowStockCount.value > 0 && !dismissedAlerts.value.has('low-stock')) {
-    alertList.push({
-      id: 'low-stock',
-      type: 'warning',
-      icon: 'mdi-package-variant',
-      title: 'Low Stock Warning',
-      message: `${lowStockCount.value} stock group${lowStockCount.value > 1 ? 's have' : ' has'} low inventory levels.`,
-      action: {
-        text: 'Check Stock',
-        handler: () => navigateTo('/stock')
-      }
-    })
-  }
-  
-  // Failed batches alert
-  if (failedBatchesCount.value > 0 && !dismissedAlerts.value.has('failed-batches')) {
-    alertList.push({
-      id: 'failed-batches',
-      type: 'error',
-      icon: 'mdi-alert-circle',
-      title: 'Failed Batches',
-      message: `${failedBatchesCount.value} batch${failedBatchesCount.value > 1 ? 'es have' : ' has'} failed and need attention.`,
-      action: {
-        text: 'Review Batches',
-        handler: () => navigateTo('/batches?filter=failed')
-      }
-    })
-  }
-  
-  // No available fermenters alert
-  if (availableFermenters.value === 0 && fermenters.value.length > 0 && !dismissedAlerts.value.has('no-fermenters')) {
-    alertList.push({
-      id: 'no-fermenters',
-      type: 'warning',
-      icon: 'mdi-beer',
-      title: 'All Fermenters in Use',
-      message: 'All fermenters are currently occupied. New batches cannot be started.',
-      action: {
-        text: 'View Fermenters',
-        handler: () => navigateTo('/fermenters')
-      }
-    })
-  }
-  
-  return alertList
 })
 
 // Quick links configuration
@@ -355,16 +240,6 @@ function navigateTo(path) {
   router.push(path)
 }
 
-function dismissAlert(alertId) {
-  dismissedAlerts.value.add(alertId)
-}
-
-function handleAlertAction(alert) {
-  if (alert.action?.handler) {
-    alert.action.handler()
-  }
-}
-
 onMounted(() => {
   // Data is loaded by parent component
 })
@@ -408,32 +283,6 @@ onMounted(() => {
   margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
-}
-
-/* Alerts Section */
-.alerts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.alert-item {
-  border-radius: 0.75rem;
-}
-
-.alert-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.alert-title {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.alert-message {
-  font-size: 0.875rem;
-  opacity: 0.9;
 }
 
 /* Primary Actions */
