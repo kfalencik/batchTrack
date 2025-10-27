@@ -25,7 +25,7 @@
             loading-text="Loading tax records..."
         >
             <template #item.batchId="{ item }">
-                <span class="text-subtitle-2 font-weight-medium">{{ item.id || '-' }}</span>
+                <span class="text-subtitle-2 font-weight-medium text-primary">{{ item.batchId || item.id || '-' }}</span>
             </template>
             <template #item.recipe="{ item }">
                 <div>
@@ -540,7 +540,7 @@ async function handleDutyAction(actionKey, batch) {
 
 function exportToCSV() {
     const csvData = taxBatches.value.map(batch => ({
-        'Batch ID': batch.id || '-',
+        'Batch ID': batch.batchId || batch.id || '-',
         'Fermenter': getBatchLabel(batch),
         'Recipe': getRecipeName(batch.recipeId),
         'ABV (%)': getABV(batch),

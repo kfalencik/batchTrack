@@ -104,12 +104,50 @@ export const useDataStore = defineStore('dataStore', {
             const nuxtApp = useNuxtApp()
             const db = getFirestore(nuxtApp.$firebase);
             const batchesRef = collection(db, "batches");
+            
+            // Generate batch ID if not provided
+            if (!batch.batchId) {
+                batch.batchId = await this.generateBatchId();
+            }
+            
             await addDoc(batchesRef, batch);
             this.setNotification({
                 text: 'Batch successfully created!',
                 color: 'success',
                 delay: 5000
             })
+        },
+        
+        // Generate batch ID in format YYYY-MM[A-Z]
+        async generateBatchId() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const prefix = `${year}-${month}`;
+            
+            // Get existing batches for this month
+            const existingBatches = this.batches || [];
+            const monthlyBatches = existingBatches.filter(batch => 
+                batch.batchId && batch.batchId.startsWith(prefix)
+            );
+            
+            // Find the next available letter
+            const usedLetters = monthlyBatches.map(batch => {
+                const match = batch.batchId.match(/^(\d{4}-\d{2})([A-Z])$/);
+                return match ? match[2] : null;
+            }).filter(Boolean);
+            
+            // Generate next letter (A, B, C, ...)
+            let nextLetter = 'A';
+            for (let i = 0; i < 26; i++) {
+                const letter = String.fromCharCode(65 + i); // A=65, B=66, etc.
+                if (!usedLetters.includes(letter)) {
+                    nextLetter = letter;
+                    break;
+                }
+            }
+            
+            return `${prefix}${nextLetter}`;
         },
         // Fermenter CRUD
         async getFermenters() {

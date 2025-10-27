@@ -13,6 +13,9 @@
             :loading="loadingProducts"
             loading-text="Loading products..."
         >
+            <template #item.batchDisplayId="{ item }">
+                <span class="text-caption font-weight-medium text-primary">{{ item.batchDisplayId || '-' }}</span>
+            </template>
             <template #item.productName="{ item }">
                 <div>
                     <div class="text-subtitle-2">{{ item.productName }}</div>
@@ -323,6 +326,7 @@ const requiredNumberRule = (v) => {
 
 // Product headers for the products section
 const productHeaders = ref([
+    { title: 'Batch ID', value: 'batchDisplayId', sortable: true, width: '100px' },
     { title: 'Product', value: 'productName', sortable: true },
     { title: 'Quantity', value: 'quantity', sortable: true, align: 'center', width: '100px' },
     { title: 'Total Volume', value: 'totalVolume', sortable: true, align: 'center', width: '120px' },
@@ -436,6 +440,7 @@ async function saveProduct() {
         const products = containerGroups.value.map(group => ({
             id: `${selectedBatch.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             batchId: selectedBatch.id,
+            batchDisplayId: selectedBatch.batchId, // User-friendly batch ID
             productName: `${editedProduct.value.productName} - ${group.containerType}`,
             containerType: group.containerType,
             containerSize: Number(group.containerSize),

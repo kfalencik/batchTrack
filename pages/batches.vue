@@ -24,6 +24,9 @@
             :loading="loading"
             loading-text="Loading batches..."
         >
+            <template #item.batchId="{ item }">
+                <span class="font-weight-medium text-primary">{{ item.batchId || '-' }}</span>
+            </template>
             <template #item.recipe="{ item }">
                 <span>{{ getRecipeName(item.recipeId) }}</span>
             </template>
@@ -116,6 +119,21 @@
                                     <v-icon color="primary">mdi-chef-hat</v-icon>
                                 </template>
                             </v-select>
+                        </v-col>
+                        <v-col cols="12" v-if="!isAdding">
+                            <v-text-field
+                                label="Batch ID"
+                                v-model="edited.batchId"
+                                variant="outlined"
+                                class="mb-2 modern-field"
+                                readonly
+                                hint="Auto-generated unique identifier for this batch"
+                                persistent-hint
+                            >
+                                <template #prepend-inner>
+                                    <v-icon color="primary">mdi-tag</v-icon>
+                                </template>
+                            </v-text-field>
                         </v-col>
                         <v-col cols="12">
                             <v-select
@@ -431,6 +449,7 @@ import PackagingGroup from '@/components/PackagingGroup.vue'
         }
     ])
     const headers = ref([
+        { title: 'Batch ID', value: 'batchId', sortable: true, width: '120px' },
         { title: 'Recipe', value: 'recipe', sortable: true },
         { title: 'Fermenter', value: 'fermenter', sortable: true, width: '120px' },
         { title: 'Fermentation Days', value: 'fermentationDays', sortable: true, align: 'center', width: '140px' },
@@ -924,6 +943,7 @@ import PackagingGroup from '@/components/PackagingGroup.vue'
         const products = packagingGroups.value.map(group => ({
             id: `${packingBatch.value.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             batchId: packingBatch.value.id,
+            batchDisplayId: packingBatch.value.batchId, // User-friendly batch ID
             productName: `${getFermenterLabelById(packingBatch.value.fermenter)} - ${group.containerType}`,
             containerType: group.containerType,
             containerSize: Number(group.containerSize),
@@ -941,8 +961,12 @@ import PackagingGroup from '@/components/PackagingGroup.vue'
             await dataStore.addProduct(product)
         }
 
-        // Update batch status to 'packaged'
-        const updatedBatch = Object.assign({}, packingBatch.value, { status: 'packaged' })
+        // Update batch status to 'packaged' and set duty point date
+        const packagedDate = new Date().toISOString().slice(0, 10);
+        const updatedBatch = Object.assign({}, packingBatch.value, { 
+            status: 'packaged',
+            dutyPointDate: packagedDate // Set duty point date to packaging date
+        })
         await dataStore.updateBatch(updatedBatch)
         
         // Refresh batches
