@@ -66,9 +66,17 @@ const statusConfigs = {
   // Stock statuses
   stock: {
     'ok': { color: 'green', icon: 'mdi-check-circle' },
+    'good': { color: 'green', icon: 'mdi-check-circle' },
+    'fresh': { color: 'green', icon: 'mdi-leaf' },
     'low': { color: 'orange', icon: 'mdi-alert' },
     'expired': { color: 'red', icon: 'mdi-close-circle' },
-    'warning': { color: 'amber', icon: 'mdi-alert-circle' }
+    'warning': { color: 'amber', icon: 'mdi-alert-circle' },
+    'expiring soon': { color: 'amber', icon: 'mdi-clock-alert' },
+    'needs attention': { color: 'orange', icon: 'mdi-alert-octagon' },
+    'critical': { color: 'red', icon: 'mdi-alert-circle-outline' },
+    'mixed': { color: 'blue', icon: 'mdi-information' },
+    'no date': { color: 'grey', icon: 'mdi-calendar-question' },
+    'no items': { color: 'grey', icon: 'mdi-package-variant-closed-remove' }
   },
   // Product statuses
   product: {
@@ -87,7 +95,36 @@ const statusConfigs = {
 const config = computed(() => {
   const typeConfig = statusConfigs[props.type] || statusConfigs.default || {}
   const statusKey = props.status.toLowerCase()
-  return typeConfig[statusKey] || { color: 'grey', icon: 'mdi-help-circle' }
+  
+  // Handle descriptive status text that contains keywords
+  let matchedConfig = typeConfig[statusKey]
+  
+  if (!matchedConfig && props.type === 'stock') {
+    // Try to match based on keywords in the status text
+    if (statusKey.includes('expired') || statusKey.includes('expires today')) {
+      matchedConfig = typeConfig['expired']
+    } else if (statusKey.includes('expires tomorrow') || statusKey.includes('expires in')) {
+      if (statusKey.includes('expires in 1') || statusKey.includes('expires in 2') || statusKey.includes('expires in 3')) {
+        matchedConfig = typeConfig['expiring soon']
+      } else if (statusKey.includes('expires in')) {
+        matchedConfig = typeConfig['warning']
+      }
+    } else if (statusKey.includes('fresh')) {
+      matchedConfig = typeConfig['fresh']
+    } else if (statusKey.includes('no expiry') || statusKey.includes('no date')) {
+      matchedConfig = typeConfig['no date']
+    } else if (statusKey.includes('needs attention')) {
+      matchedConfig = typeConfig['needs attention']
+    } else if (statusKey.includes('expiring soon')) {
+      matchedConfig = typeConfig['expiring soon']
+    } else if (statusKey.includes('mixed')) {
+      matchedConfig = typeConfig['mixed']
+    } else if (statusKey.includes('no items')) {
+      matchedConfig = typeConfig['no items']
+    }
+  }
+  
+  return matchedConfig || { color: 'grey', icon: 'mdi-help-circle' }
 })
 
 const chipColor = computed(() => config.value.color)
@@ -157,6 +194,18 @@ const iconSize = computed(() => {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(167, 139, 250, 0.05) 100%) !important;
   color: rgb(109, 40, 217) !important;
   border-color: rgba(139, 92, 246, 0.2) !important;
+}
+
+:deep(.v-chip--color-orange) {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(254, 154, 46, 0.05) 100%) !important;
+  color: rgb(234, 88, 12) !important;
+  border-color: rgba(251, 146, 60, 0.2) !important;
+}
+
+:deep(.v-chip--color-amber) {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%) !important;
+  color: rgb(217, 119, 6) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
 }
 
 :deep(.v-chip--color-grey) {

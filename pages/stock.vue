@@ -71,12 +71,11 @@
                         </template>
 
                         <template #item.status="{ item: it }">
-                            <v-chip :color="isExpired(it) ? getStatusColor('expired') : (daysUntilExpiry(it) !== null && daysUntilExpiry(it) <= 7 ? getStatusColor('warning') : getStatusColor('ok'))" dark>
-                                <v-icon left small>{{ isExpired(it) ? getStatusIcon('expired') : (daysUntilExpiry(it) !== null && daysUntilExpiry(it) <= 7 ? getStatusIcon('warning') : getStatusIcon('ok')) }}</v-icon>
-                                <span>
-                                    {{ isExpired(it) ? 'Expired' : (daysUntilExpiry(it) === null ? 'No date' : (daysUntilExpiry(it) <= 0 ? 'Expires today' : daysUntilExpiry(it) <= 7 ? `${daysUntilExpiry(it)}d` : `${daysUntilExpiry(it)}d`)) }}
-                                </span>
-                            </v-chip>
+                            <StatusChip 
+                                :status="getItemStatusInfo(it).text"
+                                type="stock"
+                                size="small"
+                            />
                         </template>
                     </v-data-table>
                 </td>
@@ -393,6 +392,80 @@ function daysUntilExpiry(item) {
     return diff
 }
 
+function getItemStatusInfo(item) {
+    if (isExpired(item)) {
+        return {
+            status: 'expired',
+            text: 'Expired',
+            color: 'red',
+            icon: 'mdi-close-circle'
+        }
+    }
+    
+    const days = daysUntilExpiry(item)
+    
+    if (days === null) {
+        return {
+            status: 'no date',
+            text: 'No expiry date',
+            color: 'grey',
+            icon: 'mdi-calendar-question'
+        }
+    }
+    
+    if (days <= 0) {
+        return {
+            status: 'expired',
+            text: 'Expires today',
+            color: 'red',
+            icon: 'mdi-clock-alert'
+        }
+    }
+    
+    if (days === 1) {
+        return {
+            status: 'expiring soon',
+            text: 'Expires tomorrow',
+            color: 'amber',
+            icon: 'mdi-clock-alert'
+        }
+    }
+    
+    if (days <= 3) {
+        return {
+            status: 'expiring soon',
+            text: `Expires in ${days} days`,
+            color: 'amber',
+            icon: 'mdi-clock-alert'
+        }
+    }
+    
+    if (days <= 30) {
+        return {
+            status: 'warning',
+            text: `Expires in ${days} days`,
+            color: 'orange',
+            icon: 'mdi-alert'
+        }
+    }
+    
+    if (days <= 60) {
+        return {
+            status: 'good',
+            text: `Expires in ${days} days`,
+            color: 'green',
+            icon: 'mdi-check-circle'
+        }
+    }
+    
+    return {
+        status: 'fresh',
+        text: `Fresh (${days} days)`,
+        color: 'green',
+        icon: 'mdi-leaf'
+    }
+}
+
 function formatDate(d) {
     if (!d) return '-'
     const ms = Date.parse(d)
@@ -401,41 +474,77 @@ function formatDate(d) {
     return dt.toLocaleDateString()
 }
 
-function getStatusColor(status) {
-    const s = (status || '').toLowerCase()
-    if (s === 'warning') return 'orange'
-    if (s === 'expired') return 'red'
-    return 'green'
-}
-
-function getStatusIcon(status) {
-    const s = (status || '').toLowerCase()
-    if (s === 'warning') return 'mdi-alert'
-    if (s === 'expired') return 'mdi-alert-circle-outline'
-    return 'mdi-check-circle-outline'
-}
-
 const groups = computed(() => dataStore.stockGroups || [])
 
 const displayedGroups = computed(() => {
     return (groups.value || []).map(g => {
         const items = g.items || []
         let usable = 0
+        const unitCounts = new Map() // Track quantities by unit
+        
         for (const it of items) {
             if (!isExpired(it)) {
                 const q = Number(it.quantity)
-                if (Number.isFinite(q)) usable += q
+                const unit = (it.unit || '').trim()
+                if (Number.isFinite(q) && q > 0) {
+                    usable += q
+                    if (unit) {
+                        unitCounts.set(unit, (unitCounts.get(unit) || 0) + q)
+                    }
+                }
             }
         }
-        let status = 'ok'
-        if (items.some(isExpired)) status = 'expired'
-        else if (items.some(it => { const d = daysUntilExpiry(it); return d !== null && d <= 7 })) status = 'warning'
+        
+        // Create display string with units
+        let usableDisplay = '-'
+        if (usable > 0) {
+            if (unitCounts.size === 0) {
+                // No units specified
+                usableDisplay = usable.toString()
+            } else if (unitCounts.size === 1) {
+                // Single unit type
+                const [unit, quantity] = unitCounts.entries().next().value
+                usableDisplay = `${quantity} ${unit}`
+            } else {
+                // Multiple units - show breakdown
+                const unitBreakdown = Array.from(unitCounts.entries())
+                    .map(([unit, qty]) => `${qty} ${unit}`)
+                    .join(', ')
+                usableDisplay = unitBreakdown
+            }
+        }
+        
+        // More descriptive group status logic
+        let status = 'good'
+        const expiredItems = items.filter(isExpired)
+        const expiringItems = items.filter(it => {
+            const d = daysUntilExpiry(it)
+            return d !== null && d <= 30 && d > 0
+        })
+        const noDateItems = items.filter(it => !it.expiryDate)
+        
+        if (items.length === 0) {
+            status = 'no items'
+        } else if (expiredItems.length === items.length) {
+            status = 'expired'
+        } else if (expiredItems.length > 0) {
+            status = 'needs attention'
+        } else if (expiringItems.length > 0) {
+            status = 'expiring soon'
+        } else if (noDateItems.length === items.length) {
+            status = 'no date'
+        } else if (noDateItems.length > 0) {
+            status = 'mixed'
+        } else {
+            status = 'fresh'
+        }
+        
         return {
             id: g.id,
             name: g.name,
             items: items,
             usable,
-            usableDisplay: usable > 0 ? usable : '-',
+            usableDisplay,
             status,
             raw: g
         }
