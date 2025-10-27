@@ -96,6 +96,35 @@ const statusConfigs = {
     'tax paid': { color: 'green', icon: 'mdi-check-circle' },
     'destroyed': { color: 'red', icon: 'mdi-delete-outline' },
     'transferred': { color: 'blue', icon: 'mdi-truck-delivery' }
+  },
+  // Fermenter statuses
+  fermenter: {
+    'available': { color: 'green', icon: 'mdi-check-circle' },
+    'fermenting': { color: 'blue', icon: 'mdi-flask' },
+    'flavouring': { color: 'orange', icon: 'mdi-leaf' },
+    'ready to pack': { color: 'purple', icon: 'mdi-package-up' },
+    'failed': { color: 'red', icon: 'mdi-alert-circle-outline' },
+    'packaged': { color: 'green', icon: 'mdi-package-variant-closed' }
+  },
+  // Entity types for activity logs
+  entity: {
+    'batch': { color: 'blue', icon: 'mdi-flask' },
+    'fermenter': { color: 'green', icon: 'mdi-beer' },
+    'stock': { color: 'orange', icon: 'mdi-package-variant' },
+    'product': { color: 'purple', icon: 'mdi-bottle-soda' },
+    'recipe': { color: 'amber', icon: 'mdi-book-open-page-variant' },
+    'tax': { color: 'red', icon: 'mdi-receipt' }
+  },
+  // Action types for activity logs
+  action: {
+    'create': { color: 'success', icon: 'mdi-plus' },
+    'update': { color: 'info', icon: 'mdi-pencil' },
+    'delete': { color: 'error', icon: 'mdi-delete' },
+    'status_change': { color: 'info', icon: 'mdi-swap-horizontal' },
+    'transfer': { color: 'purple', icon: 'mdi-truck-delivery' },
+    'deduct': { color: 'orange', icon: 'mdi-minus' },
+    'add_stock': { color: 'green', icon: 'mdi-package-variant-plus' },
+    'batch_progress': { color: 'blue', icon: 'mdi-progress-clock' }
   }
 }
 
@@ -129,6 +158,12 @@ const config = computed(() => {
     } else if (statusKey.includes('no items')) {
       matchedConfig = typeConfig['no items']
     }
+  }
+  
+  // Handle combined action statuses - simplified approach
+  if (!matchedConfig && props.type === 'action') {
+    // Just use the direct action status from our config
+    matchedConfig = typeConfig[statusKey]
   }
   
   return matchedConfig || { color: 'grey', icon: 'mdi-help-circle' }
@@ -179,7 +214,19 @@ const iconSize = computed(() => {
   border-color: rgba(16, 185, 129, 0.2) !important;
 }
 
+:deep(.v-chip--color-success) {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(34, 211, 238, 0.05) 100%) !important;
+  color: rgb(5, 150, 105) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+
 :deep(.v-chip--color-red) {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(245, 101, 101, 0.05) 100%) !important;
+  color: rgb(220, 38, 38) !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+:deep(.v-chip--color-error) {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(245, 101, 101, 0.05) 100%) !important;
   color: rgb(220, 38, 38) !important;
   border-color: rgba(239, 68, 68, 0.2) !important;
@@ -189,6 +236,12 @@ const iconSize = computed(() => {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%) !important;
   color: rgb(37, 99, 235) !important;
   border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+:deep(.v-chip--color-info) {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(56, 189, 248, 0.05) 100%) !important;
+  color: rgb(2, 132, 199) !important;
+  border-color: rgba(14, 165, 233, 0.2) !important;
 }
 
 :deep(.v-chip--color-yellow) {

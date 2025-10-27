@@ -45,12 +45,7 @@
             <div class="timeline-header">
               <div class="timeline-badges">
                 <StatusChip 
-                  :status="log.entity" 
-                  :type="'entity'"
-                  size="small"
-                />
-                <StatusChip 
-                  :status="log.action" 
+                  :status="getSimpleAction(log)" 
                   :type="'action'"
                   size="small"
                 />
@@ -59,13 +54,13 @@
             </div>
             
             <div class="timeline-body">
-              <div class="timeline-title">{{ log.entityName }}</div>
-              <div class="timeline-description">{{ log.description }}</div>
+              <div class="timeline-title">{{ getDisplayTitle(log) }}</div>
+              <div class="timeline-description">{{ getDisplayDescription(log) }}</div>
               
               <div v-if="log.changes && Object.keys(log.changes).length > 0" class="timeline-changes">
-                <div class="changes-summary">
-                  <v-icon size="12" class="mr-1">mdi-pencil</v-icon>
-                  {{ Object.keys(log.changes).length }} field{{ Object.keys(log.changes).length > 1 ? 's' : '' }} changed
+                <div class="changes-detail">
+                  <v-icon size="12" class="mr-1 text--secondary">mdi-arrow-right</v-icon>
+                  <span class="text-caption">{{ getChangesText(log.changes) }}</span>
                 </div>
               </div>
             </div>
@@ -120,20 +115,74 @@ const refreshLogs = async () => {
   }
 }
 
+// Helper function to get simple action for chip
+function getSimpleAction(log) {
+  return log.action || 'update'
+}
+
+// Helper function to get clear display title
+function getDisplayTitle(log) {
+  const entity = log.entity || 'item'
+  const id = log.entityId || 'unknown'
+  
+  // Show entity type and ID clearly
+  return `${entity.toUpperCase()} ${id}`
+}
+
+// Helper function to get clear description
+function getDisplayDescription(log) {
+  const action = log.action || 'updated'
+  
+  // Show what actually happened
+  if (log.changes && log.changes.status) {
+    const newStatus = log.changes.status.after || log.changes.status
+    return `Status changed to: ${newStatus}`
+  }
+  
+  if (action === 'create') return 'Created'
+  if (action === 'update') return 'Updated'
+  if (action === 'delete') return 'Deleted'
+  if (action === 'status_change') return 'Status changed'
+  if (action === 'transfer') return 'Transferred'
+  if (action === 'deduct') return 'Stock deducted'
+  if (action === 'add_stock') return 'Stock added'
+  if (action === 'batch_progress') return 'Progress updated'
+  
+  return action
+}
+
+// Helper function to show what changed
+function getChangesText(changes) {
+  if (!changes || typeof changes !== 'object') return ''
+  
+  const changeList = Object.keys(changes).map(key => {
+    const change = changes[key]
+    if (typeof change === 'object' && change.after !== undefined) {
+      return `${key}: ${change.before || 'none'} → ${change.after}`
+    }
+    return `${key}: ${change}`
+  })
+  
+  return changeList.join(' • ')
+}
+
 // Computed properties
 const displayedLogs = computed(() => {
-  return logs.value.slice(0, props.limit)
+  // Filter out stock logs and then limit results
+  const filteredLogs = logs.value.filter(log => log.entity !== 'stock')
+  return filteredLogs.slice(0, props.limit)
 })
 
 const hasMoreLogs = computed(() => {
-  return logs.value.length > props.limit
+  const filteredLogs = logs.value.filter(log => log.entity !== 'stock')
+  return filteredLogs.length > props.limit
 })
 
 // Helper functions
 function getLogColor(action) {
   const colors = {
     [LOG_ACTIONS.CREATE]: 'success',
-    [LOG_ACTIONS.UPDATE]: 'warning', 
+    [LOG_ACTIONS.UPDATE]: 'info', 
     [LOG_ACTIONS.DELETE]: 'error',
     [LOG_ACTIONS.STATUS_CHANGE]: 'info',
     [LOG_ACTIONS.TRANSFER]: 'purple',
@@ -329,15 +378,15 @@ onMounted(() => {
   margin-top: 0.5rem;
 }
 
-.changes-summary {
+.changes-detail {
   display: flex;
   align-items: center;
   font-size: 0.75rem;
-  color: rgb(59 130 246);
-  background: rgb(239 246 255);
+  color: rgb(75 85 99);
+  background: rgb(249 250 251);
   padding: 0.25rem 0.5rem;
   border-radius: 0.375rem;
-  border: 1px solid rgb(191 219 254);
+  border: 1px solid rgb(229 231 235);
   width: fit-content;
 }
 
