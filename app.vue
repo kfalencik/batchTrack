@@ -197,6 +197,11 @@ p {
   letter-spacing: var(--tracking-wide) !important;
 }
 
+/* Warning chip override for white text */
+.v-chip.bg-amber {
+  color: white !important;
+}
+
 /* Layout Improvements */
 .section {
   max-width: 1400px;

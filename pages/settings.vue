@@ -35,25 +35,6 @@
             <v-tabs-window v-model="activeTab">
                 <!-- Appearance Tab -->
                 <v-tabs-window-item value="appearance">
-                    <v-card class="mb-6">
-                        <v-card-title class="d-flex align-center">
-                            <v-icon start>mdi-theme-light-dark</v-icon>
-                            Theme Mode
-                        </v-card-title>
-                        <v-card-text>
-                            <v-switch
-                                v-model="settingsStore.isDarkMode"
-                                @change="settingsStore.saveSettings()"
-                                color="primary"
-                                label="Dark Mode"
-                                hide-details
-                            ></v-switch>
-                            <p class="text-body-2 text-medium-emphasis mt-2">
-                                Toggle between light and dark theme
-                            </p>
-                        </v-card-text>
-                    </v-card>
-
                     <v-card>
                         <v-card-title class="d-flex align-center">
                             <v-icon start>mdi-palette</v-icon>
@@ -88,7 +69,6 @@
                                     @click="settingsStore.setTheme(theme.id)"
                                 >
                                     <div class="theme-preview">
-                                        <div class="theme-emoji">{{ theme.emoji }}</div>
                                         <div 
                                             class="theme-color theme-color--primary"
                                             :style="{ backgroundColor: theme.primary }"
